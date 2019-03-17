@@ -16,10 +16,17 @@ class UI < DiscordUIBase
 			game_table.add_leader(l)
 			l
 		)
+		@exists_log = false
+		@leader.log.callback do |log|
+			unless @exists_log
+				@exists_log = true
+				msg("現在、ログがあります。確認するには(`Bk`)")
+			end
+		end
 		loop do
 			case @leader.state
 			when :first_story
-				first_story()
+				#first_story()
 				@leader.state = nil
 			else
 				map()
@@ -53,6 +60,7 @@ class UI < DiscordUIBase
 			#{@leader.make_map(@game_table)}
 			現在の位置は(#{pos})です。
 			移動は(`w`/`a`/`s`/`d`)
+			アイテムは(`i`)
 		EOS
 		ruler = @game_table.ruler(pos)
 		block_text = if block != Block::EMPTY
@@ -69,7 +77,8 @@ class UI < DiscordUIBase
 			end
 		end
 		
-		msg(constant_text+(block_text||""))
+		msg(constant_text+(block_text||"")+@leader.log.each.map(&:to_s).join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
+		@leader.log.clear()
 		wait_respons do |res|
 			case res
 			when "w"
@@ -80,6 +89,13 @@ class UI < DiscordUIBase
 				@leader.move(@game_table, 0, -1)
 			when "d"
 				@leader.move(@game_table, 1, 0)
+			when "i"
+				items = @leader.items
+				if items.empty?
+					msg("現在アイテムは持っていません。")
+				else
+					msg(items.map{|i,c|"#{i} : `#{c}`"}.join("\n"))
+				end
 			when "x"
 				result = @game_table.war(@leader)
 				case result

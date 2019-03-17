@@ -19,7 +19,9 @@ class GameTable
 	attr_reader :leaders
 	def initialize()
 		@block_table = {}
+		@block_table_mutex = Mutex.new
 		@ruler_table = {}
+		@ruler_table_mutex = Mutex.new
 		@leaders = {}
 	end
 	
@@ -31,14 +33,34 @@ class GameTable
 	end
 	
 	def block(pos)
-		@block_table[pos] ||= select_object(pos)
+		@block_table_mutex.synchronize do
+			@block_table[pos] ||= select_object(pos)
+		end
 	end
 	
 	def ruler(pos)
-		@ruler_table[pos] ||= initial_ruler(pos)
+		@ruler_table_mutex.synchronize do
+			@ruler_table[pos] ||= initial_ruler(pos)
+		end
 	end
 	def set_ruler(pos, new_ruler)
-		@ruler_table[pos] = new_ruler
+		@ruler_table_mutex.synchronize do
+			@ruler_table[pos] = new_ruler
+		end
+	end
+	
+	def turn()
+		# アイテム処理
+		@ruler_table_mutex.synchronize do
+			@ruler_table
+				.each do |pos, ruler|
+					next if ruler.nil?
+					geted_items = block(pos).get_turn_items()
+					geted_items.each do |item, count|
+						ruler.add_item(item, count)
+					end
+				end
+		end
 	end
 	
 	def war(leader)
@@ -81,13 +103,13 @@ class GameTable
 		when AbPos.new(0, 0)
 			NPCEnemy.new(100)
 		else
-			NPCEnemy.new(rand(5..20))
+			NPCEnemy.new(rand(5..15))
 		end
 	end
 end
 
 class Leader
-	attr_reader :id, :pos
+	attr_reader :id, :pos, :log, :items
 	attr_accessor :state
 	def initialize(id, name)
 		@id = id
@@ -95,6 +117,34 @@ class Leader
 		@pos = initial_pos
 		@soldier = 10
 		@state = :first_story
+		@items = {}
+		@log = LogBasket.new
+	end
+	
+	class LogBasket
+		include Enumerable
+		attr_reader :log
+		def initialize
+			@log = []
+		end
+		def callback(&block)
+			@callback = block
+		end
+		def add(log)
+			@log << log
+			@callback.call(log)
+		end
+		def clear()
+			@log.clear
+		end
+		def each(*args)
+			@log.each(*args)
+		end
+	end
+	GetItemLog = Struct.new(:item, :count, :time) do
+		def to_s
+			"#{time}に#{item}を#{count}個入手しました。"
+		end
 	end
 	
 	def force
@@ -157,6 +207,12 @@ class Leader
 		end
 	end
 	
+	def add_item(item, count)
+		@items[item] ||= 0
+		@items[item] += count
+		@log.add(GetItemLog.new(item, count, Time.now))
+	end
+	
 	private
 	
 	def initial_pos
@@ -181,22 +237,49 @@ class NPCEnemy
 	# 次にこれが試合をすることはないから
 	def weaken_at_lose
 	end
+	
+	# とりあえず
+	def add_item(item, count)
+	end
 end
 
-class Block
+class Item
 	def initialize(name)
 		@name = name
 	end
+	
+	GOLD = Item.new("金")
+	FOOD = Item.new("食料")
+	IRON_ORE = Item.new("鉄鉱石")
+	IRON = Item.new("鉄")
+	WOOD = Item.new("木材")
 	
 	def ==(pair)
 		@name == pair.instance_variable_get(:@name)
 	end
 	
-	EMPTY = Block.new("    ")
-	CASTLE = Block.new("王城")
-	FARM = Block.new(" 畑 ")
-	IRON_MINE = Block.new("鉄鉱")
-	FOREST = Block.new("森林")
+	def to_s
+		@name
+	end
+end
+
+
+class Block
+	attr_reader :get_turn_items
+	def initialize(name, get_turn_items)
+		@name = name
+		@get_turn_items = get_turn_items
+	end
+	
+	EMPTY = Block.new("    ", [])
+	CASTLE = Block.new("王城", {Item::GOLD => 1000})
+	FARM = Block.new(" 畑 ", {Item::FOOD => 20}) # これ人数にもよるんじゃ・・？
+	IRON_MINE = Block.new("鉄鉱", {Item::IRON_ORE => 20})
+	FOREST = Block.new("森林", {Item::WOOD => 20})
+	
+	def ==(pair)
+		@name == pair.instance_variable_get(:@name)
+	end
 	
 	def to_s
 		@name

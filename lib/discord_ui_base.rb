@@ -114,14 +114,26 @@ class DiscordUIBase
 			queue.push Reaction.new(event)
 		end
 		
-		result = loop do
-			ret = yield(queue.pop)
-			break ret if ret
+		begin
+			@wait_respons_thread = Thread.current
+			result = loop do
+				ret = yield(queue.pop)
+				break ret if ret
+			end
+			
+			result
+		ensure
+			@wait_respons_thread = nil
+			@bot.remove_handler(message_handler)
+			@bot.remove_handler(reaction_handler)
 		end
-		
-		@bot.remove_handler(message_handler)
-		@bot.remove_handler(reaction_handler)
-		result
+	end
+	
+	def stop_waiting()
+		if @wait_respons_thread
+			@wait_respons_thread.kill
+			@wait_respons_thread = nil
+		end
 	end
 	
 	def send_reactions(msg, args)

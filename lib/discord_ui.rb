@@ -11,23 +11,27 @@ class UI < DiscordUIBase
 	
 	def start(game_table)
 		@game_table = game_table
-		@leader = game_table.leader(@user.id) || (
-			l = Leader.new(@user.id, @user.name)
-			game_table.add_leader(l)
+		@group = game_table.group(@user.id) || (
+			l = Group.new(@user.id, @user.name)
+			game_table.add_group(l)
 			l
 		)
 		@exists_log = false
-		@leader.log.callback do |log|
+		@group.log.callback do |log|
 			unless @exists_log
 				@exists_log = true
 				msg("現在、ログがあります。確認するには(`Bk`)")
 			end
 		end
 		loop do
-			case @leader.state
+			case @group.state
 			when :first_story
 				#first_story()
-				@leader.state = nil
+				@group.state = nil
+			when :ending
+				ending_story()
+				@group = nil
+				break
 			else
 				map()
 			end
@@ -38,7 +42,7 @@ class UI < DiscordUIBase
 		text = <<~EOS
 			・・・・・・・・・・
 			戦いばかりが続くこの国。
-			王の力は弱まり、いくつもの兵を持った集団が収めるこの国。
+			王の力は弱まり、いくつもの兵を持った集団が治めるこの国。
 			その中のある村で・・・・・
 			
 			この青年は夢を持っている。
@@ -53,18 +57,42 @@ class UI < DiscordUIBase
 			.each{|line|sleep 1; line.empty? || msg(line)}
 	end
 	
+	def ending_story()
+		text = <<~EOS
+			・・・・・・・・・・
+			戦いばかりが続いていたこの国。
+			その後王は倒され、新たな王が誕生したこの国。
+			その中心の城の中・・・・・
+			
+			この青年は夢を叶えた。
+			他の集団を倒し、王を倒し、この国の新たな王として君臨する夢を。
+			この大きな城で終わる、壮大な道。
+			
+			「リーダー...ここまで、長かったですね...
+			また、新しい夢を作って、叶えていきましょう！」
+			
+			
+			(END)
+			(テストプレイ終了です。DMください)
+		EOS
+		text
+			.lines
+			.map(&:chomp)
+			.each{|line|sleep 1; line.empty? || msg(line)}
+	end
+	
 	def map()
-		pos = @leader.pos
+		pos = @group.pos
 		block = @game_table.block(pos)
 		constant_text = <<~EOS
-			#{@leader.make_map(@game_table)}
+			#{@group.make_map(@game_table)}
 			現在の位置は(#{pos})です。
 			移動は(`w`/`a`/`s`/`d`)
 			アイテムは(`i`)
 		EOS
 		ruler = @game_table.ruler(pos)
 		block_text = if block != Block::EMPTY
-			if ruler == @leader
+			if ruler == @group
 				<<~EOS
 					現在このブロックを支配しています。
 					移動した際は、支配は解除されます。
@@ -72,32 +100,39 @@ class UI < DiscordUIBase
 			else
 				<<~EOS
 					このブロックを支配するには(`x`)
-					敵は#{@leader.compare_force(ruler)}相手でしょう。
+					敵は#{@group.compare_force(ruler)}相手でしょう。
 				EOS
 			end
 		end
 		
-		msg(constant_text+(block_text||"")+@leader.log.each.map(&:to_s).join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
-		@leader.log.clear()
+		msg(constant_text+(block_text||"")+@group.log.each.map(&:to_s).join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
+		@group.log.clear()
 		wait_respons do |res|
 			case res
 			when "w"
-				@leader.move(@game_table, 0, 1)
+				@group.move(@game_table, 0, 1)
 			when "a"
-				@leader.move(@game_table, -1, 0)
+				@group.move(@game_table, -1, 0)
 			when "s"
-				@leader.move(@game_table, 0, -1)
+				@group.move(@game_table, 0, -1)
 			when "d"
-				@leader.move(@game_table, 1, 0)
+				@group.move(@game_table, 1, 0)
 			when "i"
-				items = @leader.items
+				items = @group.items
 				if items.empty?
 					msg("現在アイテムは持っていません。")
 				else
 					msg(items.map{|i,c|"#{i} : `#{c}`"}.join("\n"))
 				end
 			when "x"
-				result = @game_table.war(@leader)
+				enemy = @game_table.ruler(pos)
+				if enemy == @group
+					msg(<<~EOS)
+						この場所は既に支配しています。
+					EOS
+					next true
+				end
+				result = @game_table.war(@group)
 				case result
 				when :win
 					msg(<<~EOS)

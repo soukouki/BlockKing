@@ -13,23 +13,24 @@ AbPos = Struct.new(:x, :y) do
 		AbPos.new(x+diff_x, y+diff_y)
 	end
 end
+AbPos::CENTER = AbPos.new(0, 0)
 
 
 class GameTable
-	attr_reader :leaders
+	attr_reader :groups
 	def initialize()
 		@block_table = {}
 		@block_table_mutex = Mutex.new
 		@ruler_table = {}
 		@ruler_table_mutex = Mutex.new
-		@leaders = {}
+		@groups = {}
 	end
 	
-	def leader(id)
-		@leaders[id]
+	def group(id)
+		@groups[id]
 	end
-	def add_leader(leader)
-		@leaders[leader.id] = leader
+	def add_group(group)
+		@groups[group.id] = group
 	end
 	
 	def block(pos)
@@ -63,31 +64,34 @@ class GameTable
 		end
 	end
 	
-	def war(leader)
-		pos = leader.pos
+	def war(group)
+		pos = group.pos
 		enemy = ruler(pos)
-		case enemy.force <=> leader.force
+		case (enemy.force * rand(0.95..1.05)) <=> (group.force * rand(0.95..1.05))
 		when 1, 0 # enemyの勝利
 			enemy.weaken_at_win
-			leader.weaken_at_lose
+			group.weaken_at_lose
 			:lose
-		when -1   # leaderの勝利
+		when -1   # groupの勝利
 			enemy.weaken_at_lose
-			leader.weaken_at_win
-			set_ruler(pos, leader)
+			group.weaken_at_win
+			set_ruler(pos, group)
+			if pos==AbPos::CENTER
+				group.state = :ending
+			end
 			:win
 		end
 	end
 	
-	def is_there_a_leader_other_than_myself?(leader, pos)
-		not @leaders.values.reject{|l|l == leader}.select{|l|l.pos == pos}.empty?
+	def is_there_a_group_other_than_myself?(group, pos)
+		not @groups.values.reject{|l|l == group}.select{|l|l.pos == pos}.empty?
 	end
 	
 	private
 	
 	def select_object(pos)
 		case pos
-		when AbPos.new(0, 0)
+		when AbPos::CENTER
 			Block::CASTLE
 		else
 			if rand() > 0.5
@@ -100,24 +104,27 @@ class GameTable
 	
 	def initial_ruler(pos)
 		case pos
-		when AbPos.new(0, 0)
-			NPCEnemy.new(100)
+		when AbPos::CENTER
+			NPCEnemy.new(140)
 		else
-			NPCEnemy.new(rand(5..15))
+			force = (
+				(120 / Math.log(Math.sqrt((pos.x).abs+(pos.y).abs)+2, 1.1)) * rand(0.7..(1/0.7))
+			).to_i
+			NPCEnemy.new(force)
 		end
 	end
 end
 
-class Leader
+class Group
 	attr_reader :id, :pos, :log, :items
 	attr_accessor :state
 	def initialize(id, name)
 		@id = id
 		@name = name
 		@pos = initial_pos
-		@soldier = 10
+		@soldier = 6
 		@state = :first_story
-		@items = {}
+		@items = {Item::FOOD => 20}
 		@log = LogBasket.new
 	end
 	
@@ -146,6 +153,16 @@ class Leader
 			"#{time}に#{item}を#{count}個入手しました。"
 		end
 	end
+	JoinedSoldier = Struct.new(:count) do
+		def to_s
+			"#{count}人がグループに加わりました！"
+		end
+	end
+	LeftSoldier = Struct.new(:count) do
+		def to_s
+			"残念ながら、#{count}人がグループから去っていきました・・・"
+		end
+	end
 	
 	def force
 		@soldier
@@ -153,7 +170,7 @@ class Leader
 	
 	def make_map(game_table)
 		l = lambda do |x, y|
-			game_table.is_there_a_leader_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? "L" : " "
+			game_table.is_there_a_group_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? "L" : " "
 		end
 		o = lambda do |x, y|
 			game_table.block(@pos.diff_to_ab_pos(x, y))
@@ -184,23 +201,31 @@ class Leader
 	end
 	
 	def weaken_at_win
-		# まだ実装していない
+		count = rand(0..1.0*@soldier/6).round
+		if count != 0
+			@soldier += count
+			@log.add(JoinedSoldier.new(count))
+		end
 	end
 	def weaken_at_lose
-		# まだ実装していない
+		count = rand(0..1.0*@soldier/4).to_i
+		if count != 0
+			@soldier -= count
+			@log.add(LeftSoldier.new(count))
+		end
 	end
 	
 	def compare_force(enemy)
-		enemy_apparent_force = enemy.force # 誤差とか入れたい
+		p [enemy.force, force, enemy.force/force]
 		# インフレしたらいろいろ入れてみたい
-		case enemy_apparent_force / force
+		case 1.0 * enemy.force / force
 		when 0..0.7
 			"ほぼ確実に勝てる"
 		when 0..0.9
 			"おそらく勝てる"
-		when 0..(0.9/1)
+		when 0..(1/0.9)
 			"勝つか負けるかわからない"
-		when 0..(0.7/1)
+		when 0..(1/0.7)
 			"おそらく負ける"
 		else
 			"ほぼ確実に負ける"
@@ -216,12 +241,8 @@ class Leader
 	private
 	
 	def initial_pos
-		pos = AbPos.new(rand(-2..2), rand(-2..-2))
-		if pos == AbPos.new(0, 0)
-			initial_pos
-		else
-			pos
-		end
+		r = rand(0..Math::PI*2)
+		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*10).round})
 	end
 end
 
@@ -248,7 +269,6 @@ class Item
 		@name = name
 	end
 	
-	GOLD = Item.new("金")
 	FOOD = Item.new("食料")
 	IRON_ORE = Item.new("鉄鉱石")
 	IRON = Item.new("鉄")
@@ -272,7 +292,7 @@ class Block
 	end
 	
 	EMPTY = Block.new("    ", [])
-	CASTLE = Block.new("王城", {Item::GOLD => 1000})
+	CASTLE = Block.new("王城", [])
 	FARM = Block.new(" 畑 ", {Item::FOOD => 20}) # これ人数にもよるんじゃ・・？
 	IRON_MINE = Block.new("鉄鉱", {Item::IRON_ORE => 20})
 	FOREST = Block.new("森林", {Item::WOOD => 20})

@@ -40,6 +40,10 @@ class UI < DiscordUIBase
 	
 	private
 	
+	def pos
+		@group.pos
+	end
+	
 	def first_story()
 		text = <<~EOS
 			・・・・・・・・・・
@@ -84,7 +88,6 @@ class UI < DiscordUIBase
 	end
 	
 	def map()
-		pos = @group.pos
 		block = @game_table.block(pos)
 		constant_text = <<~EOS
 			#{@group.make_map(@game_table)}
@@ -93,18 +96,16 @@ class UI < DiscordUIBase
 			アイテムは(`i`)
 		EOS
 		ruler = @game_table.ruler(pos)
-		block_text = if block != Block::EMPTY
-			if ruler == @group
-				<<~EOS
-					現在このブロックを支配しています。
-					移動した際は、支配は解除されます。
-				EOS
-			else
-				<<~EOS
-					このブロックを支配するには(`x`)
-					敵は#{@group.compare_force(ruler)}相手でしょう。
-				EOS
-			end
+		block_text = if ruler == @group
+			<<~EOS
+				現在このブロックを支配しています。
+				移動した際は、支配は解除されます。
+			EOS
+		else
+			<<~EOS
+				このブロックを支配するには(`x`)
+				敵は#{@group.compare_force(ruler)}相手でしょう。
+			EOS
 		end
 		
 		msg(constant_text+(block_text||"")+@group.log.each.to_a.join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった

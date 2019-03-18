@@ -3,7 +3,7 @@ require_relative "../lib/discord_ui_base"
 
 
 class UI < DiscordUIBase
-	def msg(text)
+	private def msg(text)
 		server = @channel.server
 		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first}"
 		@channel.send_message(text)
@@ -37,6 +37,8 @@ class UI < DiscordUIBase
 			end
 		end
 	end
+	
+	private
 	
 	def first_story()
 		text = <<~EOS
@@ -105,47 +107,55 @@ class UI < DiscordUIBase
 			end
 		end
 		
-		msg(constant_text+(block_text||"")+@group.log.each.map(&:to_s).join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
+		msg(constant_text+(block_text||"")+@group.log.each.to_a.join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
 		@group.log.clear()
-		wait_respons do |res|
-			case res
-			when "w"
-				@group.move(@game_table, 0, 1)
-			when "a"
-				@group.move(@game_table, -1, 0)
-			when "s"
-				@group.move(@game_table, 0, -1)
-			when "d"
-				@group.move(@game_table, 1, 0)
-			when "i"
-				items = @group.items
-				if items.empty?
-					msg("現在アイテムは持っていません。")
-				else
-					msg(items.map{|i,c|"#{i} : `#{c}`"}.join("\n"))
-				end
-			when "x"
-				enemy = @game_table.ruler(pos)
-				if enemy == @group
-					msg(<<~EOS)
-						この場所は既に支配しています。
-					EOS
-					next true
-				end
-				result = @game_table.war(@group)
-				case result
-				when :win
-					msg(<<~EOS)
-						やった！勝ちました！
-						TODO: 情報追加
-					EOS
-				when :lose
-					msg(<<~EOS)
-						残念ながら負けてしまいました・・・
-						TODO: 情報追加
-					EOS
+		catch(:already_ruler) do
+			wait_respons do |res|
+				case res
+				when "w"
+					move(0, 1)
+				when "a"
+					move(-1, 0)
+				when "s"
+					move(0, -1)
+				when "d"
+					move(1, 0)
+				when "i"
+					items = @group.items
+					if items.empty?
+						msg("現在アイテムは持っていません。")
+					else
+						msg(items.map{|i,c|"#{i} : `#{c}`"}.join("\n"))
+					end
+				when "x"
+					war()
 				end
 			end
+		end
+	end
+	
+	def move(x, y)
+		result = @group.move(@game_table, x, y)
+	end
+	
+	def war()
+		enemy = @game_table.ruler(pos)
+		if enemy == @group
+			msg(<<~EOS)
+				この場所は既に支配しています。
+			EOS
+			throw :already_ruler
+		end
+		result = @game_table.war(@group)
+		case result
+		when :win
+			msg(<<~EOS)
+				やった！勝ちました！
+			EOS
+		when :lose
+			msg(<<~EOS)
+				残念ながら負けてしまいました・・・
+			EOS
 		end
 	end
 end

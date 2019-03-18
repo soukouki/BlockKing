@@ -138,7 +138,7 @@ class Group
 			@callback = block
 		end
 		def add(log)
-			@log << log
+			@log << ("#{Time.now.strftime("[%d日%H時%M分]")}"+log)
 			@callback.call(log)
 		end
 		def clear()
@@ -146,21 +146,6 @@ class Group
 		end
 		def each(*args)
 			@log.each(*args)
-		end
-	end
-	GetItemLog = Struct.new(:item, :count, :time) do
-		def to_s
-			"#{time}に#{item}を#{count}個入手しました。"
-		end
-	end
-	JoinedSoldier = Struct.new(:count) do
-		def to_s
-			"#{count}人がグループに加わりました！"
-		end
-	end
-	LeftSoldier = Struct.new(:count) do
-		def to_s
-			"残念ながら、#{count}人がグループから去っていきました・・・"
 		end
 	end
 	
@@ -197,6 +182,17 @@ class Group
 	
 	def move(game_table, m_x, m_y)
 		game_table.set_ruler(@pos, nil)
+		use_food = if game_table.ruler(@pos) == self
+			0
+		else
+			@soldier
+		end
+		food_count = @items[Item::FOOD] || 0
+		if use_food > food_count
+			@log.add("食料が足りず、行動に失敗しました。\n	使用数`#{use_food}`/現在`#{food_count}`")
+		else
+			@items[Item::FOOD] -= use_food
+		end
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
@@ -204,21 +200,22 @@ class Group
 		count = rand(0..1.0*@soldier/6).round
 		if count != 0
 			@soldier += count
-			@log.add(JoinedSoldier.new(count))
+			@log.add("#{count}人がグループに加わりました！")
 		end
 	end
 	def weaken_at_lose
 		count = rand(0..1.0*@soldier/4).to_i
 		if count != 0
 			@soldier -= count
-			@log.add(LeftSoldier.new(count))
+			@log.add("残念ながら、#{count}人がグループから去っていきました・・・")
 		end
 	end
 	
 	def compare_force(enemy)
-		p [enemy.force, force, enemy.force/force]
 		# インフレしたらいろいろ入れてみたい
 		case 1.0 * enemy.force / force
+		when 0..0.5
+			"余裕で勝てる"
 		when 0..0.7
 			"ほぼ確実に勝てる"
 		when 0..0.9
@@ -227,15 +224,17 @@ class Group
 			"勝つか負けるかわからない"
 		when 0..(1/0.7)
 			"おそらく負ける"
-		else
+		when 0..2
 			"ほぼ確実に負ける"
+		else
+			"余裕で負ける"
 		end
 	end
 	
 	def add_item(item, count)
 		@items[item] ||= 0
 		@items[item] += count
-		@log.add(GetItemLog.new(item, count, Time.now))
+		@log.add("#{item}を#{count}個入手しました。")
 	end
 	
 	private

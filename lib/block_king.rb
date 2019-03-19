@@ -19,6 +19,8 @@ class Item
 		@name = name
 	end
 	
+	COPPER_ORE = Item.new("銅鉱石")
+	COPPER = Item.new("銅")
 	IRON_ORE = Item.new("鉄鉱石")
 	IRON = Item.new("鉄")
 	WOOD = Item.new("木材")
@@ -43,6 +45,7 @@ class Block
 	EMPTY = Block.new("    ", [])
 	CASTLE = Block.new("王城", [])
 	IRON_MINE = Block.new("鉄鉱", {Item::IRON_ORE => 20})
+	COPPER_MINE = Block.new("銅鉱", {Item::COPPER_ORE => 20})
 	FOREST = Block.new("森林", {Item::WOOD => 20})
 	
 	def ==(pair)

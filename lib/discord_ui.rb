@@ -130,6 +130,14 @@ class UI < DiscordUIBase
 					end
 				when "x"
 					war()
+				when "c"
+					msg(<<~EOS)
+						施設の建設
+					EOS
+				when "v"
+					msg(<<~EOS)
+						施設の破壊
+					EOS
 				end
 			end
 		end

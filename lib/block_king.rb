@@ -35,24 +35,21 @@ class Item
 end
 
 
-class Block
-	attr_reader :get_turn_items
-	def initialize(name, get_turn_items)
-		@name = name
-		@get_turn_items = get_turn_items
-	end
-	
-	EMPTY = Block.new("    ", [])
-	CASTLE = Block.new("王城", [])
-	IRON_MINE = Block.new("鉄鉱", {Item::IRON_ORE => 20})
-	COPPER_MINE = Block.new("銅鉱", {Item::COPPER_ORE => 20})
-	FOREST = Block.new("森林", {Item::WOOD => 20})
-	
+Block = Struct.new(:name, :get_turn_items) do
 	def ==(pair)
-		@name == pair.instance_variable_get(:@name)
+		name == pair.name
 	end
-	
 	def to_s
-		@name
+		name
 	end
 end
+Block::EMPTY = Block.new("    ", [])
+Block::CASTLE = Block.new("王城", [])
+Block::COPPER_MINE = Block.new("銅鉱", {Item::COPPER_ORE => 20})
+Block::IRON_MINE = Block.new("鉄鉱", {Item::IRON_ORE => 20})
+Block::FOREST = Block.new("森林", {Item::WOOD => 20})
+Block::LOW_LEVEL_FURNACE = Block.new("下炉", {})
+
+Block::CAN_BUILD_LIST = {
+	Block::LOW_LEVEL_FURNACE => {Item::WOOD => 40},
+}

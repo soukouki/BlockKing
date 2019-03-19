@@ -93,11 +93,16 @@ class UI < DiscordUIBase
 			#{@group.make_map(@game_table)}
 			現在の位置は(#{pos})です。#{Group.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
-			アイテムは(`i`)
+			アイテム一覧は(`i`)
 		EOS
 		ruler = @game_table.ruler(pos)
 		block_text = if ruler == @group
-			<<~EOS
+			building = if block==Block::EMPTY
+				"施設を建設するには(`c`)"
+			else
+				"施設を撤去するには(`v`)"
+			end
+			building+"\n"+<<~EOS
 				現在このブロックを支配しています。
 				移動した際は、支配は解除されます。
 			EOS
@@ -110,8 +115,8 @@ class UI < DiscordUIBase
 		
 		msg(constant_text+(block_text||"")+@group.log.each.to_a.join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
 		@group.log.clear()
-		catch(:already_ruler) do
-			wait_respons do |res|
+		wait_respons do |res|
+			catch(:return_no_map) do
 				case res
 				when "w"
 					move(0, 1)
@@ -128,16 +133,13 @@ class UI < DiscordUIBase
 					else
 						msg(items.map{|i,c|"#{i} : `#{c}`"}.join("\n"))
 					end
+					throw :return_no_map
 				when "x"
 					war()
 				when "c"
-					msg(<<~EOS)
-						施設の建設
-					EOS
+					build_building()
 				when "v"
-					msg(<<~EOS)
-						施設の破壊
-					EOS
+					remove_building()
 				end
 			end
 		end
@@ -153,7 +155,7 @@ class UI < DiscordUIBase
 			msg(<<~EOS)
 				この場所は既に支配しています。
 			EOS
-			throw :already_ruler
+			throw :return_no_map
 		end
 		result = @game_table.war(@group)
 		case result
@@ -166,5 +168,62 @@ class UI < DiscordUIBase
 				残念ながら負けてしまいました・・・
 			EOS
 		end
+	end
+	
+	def build_building()
+		block = @game_table.block(pos)
+		ruler = @game_table.ruler(pos)
+		if block != Block::EMPTY
+			msg(<<~EOS)
+				既に建物が立っていて、土地がありません・・・
+			EOS
+			throw :return_no_map
+		end
+		if ruler != @group
+			msg(<<~EOS)
+				ここを支配しているグループに建設を邪魔されました・・・
+			EOS
+			throw :return_no_map
+		end
+		
+		select_block = Block::CAN_BUILD_LIST
+			.map
+			.with_index{|b, i|[(i+?a.ord).chr, b]}
+			.to_h
+		select_text = select_block
+			.map do |char, (block, need_items)|
+				group_items = @group.items
+				can_build = need_items.all?{|item,count|(group_items[item]||0) >= count}
+				"`#{char}` : "+(
+					if can_build
+						"#{block.name}(#{need_items.map{|item,count|"#{item}を#{count}"}.join("、")}使う)"
+					else
+						"#{"■"*block.name.length}(#{need_items.map{|item,count|"#{item}があと#{count-(group_items[item]||0)}"}.join("、")}必要)"
+					end
+				)
+			end
+			.join("\n")
+		msg(<<~EOS)
+			建物リスト
+			#{select_text}
+			`ret` : 前の画面に戻る
+		EOS
+		select = wait_respons do |res|
+			if res == "ret"
+				return true
+			end
+			sel = select_block[res.to_str]
+			(sel.nil?)? nil : sel
+		end
+		result, text = @group.build(@game_table, select[0])
+		msg(text)
+		throw :return_no_map unless result
+		return true
+	end
+	
+	def remove_building()
+		msg(<<~EOS)
+			施設の撤去
+		EOS
 	end
 end

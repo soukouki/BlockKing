@@ -105,37 +105,42 @@ class DiscordUIBase
 		@bot = bot
 		@channel = channel
 		@user = user
+		@wait_respons_threads = []
 	end
 	
+	# このプログラム一番の複雑なところ！マルチスレッド注意！
 	def wait_respons(message=nil, &block)
 		queue = Thread::Queue.new
+		is_now_exec_block = false
 		message_handler = @bot.message(in: @channel, from: @user) do |event|
-			queue.push Message.new(event)
+			queue.push Message.new(event) unless is_now_exec_block
 		end
 		reaction_handler = @bot.reaction_add(in: @channel, from: @user, message:message) do |event|
-			queue.push Reaction.new(event)
+			queue.push Reaction.new(event) unless is_now_exec_block
 		end
 		
 		begin
-			@wait_respons_thread = Thread.current
+			@wait_respons_threads << Thread.current
 			result = loop do
-				ret = yield(queue.pop)
+				pop = queue.pop
+				is_now_exec_block = true
+				ret = yield(pop)
+				is_now_exec_block = false
 				break ret if ret
 			end
 			
 			result
 		ensure
-			@wait_respons_thread = nil
+			# 後片付け
+			@wait_respons_threads - [Thread.current]
 			@bot.remove_handler(message_handler)
 			@bot.remove_handler(reaction_handler)
 		end
 	end
 	
 	def stop_waiting()
-		if @wait_respons_thread
-			@wait_respons_thread.kill
-			@wait_respons_thread = nil
-		end
+		@wait_respons_threads.each{|t|t.kill}
+		@wait_respons_threads = []
 	end
 	
 	def send_reactions(msg, args)

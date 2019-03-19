@@ -9,6 +9,7 @@ class Group
 		@soldier = 6
 		@state = :first_story
 		@log = LogBasket.new
+		@items = {}
 	end
 	
 	class LogBasket
@@ -84,6 +85,24 @@ class Group
 	def move(game_table, m_x, m_y)
 		game_table.set_ruler(@pos, nil)
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
+	end
+	
+	def build(game_table, block)
+		need_items = Block::CAN_BUILD_LIST[block]
+		unless need_items
+			return [false, "このブロックは建設できません。"]
+		end
+		need_items
+			.each do |item,count|
+				i = @items[item] || 0
+				return [false, "#{item}が#{count-i}足りません。"] if i < count
+			end
+		need_items.each{|item,count|@items[item] -= count}
+		game_table.set_block(@pos, block)
+		[true, <<~EOS]
+			#{block}が完成しました！
+			「リーダー！夢に向かって、また一歩前進ですね！」
+		EOS
 	end
 	
 	def weaken_at_win

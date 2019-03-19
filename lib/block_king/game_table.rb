@@ -21,6 +21,11 @@ class GameTable
 			@block_table[pos] ||= select_object(pos)
 		end
 	end
+	def set_block(pos, new_block)
+		@block_table_mutex.synchronize do
+			@block_table[pos] = new_block
+		end
+	end
 	
 	def ruler(pos)
 		@ruler_table_mutex.synchronize do

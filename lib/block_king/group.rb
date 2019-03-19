@@ -38,25 +38,43 @@ class Group
 	
 	def make_map(game_table)
 		l = lambda do |x, y|
-			game_table.is_there_a_group_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? "L" : " "
+			ypos = (x==0 && y==0)? "Y" : " "
+			game_table.is_there_a_group_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? " #{ypos}L " : " #{ypos}  "
+		end
+		ll = lambda do |y|
+			"   |"+
+			5.times
+				.map{|i|l[i-2, y]}
+				.join("|")+"|"
 		end
 		o = lambda do |x, y|
-			game_table.block(@pos.diff_to_ab_pos(x, y))
+			game_table.block(@pos.diff_to_ab_pos(x, y)).to_s
 		end
+		ol = lambda do |y|
+			fullwidth_count = 0
+			"   |"+
+			5.times
+				.map{|i|i-2}
+				.map{|x|[x, o[x, y]]}
+				.map do |(x, s)|
+					fullwidth_count += s.length - s.count(" ")
+					if fullwidth_count>=4 && x<2
+						fullwidth_count -= 4
+						s+" "
+					else
+						s
+					end
+				end
+				.join("|")+"|"
+		end
+		al = "   :#{"    :"*5}"
+		bl = "...+#{"----+"*5}..."
 		<<~EOS
 			```
-			   :    :    :    :
-			...+----+----+----+...
-			   |  #{l[-1,1]} |  #{l[0,1]} |  #{l[1,1]} |
-			   |#{o[-1,1]}|#{o[0,1]}|#{o[1,1]}|
-			...+----+----+----+...
-			   |  #{l[-1,0]} | Y#{l[0,0]} |  #{l[1,0]} |
-			   |#{o[-1,0]}|#{o[0,0]}|#{o[1,0]}|
-			...+----+----+----+...
-			   |  #{l[-1,-1]} |  #{l[0,-1]} |  #{l[1,-1]} |
-			   |#{o[-1,-1]}|#{o[0,-1]}|#{o[1,-1]}|
-			...+----+----+----+...
-			   :    :    :    :
+			#{al}
+			#{bl}
+			#{5.times.reverse_each.map{|y|ll[y-2]+"\n"+ol[y-2]+"\n"+bl}.join("\n")}
+			#{al}
 			```
 			Y...あなたのいる位置
 			L...他のリーダー

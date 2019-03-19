@@ -1,4 +1,6 @@
 
+require "twemoji"
+
 module Discordrb::Events
   # Generic superclass for event handlers pertaining to adding and removing reactions
   class ReactionEventHandler < EventHandler

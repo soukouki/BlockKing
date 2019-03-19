@@ -77,7 +77,10 @@ class GameTable
 		when AbPos::CENTER
 			Block::CASTLE
 		else
-			if rand() > 0.5
+			case rand(3)
+			when 0
+				Block::FARM
+			when 1
 				[Block::FARM, Block::IRON_MINE, Block::FOREST].sample
 			else
 				Block::EMPTY

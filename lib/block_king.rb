@@ -1,7 +1,4 @@
 
-require "discordrb"
-require "twemoji"
-
 require_relative "block_king/game_table"
 require_relative "block_king/group"
 

@@ -95,6 +95,12 @@ class Group
 		end
 	end
 	
+	def add_item(item, count)
+		@items[item] ||= 0
+		@items[item] += count
+		@log.add("#{item}を#{count}個入手しました。")
+	end
+	
 	def compare_force(enemy)
 		# インフレしたらいろいろ入れてみたい
 		case 1.0 * enemy.force / force
@@ -115,10 +121,15 @@ class Group
 		end
 	end
 	
-	def add_item(item, count)
-		@items[item] ||= 0
-		@items[item] += count
-		@log.add("#{item}を#{count}個入手しました。")
+	def self.direction_of_castle(pos)
+		x, y = [pos.x, pos.y]
+		return "" if pos == AbPos::CENTER
+		l = Math.sqrt(x*x+y*y)
+		ac_ang = Math.acos(x/l)*180/Math::PI
+		ang = (y<0)? 360-ac_ang : ac_ang
+		piece = 360.0/(8*2)
+		str = ["西", "南西", "南", "南東", "東", "北東", "北", "北西"][((ang/piece)/2).round % 8]
+		"王都は"+str+"の方向。"
 	end
 	
 	private

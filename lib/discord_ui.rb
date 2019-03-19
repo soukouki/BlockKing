@@ -1,6 +1,6 @@
 
+require "discordrb"
 require_relative "../lib/discord_ui_base"
-
 
 class UI < DiscordUIBase
 	private def msg(text)
@@ -91,7 +91,7 @@ class UI < DiscordUIBase
 		block = @game_table.block(pos)
 		constant_text = <<~EOS
 			#{@group.make_map(@game_table)}
-			現在の位置は(#{pos})です。
+			現在の位置は(#{pos})です。#{Group.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテムは(`i`)
 		EOS

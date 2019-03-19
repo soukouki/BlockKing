@@ -52,6 +52,10 @@ class UI < DiscordUIBase
 		@game_table.ruler(pos)
 	end
 	
+	def items
+		@group.items
+	end
+	
 	def first_story()
 		text = <<~EOS
 			・・・・・・・・・・
@@ -100,13 +104,20 @@ class UI < DiscordUIBase
 			#{@group.make_map(@game_table)}
 			現在の位置は(#{pos})です。#{Group.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
-			アイテム一覧は(`i`)
+			アイテム・その他情報は(`i`)
 		EOS
 		block_text = if ruler == @group
 			building = if block==Block::EMPTY
 				"施設を建設するには(`c`)"
 			else
-				"施設を撤去するには(`v`)"
+				if Block::CAN_BUILD_LIST[block]
+					<<~EOS
+						施設を使用するには(`u`)
+						施設を撤去するには(`v`)
+					EOS
+				else
+					""
+				end
 			end
 			building+"\n"+<<~EOS
 				現在このブロックを支配しています。
@@ -119,8 +130,9 @@ class UI < DiscordUIBase
 			EOS
 		end
 		
-		msg(constant_text+(block_text||"")+@group.log.each.to_a.join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
+		log = @group.log.each.to_a
 		@group.log.clear()
+		msg(constant_text+(block_text||"")+log.join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
 		wait_respons do |res|
 			catch(:return_no_map) do
 				case res
@@ -133,12 +145,12 @@ class UI < DiscordUIBase
 				when "d"
 					move(1, 0)
 				when "i"
-					items = @group.items
-					if items.empty?
-						msg("現在アイテムは持っていません。")
+					text = if items.empty?
+						"現在アイテムは持っていません。"
 					else
-						msg(items.map{|i,c|"#{i} : `#{c}`"}.join("\n"))
+						items.map{|i,c|"#{i} : `#{c}`"}.join("\n")
 					end
+					msg(text+"\n兵士 : `#{@group.soldier}`")
 					throw :return_no_map
 				when "x"
 					war()
@@ -146,6 +158,11 @@ class UI < DiscordUIBase
 					build_building()
 				when "v"
 					remove_building()
+				when "u"
+					craft_using_building()
+				when "testprint"
+					puts YAML.dump(@game_table)
+					puts YAML.dump(@game_table)
 				end
 			end
 		end
@@ -196,13 +213,12 @@ class UI < DiscordUIBase
 			.to_h
 		select_text = select_block
 			.map do |char, (block, need_items)|
-				group_items = @group.items
-				can_build = need_items.all?{|item,count|(group_items[item]||0) >= count}
+				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
 				"`#{char}` : "+(
 					if can_build
-						"#{block.name}(#{need_items.map{|item,count|"#{item}を#{count}"}.join("、")}使う)"
+						"#{block.name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
 					else
-						"#{"■"*block.name.length}(#{need_items.map{|item,count|"#{item}があと#{count-(group_items[item]||0)}"}.join("、")}必要)"
+						"#{"■"*block.name.length}(#{not_enough_item_text(need_items)}必要)"
 					end
 				)
 			end
@@ -212,23 +228,81 @@ class UI < DiscordUIBase
 			#{select_text}
 			`ret` : 前の画面に戻る
 		EOS
-		select = wait_respons() do |res|
+		wait_respons() do |res|
 			if res == "ret"
 				return true
 			end
 			sel = select_block[res.to_str]
-			(sel.nil?)? nil : sel
+			catch(:return_inner_wait) do
+				unless sel.nil?
+					result_tuple(@group.build(@game_table, sel[0]), :return_inner_wait)
+				end
+			end
 		end
-		result, text = @group.build(@game_table, select[0])
-		msg(text)
-		throw :return_no_map unless result
-		return true
 	end
 	
 	def remove_building()
-		result, text = @group.remove(@game_table)
+		result_tuple(@group.remove(@game_table))
+	end
+	
+	def craft_using_building()
+		if ruler != @group
+			msg("「ここを支配してる奴らに邪魔されて出来ませんよ！」")
+			throw :return_no_map
+		end
+		creation_items = block
+			.creation_items
+			.map
+			.with_index{|recipe, i|[(i+(?a.ord)).chr, recipe]}
+			.to_h
+		if creation_items.empty?
+			msg("「#{block}では何も作れないですよ？」")
+			throw :return_no_map
+		end
+		creation_items_text = creation_items
+			.map do |char, (need_items, finished_items)|
+				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
+				"`#{char}` : "+(
+					finished_item_name = finished_items.map{|item,count|"#{(can_build)? iten.name : "■"*item.name.length}を`#{count}`"}.join("、")
+					if can_build
+						"#{finished_item_name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
+					else
+						"#{finished_item_name}(#{not_enough_item_text(need_items)}必要)"
+					end
+				)
+			end
+			.join("\n")
+		msg(<<~EOS)
+			レシピリスト
+			#{creation_items_text}
+			`ret` : 前の画面に戻る
+		EOS
+		recipe = wait_respons() do |res|
+			if res == "ret"
+				return true
+			end
+			recipe = creation_items[res.to_str]
+			catch(:return_inner_wait) do
+				unless recipe.nil?
+					result_tuple(@group.craft_using_building(@game_table, recipe), :return_inner_wait)
+				end
+			end
+		end
+	end
+	
+	# 名前が気に入らない・・・
+	def result_tuple(arr, throw_symbol = :return_no_map)
+		result, text = arr
 		msg(text)
-		throw :return_no_map unless result
+		throw throw_symbol unless result
 		return true
+	end
+	
+	def not_enough_item_text(need_items)
+		need_items
+			.map{|i,c|[i,c,items[i]||0]}
+			.select{|(i,c,hc)|c>hc}
+			.map{|(i,c,hc)|"#{i}があと`#{c-hc}`"}
+			.join("、")
 	end
 end

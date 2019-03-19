@@ -1,6 +1,6 @@
 
 class Group
-	attr_reader :id, :pos, :log, :items
+	attr_reader :id, :pos, :log, :soldier, :items
 	attr_accessor :state
 	def initialize(id, name)
 		@id = id
@@ -34,7 +34,19 @@ class Group
 	end
 	
 	def force
-		@soldier
+		sword_hash = {
+			Item::COPPER_SWORD => 2,
+			Item::IRON_SWORD => 4,
+		}
+		re, fo = sword_hash
+			.to_a
+			.sort_by{|i,atk|atk}
+			.map{|sword,atk|[atk, @items[sword]||0]}
+			.reduce([@soldier, 0]) do |(remaining_soldier, force), (attack_power, having_count)|
+				m = [remaining_soldier, having_count].min
+				[remaining_soldier-m, force+m*attack_power]
+			end
+		fo + re
 	end
 	
 	def make_map(game_table)
@@ -87,19 +99,9 @@ class Group
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
+	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはUI側で行っているので、省略する
 	def build(game_table, block)
-		ruler = game_table.ruler(@pos)
 		need_items = Block::CAN_BUILD_LIST[block]
-		# 実際には来ない分岐もある。微妙感
-		if game_table.block(@pos) != Block::EMPTY
-			return [false, "既に建物が建っています。"]
-		end
-		if ruler != self
-			return [false, "この場所を支配できていません。"]
-		end
-		unless need_items
-			return [false, "このブロックは建設できません。"]
-		end
 		need_items
 			.each do |item,count|
 				i = @items[item] || 0
@@ -116,22 +118,38 @@ class Group
 	def remove(game_table)
 		block = game_table.block(@pos)
 		ruler = game_table.ruler(@pos)
-		needed_items = Block::CAN_BUILD_LIST[block]
+		need_items = Block::CAN_BUILD_LIST[block]
 		if block==Block::EMPTY
 			return [false, "「そもそも更地をどう解体するんですか・・？馬鹿なんですか・・？」"]
 		end
-		unless needed_items
+		unless need_items
 			return [false, "「#{block}を解体？いやですよー。」"]
 		end
 		if ruler!=self
 			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
 		end
 		game_table.set_block(@pos, Block::EMPTY)
-		needed_items.each{|item, count|add_item(item, count)}
+		need_items.each{|item, count|add_item(item, count)}
 		return [true, <<~EOS]
 			無事に解体できました。
-			#{needed_items.map{|i,c|"#{i}を#{c}"}.join("、")}
+			#{need_items.map{|i,c|"#{i}を#{c}"}.join("、")}
 			を手に入れました
+		EOS
+	end
+	
+	# 支配できていない・このレシピが作れうかどうか、のチェックはUI側で行っているので、省略する
+	def craft_using_building(game_table, recipe)
+		need_items, finished_items = recipe
+		need_items
+			.each do |item,count|
+				i = @items[item] || 0
+				return [false, "#{item}が#{count-i}足りません。"] if i < count
+			end
+		need_items.each{|item,count|@items[item] -= count}
+		finished_items.each{|item,count|add_item(item, count)}
+		[true, <<~EOS]
+			無事に作成できたときのメッセージ。
+			これまた作れたアイテムのテキスト用意しないといけない・・？
 		EOS
 	end
 	

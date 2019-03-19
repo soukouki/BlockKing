@@ -44,6 +44,14 @@ class UI < DiscordUIBase
 		@group.pos
 	end
 	
+	def block
+		@game_table.block(pos)
+	end
+	
+	def ruler
+		@game_table.ruler(pos)
+	end
+	
 	def first_story()
 		text = <<~EOS
 			・・・・・・・・・・
@@ -88,14 +96,12 @@ class UI < DiscordUIBase
 	end
 	
 	def map()
-		block = @game_table.block(pos)
 		constant_text = <<~EOS
 			#{@group.make_map(@game_table)}
 			現在の位置は(#{pos})です。#{Group.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテム一覧は(`i`)
 		EOS
-		ruler = @game_table.ruler(pos)
 		block_text = if ruler == @group
 			building = if block==Block::EMPTY
 				"施設を建設するには(`c`)"
@@ -150,7 +156,7 @@ class UI < DiscordUIBase
 	end
 	
 	def war()
-		enemy = @game_table.ruler(pos)
+		enemy = ruler
 		if enemy == @group
 			msg(<<~EOS)
 				この場所は既に支配しています。
@@ -171,8 +177,6 @@ class UI < DiscordUIBase
 	end
 	
 	def build_building()
-		block = @game_table.block(pos)
-		ruler = @game_table.ruler(pos)
 		if block != Block::EMPTY
 			msg(<<~EOS)
 				既に建物が立っていて、土地がありません・・・
@@ -181,7 +185,7 @@ class UI < DiscordUIBase
 		end
 		if ruler != @group
 			msg(<<~EOS)
-				ここを支配しているグループに建設を邪魔されました・・・
+				ここを支配しているグループに邪魔されてしまいました・・・
 			EOS
 			throw :return_no_map
 		end
@@ -208,7 +212,7 @@ class UI < DiscordUIBase
 			#{select_text}
 			`ret` : 前の画面に戻る
 		EOS
-		select = wait_respons do |res|
+		select = wait_respons() do |res|
 			if res == "ret"
 				return true
 			end
@@ -222,8 +226,9 @@ class UI < DiscordUIBase
 	end
 	
 	def remove_building()
-		msg(<<~EOS)
-			施設の撤去
-		EOS
+		result, text = @group.remove(@game_table)
+		msg(text)
+		throw :return_no_map unless result
+		return true
 	end
 end

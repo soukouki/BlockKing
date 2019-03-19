@@ -88,7 +88,15 @@ class Group
 	end
 	
 	def build(game_table, block)
+		ruler = game_table.ruler(@pos)
 		need_items = Block::CAN_BUILD_LIST[block]
+		# 実際には来ない分岐もある。微妙感
+		if game_table.block(@pos) != Block::EMPTY
+			return [false, "既に建物が建っています。"]
+		end
+		if ruler != self
+			return [false, "この場所を支配できていません。"]
+		end
 		unless need_items
 			return [false, "このブロックは建設できません。"]
 		end
@@ -102,6 +110,28 @@ class Group
 		[true, <<~EOS]
 			#{block}が完成しました！
 			「リーダー！夢に向かって、また一歩前進ですね！」
+		EOS
+	end
+	
+	def remove(game_table)
+		block = game_table.block(@pos)
+		ruler = game_table.ruler(@pos)
+		needed_items = Block::CAN_BUILD_LIST[block]
+		if block==Block::EMPTY
+			return [false, "「そもそも更地をどう解体するんですか・・？馬鹿なんですか・・？」"]
+		end
+		unless needed_items
+			return [false, "「#{block}を解体？いやですよー。」"]
+		end
+		if ruler!=self
+			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
+		end
+		game_table.set_block(@pos, Block::EMPTY)
+		needed_items.each{|item, count|add_item(item, count)}
+		return [true, <<~EOS]
+			無事に解体できました。
+			#{needed_items.map{|i,c|"#{i}を#{c}"}.join("、")}
+			を手に入れました
 		EOS
 	end
 	

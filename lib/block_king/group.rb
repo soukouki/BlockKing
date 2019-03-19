@@ -8,7 +8,6 @@ class Group
 		@pos = initial_pos
 		@soldier = 6
 		@state = :first_story
-		@items = {Item::FOOD => 20}
 		@log = LogBasket.new
 	end
 	
@@ -66,17 +65,6 @@ class Group
 	
 	def move(game_table, m_x, m_y)
 		game_table.set_ruler(@pos, nil)
-		use_food = if game_table.ruler(@pos) == self
-			0
-		else
-			@soldier
-		end
-		food_count = @items[Item::FOOD] || 0
-		if use_food > food_count
-			@log.add("食料が足りず、行動に失敗しました。\n	使用数`#{use_food}`/現在`#{food_count}`")
-		else
-			@items[Item::FOOD] -= use_food
-		end
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	

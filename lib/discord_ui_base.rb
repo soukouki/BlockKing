@@ -132,7 +132,7 @@ class DiscordUIBase
 			result
 		ensure
 			# 後片付け
-			@wait_respons_threads - [Thread.current]
+			@wait_respons_threads -= [Thread.current]
 			@bot.remove_handler(message_handler)
 			@bot.remove_handler(reaction_handler)
 		end

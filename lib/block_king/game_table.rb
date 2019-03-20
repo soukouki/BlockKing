@@ -44,9 +44,10 @@ class GameTable
 			@ruler_table
 				.each do |pos, ruler|
 					next if ruler.nil?
-					geted_items = block(pos).get_turn_items()
+					block = block(pos)
+					geted_items = block.get_turn_items()
 					geted_items.each do |item, count|
-						ruler.add_item(item, count)
+						ruler.add_item(false, "#{block}を支配し", item, count)
 					end
 				end
 		end
@@ -57,12 +58,12 @@ class GameTable
 		enemy = ruler(pos)
 		case (enemy.force * rand(0.95..1.05)) <=> (group.force * rand(0.95..1.05))
 		when 1, 0 # enemyの勝利
-			enemy.weaken_at_win
-			group.weaken_at_lose
+			enemy.weaken_at_win(false)
+			group.weaken_at_lose(true)
 			:lose
 		when -1   # groupの勝利
-			enemy.weaken_at_lose
-			group.weaken_at_win
+			enemy.weaken_at_lose(false)
+			group.weaken_at_win(true)
 			set_ruler(pos, group)
 			if pos==AbPos::CENTER
 				group.state = :ending
@@ -99,7 +100,7 @@ class GameTable
 			NPCEnemy.new(140)
 		else
 			force = (
-				(120 / Math.log(Math.sqrt((pos.x).abs+(pos.y).abs)+2, 1.1)) * rand(0.7..(1/0.7))
+				(140 / Math.log(Math.sqrt((pos.x).abs+(pos.y).abs)+0.5, 1.09)) * rand(0.7..(1/0.7))
 			).to_i
 			NPCEnemy.new(force)
 		end

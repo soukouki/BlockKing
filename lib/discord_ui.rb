@@ -16,9 +16,10 @@ class UI < DiscordUIBase
 			game_table.add_group(l)
 			l
 		)
+		is_now_executing = false
 		@exists_log = false
-		@group.log.callback do |log|
-			unless @exists_log
+		@group.log.callback = lambda do |sync|
+			if !@exists_log && !sync
 				@exists_log = true
 				msg("現在、ログがあります。確認するには(`Bk`)")
 			end
@@ -30,7 +31,7 @@ class UI < DiscordUIBase
 				@group.state = nil
 			when :ending
 				ending_story()
-				@group = nil
+				@group.state = nil
 				break
 			else
 				map()
@@ -130,9 +131,10 @@ class UI < DiscordUIBase
 			EOS
 		end
 		
-		log = @group.log.each.to_a
+		log_text = @group.log.to_s
 		@group.log.clear()
-		msg(constant_text+(block_text||"")+log.join("\n")) # よくわからないけど、eachをつけないとうまく動かなかった
+		
+		msg(constant_text+(block_text||"")+log_text) # よくわからないけど、eachをつけないとうまく動かなかった
 		wait_respons do |res|
 			catch(:return_no_map) do
 				case res
@@ -160,9 +162,6 @@ class UI < DiscordUIBase
 					remove_building()
 				when "u"
 					craft_using_building()
-				when "testprint"
-					puts YAML.dump(@game_table)
-					puts YAML.dump(@game_table)
 				end
 			end
 		end

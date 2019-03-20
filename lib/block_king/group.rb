@@ -13,23 +13,35 @@ class Group
 	end
 	
 	class LogBasket
-		include Enumerable
-		attr_reader :log
+		attr_writer :callback
 		def initialize
-			@log = []
+			@causes = {}
+			@text_logs = []
+			@callback = ->{}
 		end
-		def callback(&block)
-			@callback = block
+		def add_item(sync, cause, item, count)
+			@causes[cause] ||= {}
+			@causes[cause][item] ||= 0
+			@causes[cause][item] += count
+			@callback.call(sync)
 		end
-		def add(log)
-			@log << ("#{Time.now.strftime("[%d日%H時%M分]")}"+log)
-			@callback.call(log)
+		def add_text(sync, text)
+			@text_logs << Time.now.strftime("[%d日%H時%M分]")+text
+			@callback.call(sync)
 		end
 		def clear()
-			@log.clear
+			@causes = {}
+			@text_logs = []
 		end
-		def each(*args)
-			@log.each(*args)
+		def to_s
+			@text_logs.join("\n")+(
+				text = @causes
+					.map do |cause, hash|
+						"#{cause}、#{hash.reject{|i,c|c==0}.map{|i,c|"#{i}を`#{c}`"}.join("、")}"
+					end
+					.join("\n")
+				(text == "")? "" : text+"、手に入れました！"
+			)
 		end
 	end
 	
@@ -129,7 +141,7 @@ class Group
 			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
 		end
 		game_table.set_block(@pos, Block::EMPTY)
-		need_items.each{|item, count|add_item(item, count)}
+		need_items.each{|item, count|add_item(true, "#{block}の解体によって", item, count)}
 		return [true, <<~EOS]
 			無事に解体できました。
 			#{need_items.map{|i,c|"#{i}を#{c}"}.join("、")}
@@ -146,32 +158,32 @@ class Group
 				return [false, "#{item}が#{count-i}足りません。"] if i < count
 			end
 		need_items.each{|item,count|@items[item] -= count}
-		finished_items.each{|item,count|add_item(item, count)}
+		finished_items.each{|item,count|add_item(true, "クラフトによって", item, count)}
 		[true, <<~EOS]
 			無事に作成できたときのメッセージ。
 			これまた作れたアイテムのテキスト用意しないといけない・・？
 		EOS
 	end
 	
-	def weaken_at_win
+	def weaken_at_win(sync_log)
 		count = rand(0..1.0*@soldier/6).round
 		if count != 0
 			@soldier += count
-			@log.add("#{count}人がグループに加わりました！")
+			@log.add_text(sync_log, "戦闘に勝利し、`#{count}`人が加わりました！")
 		end
 	end
-	def weaken_at_lose
+	def weaken_at_lose(sync_log)
 		count = rand(0..1.0*@soldier/4).to_i
 		if count != 0
 			@soldier -= count
-			@log.add("残念ながら、#{count}人がグループから去っていきました・・・")
+			@log.add_text(sync_log, "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")
 		end
 	end
 	
-	def add_item(item, count)
+	def add_item(sync, cause, item, count)
 		@items[item] ||= 0
 		@items[item] += count
-		@log.add("#{item}を#{count}個入手しました。")
+		@log.add_item(sync, cause, item, count)
 	end
 	
 	def compare_force(enemy)
@@ -209,7 +221,7 @@ class Group
 	
 	def initial_pos
 		r = rand(0..Math::PI*2)
-		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*10).round})
+		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*15).round})
 	end
 end
 
@@ -219,14 +231,13 @@ class NPCEnemy
 		@force = soldier
 	end
 	
-	def weaken_at_win
+	def weaken_at_win(sync_log)
 		@force -= 1
 	end
 	# 次にこれが試合をすることはないから
-	def weaken_at_lose
+	def weaken_at_lose(sync_log)
 	end
 	
-	# とりあえず
-	def add_item(item, count)
+	def add_item(sync, cause, item, count)
 	end
 end

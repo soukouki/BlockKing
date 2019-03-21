@@ -46,11 +46,7 @@ class Group
 	end
 	
 	def force
-		sword_hash = {
-			Item::COPPER_SWORD => 2,
-			Item::IRON_SWORD => 4,
-		}
-		re, fo = sword_hash
+		re, fo = Item::SWORD_ATTACK_POWER_HASH
 			.to_a
 			.sort_by{|i,atk|atk}
 			.map{|sword,atk|[atk, @items[sword]||0]}

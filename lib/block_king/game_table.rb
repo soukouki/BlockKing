@@ -1,6 +1,5 @@
 
 class GameTable
-	attr_reader :groups
 	def initialize()
 		@block_table = {}
 		@block_table_mutex = Mutex.new
@@ -10,6 +9,7 @@ class GameTable
 	end
 	
 	def group(id)
+		pp @groups
 		@groups[id]
 	end
 	def add_group(group)
@@ -85,7 +85,7 @@ class GameTable
 		else
 			case rand(5)
 			when 0
-				[Block::IRON_MINE, Block::COPPER_MINE].sample
+				[Block::IRON_MINE, Block::COPPER_MINE, Block::MARSH].sample
 			when 1, 2
 				Block::FOREST
 			else

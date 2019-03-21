@@ -44,15 +44,12 @@ class UI < DiscordUIBase
 	def pos
 		@group.pos
 	end
-	
 	def block
 		@game_table.block(pos)
 	end
-	
 	def ruler
 		@game_table.ruler(pos)
 	end
-	
 	def items
 		@group.items
 	end
@@ -262,7 +259,7 @@ class UI < DiscordUIBase
 			.map do |char, (need_items, finished_items)|
 				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
 				"`#{char}` : "+(
-					finished_item_name = finished_items.map{|item,count|"#{(can_build)? iten.name : "■"*item.name.length}を`#{count}`"}.join("、")
+					finished_item_name = finished_items.map{|item,count|"#{(can_build)? item.name : "■"*item.name.length}を`#{count}`"}.join("、")
 					if can_build
 						"#{finished_item_name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
 					else

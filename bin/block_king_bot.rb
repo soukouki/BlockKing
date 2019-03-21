@@ -1,12 +1,14 @@
 
 require_relative "../lib/block_king"
 require_relative "../lib/discord_ui"
+require_relative "../lib/save_load"
 
 token = ARGV[0]
 
 bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
 
-game_table = GameTable.new
+save_load = SaveLoad.new("data", ->{GameTable.new})
+game_table = save_load.value
 
 uis = {}
 bot.command(:k) do |event|
@@ -25,7 +27,17 @@ end
 
 bot.run :async
 
-loop do
-	sleep(60 - Time.now.sec)
-	game_table.turn()
+begin
+	loop do
+		sleep(60 - Time.now.sec)
+		puts "定期処理 #{Time.now}"
+		game_table.turn()
+		if Time.now.min%5 == 0
+			puts "定時保存"
+			save_load.save
+		end
+	end
+ensure
+	puts "エラー時終了処理"
+	save_load.save
 end

@@ -44,6 +44,9 @@ bot.command(:help) do |event|
 		`Bk` : **ゲームをスタートします。**
 		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
+		
+		プログラム : sou7
+		テストプレイ : ねこらんさん、uuuさん、その他
 	EOS
 end
 

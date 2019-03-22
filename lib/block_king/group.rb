@@ -1,7 +1,7 @@
 
 class Group
 	attr_reader :id, :pos, :log, :soldier, :items
-	attr_accessor :state
+	attr_accessor :state, :tutorial_level
 	def initialize(id, name, game_table)
 		@id = id
 		@name = name
@@ -10,6 +10,7 @@ class Group
 		@state = :first_story
 		@log = LogBasket.new
 		@items = {}
+		@tutorial_level = 0
 	end
 	
 	class LogBasket
@@ -104,6 +105,7 @@ class Group
 	end
 	
 	def move(game_table, m_x, m_y)
+		game_table.set_ruler(@pos, nil) if game_table.ruler(@pos) == self
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	

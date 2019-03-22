@@ -31,7 +31,7 @@ class GameTable
 			@ruler_table[pos] ||= initial_ruler(pos)
 		end
 	end
-	private def set_ruler(pos, new_ruler)
+	def set_ruler(pos, new_ruler)
 		@ruler_table_mutex.synchronize do
 			@ruler_table[pos] = new_ruler
 		end

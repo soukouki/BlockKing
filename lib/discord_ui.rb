@@ -88,6 +88,7 @@ class UI < DiscordUIBase
 			
 			「リーダー...ここまで、長かったですね...
 			また、新しい夢を作って、叶えていきましょう！」
+			<ゲームクリアです！>
 		EOS
 		text
 			.lines
@@ -124,6 +125,19 @@ class UI < DiscordUIBase
 			<<~EOS
 				このブロックを支配するには(`x`)
 				敵は#{@group.compare_force(ruler)}相手でしょう。
+			EOS
+		end
+		if @group.tutorial_level == 0
+			@group.tutorial_level = 1
+			@add_msg << <<~EOS
+				<チュートリアル>
+				リーダー！はじめまして！
+				移動の仕方は、この画面から
+					上(北)には`w`
+					左(西)には`a`
+					右(東)には`d`
+					下(南)には`s` です！
+				PCゲームでおなじみの移動法です！
 			EOS
 		end
 		
@@ -165,6 +179,14 @@ class UI < DiscordUIBase
 	end
 	
 	def move(x, y)
+		if @group.tutorial_level == 1
+			@group.tutorial_level = 2
+			@add_msg << <<~EOS
+				<チュートリアル>
+				無事に移動できました！
+				敵は王城から離れるほど弱くなります！
+			EOS
+		end
 		result = @group.move(@game_table, x, y)
 	end
 	
@@ -179,6 +201,23 @@ class UI < DiscordUIBase
 		result = @game_table.war(@group)
 		case result
 		when :win
+			if @group.tutorial_level == 2 || @group.tutorial_level == 3
+				if block == Block::EMPTY
+					@group.tutorial_level = 4
+					@add_msg << <<~EOS
+						<チュートリアル>
+						リーダー！ここにはなにか建物を建てられそうですよ！
+						炉を作り、銅の剣を作りましょう！
+					EOS
+				else
+					@group.tutorial_level = 3
+					@add_msg << <<~EOS
+						<チュートリアル>
+						リーダー！ここではアイテムが取れそうです！私が行ってくるんで、リーダーはここで一分くらい待っててくださいね！
+						それはそうと、あっちの方には更地があって、なにか作れそうですよ？
+					EOS
+				end
+			end
 			@add_msg << "やった！勝ちました！\n"
 		when :lose
 			@add_msg << "残念ながら負けてしまいました・・・\n"
@@ -279,6 +318,13 @@ class UI < DiscordUIBase
 					result_tuple(@group.craft_using_building(@game_table, recipe), :return_inner_wait)
 				end
 			end
+		end
+		if @group.tutorial_level == 4 && items[Item::COPPER_SWORD] > 0
+			@group.tutorial_level = 5
+			@add_msg << <<~EOS
+				<チュートリアル>
+				銅の剣ができました！この調子で鉄の剣も作っていきましょう！
+			EOS
 		end
 	end
 	

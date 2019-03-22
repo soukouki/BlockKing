@@ -170,6 +170,18 @@ def 値関連()
 	
 	File.delete(path+"/main.json")
 	Dir.delete(path)
+	
+	sl7 = SaveLoad.new(path, lambda do
+		C1.new(C1.new({"foo" => :bar}))
+	end)
+	sl7.save
+	
+	sl8 = SaveLoad.new(path, ->{ここは来ないはず})
+	v8 = sl8.value
+	v8.v.v["foo"].test(:bar)
+	
+	File.delete(path+"/main.json")
+	Dir.delete(path)
 end
 値関連()
 

@@ -27,7 +27,7 @@ class Hash
 		when hash["*reference"]
 			opt[:objects][hash["*reference"]]
 		else
-			hash
+			hash.map{|key,value|[key, value.class.from_convertable_to_json(value, opt)]}.to_h
 		end
 	end
 end

@@ -16,7 +16,7 @@ class UI < DiscordUIBase
 			game_table.add_group(l)
 			l
 		)
-		is_now_executing = false
+		@add_msg = ""
 		@exists_log = false
 		@group.log.callback = lambda do |sync|
 			if !@exists_log && !sync
@@ -27,12 +27,11 @@ class UI < DiscordUIBase
 		loop do
 			case @group.state
 			when :first_story
-				#first_story()
+				first_story()
 				@group.state = nil
 			when :ending
 				ending_story()
 				@group.state = nil
-				break
 			else
 				map()
 			end
@@ -57,6 +56,7 @@ class UI < DiscordUIBase
 	def first_story()
 		text = <<~EOS
 			・・・・・・・・・・
+			
 			戦いばかりが続くこの国。
 			王の力は弱まり、いくつもの兵を持った集団が治めるこの国。
 			その中のある村で・・・・・
@@ -76,6 +76,8 @@ class UI < DiscordUIBase
 	def ending_story()
 		text = <<~EOS
 			・・・・・・・・・・
+			
+			
 			戦いばかりが続いていたこの国。
 			その後王は倒され、新たな王が誕生したこの国。
 			その中心の城の中・・・・・
@@ -86,15 +88,12 @@ class UI < DiscordUIBase
 			
 			「リーダー...ここまで、長かったですね...
 			また、新しい夢を作って、叶えていきましょう！」
-			
-			
-			(END)
-			(テストプレイ終了です。DMください)
 		EOS
 		text
 			.lines
 			.map(&:chomp)
 			.each{|line|sleep 1; line.empty? || msg(line)}
+		sleep 5
 	end
 	
 	def map()
@@ -128,10 +127,11 @@ class UI < DiscordUIBase
 			EOS
 		end
 		
-		log_text = @group.log.to_s
+		log_text = @add_msg + @group.log.to_s
+		@add_msg = ""
 		@group.log.clear()
 		
-		msg(constant_text+(block_text||"")+log_text) # よくわからないけど、eachをつけないとうまく動かなかった
+		msg(constant_text+(block_text||"")+"\n"+log_text) # よくわからないけど、eachをつけないとうまく動かなかった
 		wait_respons do |res|
 			catch(:return_no_map) do
 				case res
@@ -179,13 +179,9 @@ class UI < DiscordUIBase
 		result = @game_table.war(@group)
 		case result
 		when :win
-			msg(<<~EOS)
-				やった！勝ちました！
-			EOS
+			@add_msg << "やった！勝ちました！\n"
 		when :lose
-			msg(<<~EOS)
-				残念ながら負けてしまいました・・・
-			EOS
+			@add_msg << "残念ながら負けてしまいました・・・\n"
 		end
 	end
 	
@@ -289,9 +285,13 @@ class UI < DiscordUIBase
 	# 名前が気に入らない・・・
 	def result_tuple(arr, throw_symbol = :return_no_map)
 		result, text = arr
-		msg(text)
-		throw throw_symbol unless result
-		return true
+		if result
+			@add_msg << text
+			true
+		else
+			msg(text)
+			throw throw_symbol
+		end
 	end
 	
 	def not_enough_item_text(need_items)

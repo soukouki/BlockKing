@@ -38,7 +38,7 @@ class Item
 	COPPER_SWORD = Item.new("銅の剣")
 	IRON_ORE = Item.new("鉄鉱石")
 	IRON = Item.new("鉄")
-	IRON_SWORD = Item.new("銅の剣")
+	IRON_SWORD = Item.new("鉄の剣")
 	WOOD = Item.new("木材")
 	CLAY = Item.new("粘土")
 	BRICK = Item.new("レンガ")

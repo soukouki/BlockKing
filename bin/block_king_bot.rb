@@ -24,6 +24,32 @@ bot.command(:k) do |event|
 		old_ui.start(game_table)
 	end
 end
+bot.command(:rank) do |event|
+	uis[event.user.id] ||= UI.new(bot: bot, channel: event.channel, user: event.user)
+	event.respond(
+		"ランキング\n"+
+		game_table
+			.instance_variable_get(:@groups)
+			.values
+			.sort_by{|g|g.force}
+			.take(10)
+			.map
+			.with_index(1){|g, i|"第#{i}位 : (#{g.pos})にいるグループ"}
+			.join("\n")+"\n"
+	)
+end
+bot.command(:help) do |event|
+	event.respond <<~EOS
+		コマンドの一覧です。
+		`Bk` : **ゲームをスタートします。**
+		`Brank` : ランキングが見れます。
+		`Bhelp` : このコマンドです。
+	EOS
+end
+
+bot.ready do
+	bot.game = "ゲームスタートは`Bk`(Bは大文字)"
+end
 
 bot.run :async
 

@@ -49,6 +49,7 @@ class Group
 		re, fo = Item::SWORD_ATTACK_POWER_HASH
 			.to_a
 			.sort_by{|i,atk|atk}
+			.reverse
 			.map{|sword,atk|[atk, @items[sword]||0]}
 			.reduce([@soldier, 0]) do |(remaining_soldier, force), (attack_power, having_count)|
 				m = [remaining_soldier, having_count].min
@@ -119,7 +120,6 @@ class Group
 		game_table.set_block(@pos, block)
 		[true, <<~EOS]
 			#{block}が完成しました！
-			「リーダー！夢に向かって、また一歩前進ですね！」
 		EOS
 	end
 	
@@ -137,11 +137,9 @@ class Group
 			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
 		end
 		game_table.set_block(@pos, Block::EMPTY)
-		need_items.each{|item, count|add_item(true, "#{block}の解体によって", item, count)}
+		need_items.each{|item, count|add_item(true, "#{block}の解体で", item, count)}
 		return [true, <<~EOS]
-			無事に解体できました。
-			#{need_items.map{|i,c|"#{i}を#{c}"}.join("、")}
-			を手に入れました
+			無事に解体できました！
 		EOS
 	end
 	
@@ -154,10 +152,9 @@ class Group
 				return [false, "#{item}が#{count-i}足りません。"] if i < count
 			end
 		need_items.each{|item,count|@items[item] -= count}
-		finished_items.each{|item,count|add_item(true, "クラフトによって", item, count)}
+		finished_items.each{|item,count|add_item(true, "クラフトで", item, count)}
 		[true, <<~EOS]
-			無事に作成できたときのメッセージ。
-			これまた作れたアイテムのテキスト用意しないといけない・・？
+			無事に制作できました！
 		EOS
 	end
 	

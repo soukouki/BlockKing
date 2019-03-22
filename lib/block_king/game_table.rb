@@ -9,7 +9,6 @@ class GameTable
 	end
 	
 	def group(id)
-		pp @groups
 		@groups[id]
 	end
 	def add_group(group)

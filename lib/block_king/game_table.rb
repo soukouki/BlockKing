@@ -31,7 +31,7 @@ class GameTable
 			@ruler_table[pos] ||= initial_ruler(pos)
 		end
 	end
-	def set_ruler(pos, new_ruler)
+	private def set_ruler(pos, new_ruler)
 		@ruler_table_mutex.synchronize do
 			@ruler_table[pos] = new_ruler
 		end
@@ -75,7 +75,13 @@ class GameTable
 		not @groups.values.reject{|l|l == group}.select{|l|l.pos == pos}.empty?
 	end
 	
+	def initial_pos
+		r = rand(0..Math::PI*2)
+		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*15).round})
+	end
+	
 	private
+	
 	
 	def select_object(pos)
 		case pos

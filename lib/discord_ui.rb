@@ -12,7 +12,7 @@ class UI < DiscordUIBase
 	def start(game_table)
 		@game_table = game_table
 		@group = game_table.group(@user.id) || (
-			l = Group.new(@user.id, @user.name)
+			l = Group.new(@user.id, @user.name, game_table)
 			game_table.add_group(l)
 			l
 		)
@@ -27,11 +27,11 @@ class UI < DiscordUIBase
 		loop do
 			case @group.state
 			when :first_story
-				first_story()
 				@group.state = nil
+				#first_story()
 			when :ending
-				ending_story()
 				@group.state = nil
+				ending_story()
 			else
 				map()
 			end

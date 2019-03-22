@@ -2,10 +2,10 @@
 class Group
 	attr_reader :id, :pos, :log, :soldier, :items
 	attr_accessor :state
-	def initialize(id, name)
+	def initialize(id, name, game_table)
 		@id = id
 		@name = name
-		@pos = initial_pos
+		@pos = game_table.initial_pos
 		@soldier = 6
 		@state = :first_story
 		@log = LogBasket.new
@@ -104,7 +104,6 @@ class Group
 	end
 	
 	def move(game_table, m_x, m_y)
-		game_table.set_ruler(@pos, nil)
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
@@ -208,13 +207,6 @@ class Group
 		piece = 360.0/(8*2)
 		str = ["西", "南西", "南", "南東", "東", "北東", "北", "北西"][((ang/piece)/2).round % 8]
 		"王都は"+str+"の方向。"
-	end
-	
-	private
-	
-	def initial_pos
-		r = rand(0..Math::PI*2)
-		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*15).round})
 	end
 end
 

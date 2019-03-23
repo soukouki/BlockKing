@@ -1,5 +1,6 @@
 
 class GameTable
+	attr_reader :groups, :kings_history
 	def initialize()
 		@block_table = {}
 		@block_table_mutex = Mutex.new
@@ -44,10 +45,10 @@ class GameTable
 		@ruler_table_mutex.synchronize do
 			@ruler_table
 				.each do |pos, ruler|
-					next if ruler.nil?
+					next if ruler.nil? || !ruler.is_a?(Group)
 					block = block(pos)
-					get_item, count = block.turn_items()
-					next if get_item.nil? || !ruler.is_a?(Group)
+					get_item, count = block.turn_items(ruler)
+					next if get_item.nil?
 					block.remaining_items -= count
 					ruler.add_item(false, "#{block}を支配し", get_item, count)
 				end
@@ -101,10 +102,19 @@ class GameTable
 		else
 			case rand(5)
 			when 0
-				[GameData::IRON_MINE, GameData::COPPER_MINE, GameData::MARSH].sample
+				case rand(10)
+				when 0, 1, 2
+					GameData::IRON_MINE
+				when 3, 4, 5
+					GameData::COPPER_MINE
+				when 6, 7, 8
+					GameData::MARSH
+				else # 9
+					GameData::FIRE_CRYSTAL_MINE
+				end
 			when 1, 2
 				GameData::FOREST
-			else
+			else # 3, 4
 				GameData::EMPTY
 			end
 		end.new(calc_level(pos))

@@ -88,16 +88,11 @@ class Object
 		end
 	end
 	def self.from_convertable_to_json(hash, opt)
-		klass = self
-		init_class = Class.new(self) do
-			define_method(:initialize) do
-				hash
-					.select{|name,val|name.start_with?("@")}
-					.each{|name,val|instance_variable_set(name.to_sym, val.class.from_convertable_to_json(val, opt))}
-			end
-			define_method(:class){klass}
-		end
-		init_class.new
+		obj = self.allocate
+		hash
+			.select{|name,val|name.start_with?("@")}
+			.each{|name,val|obj.instance_variable_set(name.to_sym, val.class.from_convertable_to_json(val, opt))}
+		obj
 	end
 end
 class Struct

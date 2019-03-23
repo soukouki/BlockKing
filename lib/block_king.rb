@@ -47,7 +47,7 @@ class Nature < Block
 		@remaining_items = level * 10
 		@maximum_items = @remaining_items
 	end
-	def turn_items()
+	def turn_items(group)
 		item = get_items_when_turning
 		if item && @remaining_items > 0
 			count = if @remaining_items > @maximum_items/2
@@ -55,7 +55,7 @@ class Nature < Block
 			else
 				(level*2.0 * @remaining_items*1.0 / @maximum_items).ceil
 			end
-			[item, count]
+			[item, [count, group.soldier].min]
 		else
 			[]
 		end
@@ -63,11 +63,11 @@ class Nature < Block
 	def remaining_items_text
 		case 1.0 * @remaining_items / @maximum_items
 		when -Float::INFINITY..0.1
-			"ここには殆ど残っていなさそうです。"
+			"殆ど残っていなさそうです。"
 		when 0..0.3
 			"残り少なくなりました。移ったほうがいいかもしれません。"
 		when 0..0.5
-			"だいぶ減ってきました"
+			"だいぶ減ってきました。"
 		when 0..0.9
 			"まだまだあります！"
 		else
@@ -85,7 +85,7 @@ class Building < Block
 	def == o
 		self == o && o.builder == @builder
 	end
-	def turn_items; [] end
+	def turn_items(group); [] end
 	def get_items_when_turning; nil end
 	def need_items
 		GameData::CAN_BUILD_LIST[self.class]

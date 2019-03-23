@@ -25,17 +25,27 @@ bot.command(:k) do |event|
 	end
 end
 bot.command(:rank) do |event|
-	uis[event.user.id] ||= UI.new(bot: bot, channel: event.channel, user: event.user)
 	event.respond(
 		"ランキング\n"+
 		game_table
-			.instance_variable_get(:@groups)
+			.groups
 			.values
 			.sort_by{|g|g.force}
 			.take(10)
 			.map
 			.with_index(1){|g, i|"第#{i}位 : `#{g.name}`"}
-			.join("\n")+"\n"
+			.join("\n")
+	)
+end
+bot.command(:his) do |event|
+	event.respond(
+		"歴代王の記録\n"+
+		game_table
+			.kings_history
+			.reverse
+			.map
+			.with_index(1){|k,i|"第#{i}代 : `#{k.name}`"}
+			.join("\n")
 	)
 end
 bot.command(:help) do |event|
@@ -44,6 +54,7 @@ bot.command(:help) do |event|
 		`Bk` : **ゲームをスタートします。**
 		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
+		`Bhis` : 過去の王が見れます。
 		
 		プログラム : @sou7#0094
 		テストプレイ : ねこらんさん、uuuさん、その他

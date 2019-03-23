@@ -203,8 +203,6 @@ def 参照について
 	File.delete(path+"/main.json")
 	Dir.delete(path)
 	
-	path = File.expand_path(File.dirname(__FILE__))+"/test_db"
-	
 	c3 = S1.new(1)
 	
 	sl3 = SaveLoad.new(path, ->{[c3, {c3 => S1.new(c3)}]})
@@ -221,3 +219,18 @@ def 参照について
 	Dir.delete(path)
 end
 参照について()
+
+def オブジェクトについて()
+	path = File.expand_path(File.dirname(__FILE__))+"/test_db"
+	
+	sl1 = SaveLoad.new(path, ->{C1.new(:foo)})
+	sl1.save
+	
+	sl2 = SaveLoad.new(path, ->{ここは来ないはず})
+	v2 = sl2.value
+	v2.to_s.test(/^#<C1:/)
+	
+	File.delete(path+"/main.json")
+	Dir.delete(path)
+end
+オブジェクトについて()

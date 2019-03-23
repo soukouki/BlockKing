@@ -6,7 +6,7 @@ class GameTable
 		@ruler_table = {}
 		@ruler_table_mutex = Mutex.new
 		@groups = {}
-		@level = 100
+		@game_level = 100
 	end
 	
 	def group(id)
@@ -78,7 +78,16 @@ class GameTable
 	
 	def initial_pos
 		r = rand(0..Math::PI*2)
-		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*((@level/6)+1)).ceil})
+		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*((@game_level/6)+1)).ceil})
+	end
+	
+	def calc_level(pos)
+		(
+			1.0 *
+			@game_level /
+			Math.sqrt((pos.x ** 2).abs+(pos.y ** 2).abs+1) *
+			rand(0.7..(1/0.7))
+		).ceil # 取れるアイテム数の関係
 	end
 	
 	private
@@ -97,16 +106,15 @@ class GameTable
 			else
 				GameData::EMPTY
 			end
-		end
+		end.new(calc_level(pos))
 	end
 	
 	def initial_ruler(pos)
 		case pos
 		when AbPos::CENTER
-			NPCEnemy.new(level)
+			NPCEnemy.new(@game_level)
 		else
-			force = (140.0 / Math.sqrt((pos.x ** 2).abs+(pos.y ** 2).abs+1) * rand(0.7..(1/0.7))).to_i
-			NPCEnemy.new(force)
+			NPCEnemy.new(calc_level(pos))
 		end
 	end
 end

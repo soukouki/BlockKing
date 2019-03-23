@@ -111,7 +111,7 @@ class Group
 	
 	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはUI側で行っているので、省略する
 	def build(game_table, block)
-		need_items = GameData::CAN_BUILD_LIST[block]
+		need_items = block.need_items
 		need_items
 			.each do |item,count|
 				i = @items[item] || 0
@@ -127,17 +127,17 @@ class Group
 	def remove(game_table)
 		block = game_table.block(@pos)
 		ruler = game_table.ruler(@pos)
-		need_items = GameData::CAN_BUILD_LIST[block]
-		if block==GameData::EMPTY
+		if block.empty?
 			return [false, "「そもそも更地をどう解体するんですか・・？馬鹿なんですか・・？」"]
 		end
-		unless need_items
+		unless block.is_a?(Building)
 			return [false, "「#{block}を解体？いやですよー。」"]
 		end
+		need_items = block.need_items
 		if ruler!=self
 			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
 		end
-		game_table.set_block(@pos, GameData::EMPTY)
+		game_table.set_block(@pos, GameData::EMPTY.new(game_data.calc_level(pos)))
 		need_items
 			.map{|item, count|[item, rand((count/2)..count)]}
 			.each{|(item, count)|add_item(true, "#{block}の解体で", item, count)}

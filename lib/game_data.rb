@@ -11,14 +11,33 @@ module GameData
 	CLAY = Item.new("粘土")
 	BRICK = Item.new("レンガ")
 	
-	EMPTY = Block.new("    ")
-	CASTLE = Block.new("王城")
-	COPPER_MINE = Block.new("銅鉱")
-	IRON_MINE = Block.new("鉄鉱")
-	FOREST = Block.new("森林")
-	MARSH = Block.new(" 沼 ")
-	LOW_LEVEL_FURNACE = Block.new("下炉")
-	MEDIUM_LEVEL_FURNACE = Block.new("中炉")
+	class EMPTY < Block
+		def name; "    " end
+		def empty?
+			true
+		end
+	end
+	class CASTLE < Block
+		def name; "王城" end
+	end
+	class COPPER_MINE < Block
+		def name; "銅鉱" end
+	end
+	class IRON_MINE < Block
+		def name; "鉄鉱" end
+	end
+	class FOREST < Block
+		def name; "森林" end
+	end
+	class MARSH < Block
+		def name; " 沼 " end
+	end
+	class LOW_LEVEL_FURNACE < Building
+		def name; "下炉" end
+	end
+	class MEDIUM_LEVEL_FURNACE < Building
+		def name; "中炉" end
+	end
 	
 	SWORD_ATTACK_POWER_HASH = {
 		COPPER_SWORD => 2,

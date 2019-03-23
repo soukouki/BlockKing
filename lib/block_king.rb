@@ -19,15 +19,41 @@ Item = Struct.new(:name) do
 		name
 	end
 end
-Block = Struct.new(:name) do
+class Block
+	attr_reader :builder, :level
+	def initialize(level)
+		@builder = nil
+		@level = level
+	end
+	def eql?(o)
+		name.eql?(o.name) && level.eql?(o.level)
+	end
+	def hash
+		name.hash ^ level.hash
+	end
 	def to_s
 		name
+	end
+	def empty?
+		false
 	end
 	def get_turn_items
 		GameData::GET_TURN_ITEMS_HASH[name] || {}
 	end
 	def creation_items
 		GameData::CREATION_ITEMS_HASH[name] || {}
+	end
+end
+class Building < Block
+	def initialize(builder, level)
+		@builder = builder
+		@level = level
+	end
+	def == o
+		self == o && o.builder == @builder
+	end
+	def need_items
+		GameData::CAN_BUILD_LIST[self.class]
 	end
 end
 

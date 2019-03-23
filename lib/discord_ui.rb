@@ -105,10 +105,10 @@ class UI < DiscordUIBase
 			アイテム・その他情報は(`i`)
 		EOS
 		block_text = if ruler == @group
-			building = if block==GameData::EMPTY
+			building = if block.empty?
 				"施設を建設するには(`c`)"
 			else
-				if GameData::CAN_BUILD_LIST[block]
+				if block.is_a?(Building)
 					<<~EOS
 						施設を使用するには(`u`)
 						施設を撤去するには(`v`)
@@ -201,7 +201,8 @@ class UI < DiscordUIBase
 		result = @game_table.war(@group)
 		case result
 		when :win
-			if @group.tutorial_level == 2 || @group.tutorial_level == 3 and block == GameData::EMPTY
+			@add_msg << "やった！勝ちました！\n"
+			if @group.tutorial_level == 2 || @group.tutorial_level == 3 and block.empty?
 				@group.tutorial_level = 4
 				@add_msg << <<~EOS
 					<チュートリアル>
@@ -209,7 +210,7 @@ class UI < DiscordUIBase
 					炉を作り、銅の剣を作りましょう！
 				EOS
 			end
-			if @group.tutorial_level == 2 && block != GameData::EMPTY
+			if @group.tutorial_level == 2 && !block.empty?
 				@group.tutorial_level = 3
 				@add_msg << <<~EOS
 					<チュートリアル>
@@ -217,14 +218,14 @@ class UI < DiscordUIBase
 					それはそうと、あっちの方には更地があって、なにか作れそうですよ？
 				EOS
 			end
-			@add_msg << "やった！勝ちました！\n"
+			true
 		when :lose
 			@add_msg << "残念ながら負けてしまいました・・・\n"
 		end
 	end
 	
 	def build_building()
-		if block != GameData::EMPTY
+		unless block.empty?
 			msg(<<~EOS)
 				既に建物が立っていて、土地がありません・・・
 			EOS
@@ -242,8 +243,9 @@ class UI < DiscordUIBase
 			.with_index{|b, i|[(i+?a.ord).chr, b]}
 			.to_h
 		select_text = select_block
-			.map do |char, (block, need_items)|
+			.map do |char, (block_class, need_items)|
 				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
+				block = block_class.new(@game_table.calc_level(pos), @group)
 				"`#{char}` : "+(
 					if can_build
 						"#{block.name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
@@ -265,10 +267,11 @@ class UI < DiscordUIBase
 			sel = select_block[res.to_str]
 			catch(:return_inner_wait) do
 				unless sel.nil?
-					result_tuple(@group.build(@game_table, sel[0]), :return_inner_wait)
+					result_tuple(@group.build(@game_table, sel[0].new(@game_table.calc_level(pos), @group)), :return_inner_wait)
 				end
 			end
 		end
+		true
 	end
 	
 	def remove_building()
@@ -291,6 +294,7 @@ class UI < DiscordUIBase
 		end
 		creation_items_text = creation_items
 			.map do |char, (need_items, finished_items)|
+				p [need_items, finished_items]
 				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
 				"`#{char}` : "+(
 					finished_item_name = finished_items.map{|item,count|"#{(can_build)? item.name : "■"*item.name.length}を`#{count}`"}.join("、")

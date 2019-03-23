@@ -34,7 +34,7 @@ bot.command(:rank) do |event|
 			.sort_by{|g|g.force}
 			.take(10)
 			.map
-			.with_index(1){|g, i|"第#{i}位 : (#{g.pos})にいるグループ"}
+			.with_index(1){|g, i|"第#{i}位 : `#{g.name}`"}
 			.join("\n")+"\n"
 	)
 end

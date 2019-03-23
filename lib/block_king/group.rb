@@ -1,10 +1,10 @@
 
 class Group
 	attr_reader :id, :log, :soldier, :items
-	attr_accessor :state, :pos, :tutorial_level
+	attr_accessor :name, :state, :pos, :tutorial_level
 	def initialize(id, name, game_table)
 		@id = id
-		@name = name
+		@name = ""
 		initial_soldier_and_items()
 		@pos = game_table.initial_pos(@soldier)
 		@state = :first_story
@@ -208,9 +208,9 @@ class Group
 		when 0..(1/0.3)
 			"敵は余裕で負ける"
 		when 0..(1/0.1)
-			"逃げたくなるような"
+			"敵は逃げたくなるような"
 		else
-			"裸足で逃げたくなるような"
+			"敵は裸足で逃げたくなるような"
 		end
 	end
 	

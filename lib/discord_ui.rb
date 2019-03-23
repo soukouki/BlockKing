@@ -12,10 +12,11 @@ class UI < DiscordUIBase
 	def start(game_table)
 		@game_table = game_table
 		@group = game_table.group(@user.id) || (
-			l = Group.new(@user.id, @user.name, game_table)
+			l = Group.new(@user.id, game_table)
 			game_table.add_group(l)
 			l
 		)
+		@group.name = @user.name
 		@add_msg = ""
 		@exists_log = false
 		@group.log.callback = lambda do |sync|

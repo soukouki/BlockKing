@@ -135,7 +135,7 @@ class GameTable
 				@groups.each do |id, group|
 					group.pos = initial_pos(group.force)
 					group.log.add_text(false, <<~EOS)
-						〇〇**ここできてない！**によって王城が攻略され、ゲームがクリアされました！
+						`#{group.name}`によって王城が攻略され、ゲームがクリアされました！
 						それによって、ブロック・位置などが初期化され、すべての敵が強くなりました！
 					EOS
 				end

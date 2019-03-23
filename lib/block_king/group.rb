@@ -1,15 +1,14 @@
 
 class Group
-	attr_reader :id, :pos, :log, :soldier, :items
-	attr_accessor :state, :tutorial_level
+	attr_reader :id, :log, :soldier, :items
+	attr_accessor :state, :pos, :tutorial_level
 	def initialize(id, name, game_table)
 		@id = id
 		@name = name
-		@pos = game_table.initial_pos
-		@soldier = 6
+		initial_soldier_and_items()
+		@pos = game_table.initial_pos(@soldier)
 		@state = :first_story
 		@log = LogBasket.new
-		@items = {}
 		@tutorial_level = 0
 	end
 	
@@ -137,7 +136,7 @@ class Group
 		if ruler!=self
 			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
 		end
-		game_table.set_block(@pos, GameData::EMPTY.new(game_data.calc_level(pos)))
+		game_table.set_block(@pos, GameData::EMPTY.new(game_table.calc_level(pos)))
 		need_items
 			.map{|item, count|[item, rand((count/2)..count)]}
 			.each{|(item, count)|add_item(true, "#{block}の解体で", item, count)}
@@ -182,23 +181,36 @@ class Group
 		@log.add_item(sync, cause, item, count)
 	end
 	
+	def initial_soldier_and_items()
+		@soldier = 6
+		@items = {}
+	end
+	
 	def compare_force(enemy)
 		# インフレしたらいろいろ入れてみたい
 		case 1.0 * enemy.force / force
+		when 0..0.1
+			"敵が裸足で逃げていく"
+		when 0..0.3
+			"敵が逃げていく"
 		when 0..0.5
-			"余裕で勝てる"
+			"敵は余裕で勝てる"
 		when 0..0.7
-			"ほぼ確実に勝てる"
+			"敵はほぼ確実に勝てる"
 		when 0..0.9
-			"おそらく勝てる"
+			"敵はおそらく勝てる"
 		when 0..(1/0.9)
-			"勝つか負けるかわからない"
+			"敵は勝つか負けるかわからない"
 		when 0..(1/0.7)
-			"おそらく負ける"
+			"敵はおそらく負ける"
 		when 0..2
-			"ほぼ確実に負ける"
+			"敵はほぼ確実に負ける"
+		when 0..(1/0.3)
+			"敵は余裕で負ける"
+		when 0..(1/0.1)
+			"逃げたくなるような"
 		else
-			"余裕で負ける"
+			"裸足で逃げたくなるような"
 		end
 	end
 	

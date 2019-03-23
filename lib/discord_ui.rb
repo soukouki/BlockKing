@@ -124,7 +124,7 @@ class UI < DiscordUIBase
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				敵は#{@group.compare_force(ruler)}相手でしょう。
+				#{@group.compare_force(ruler)}相手でしょう。
 			EOS
 		end
 		if @group.tutorial_level == 0
@@ -294,7 +294,6 @@ class UI < DiscordUIBase
 		end
 		creation_items_text = creation_items
 			.map do |char, (need_items, finished_items)|
-				p [need_items, finished_items]
 				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
 				"`#{char}` : "+(
 					finished_item_name = finished_items.map{|item,count|"#{(can_build)? item.name : "■"*item.name.length}を`#{count}`"}.join("、")
@@ -322,13 +321,14 @@ class UI < DiscordUIBase
 				end
 			end
 		end
-		if @group.tutorial_level == 4 && items[GameData::COPPER_SWORD] > 0
+		if @group.tutorial_level == 4 && (items[GameData::COPPER_SWORD] || 0) > 0
 			@group.tutorial_level = 5
 			@add_msg << <<~EOS
 				<チュートリアル>
 				銅の剣ができました！この調子で鉄の剣も作っていきましょう！
 			EOS
 		end
+		true
 	end
 	
 	# 名前が気に入らない・・・

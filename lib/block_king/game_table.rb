@@ -7,6 +7,7 @@ class GameTable
 		@ruler_table_mutex = Mutex.new
 		@groups = {}
 		@game_level = 100
+		@kings_history = []
 	end
 	
 	def group(id)
@@ -67,6 +68,7 @@ class GameTable
 			set_ruler(pos, group)
 			if pos==AbPos::CENTER
 				group.state = :ending
+				game_clear(group)
 			end
 			:win
 		end
@@ -76,9 +78,9 @@ class GameTable
 		not @groups.values.reject{|l|l == group}.select{|l|l.pos == pos}.empty?
 	end
 	
-	def initial_pos
+	def initial_pos(force)
 		r = rand(0..Math::PI*2)
-		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*((@game_level/6)+1)).ceil})
+		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*((@game_level/force)+1)).ceil})
 	end
 	
 	def calc_level(pos)
@@ -91,7 +93,6 @@ class GameTable
 	end
 	
 	private
-	
 	
 	def select_object(pos)
 		case pos
@@ -115,6 +116,32 @@ class GameTable
 			NPCEnemy.new(@game_level)
 		else
 			NPCEnemy.new(calc_level(pos))
+		end
+	end
+	
+	def game_clear(cleared_group)
+		@block_table_mutex.synchronize do
+			@ruler_table_mutex.synchronize do
+				@block_table.each do |pos, block|
+					if block.is_a?(Building)
+						block.need_items do |item, count|
+							block.builder.add_item(false, "#{block}を建て", item, count)
+						end
+					end
+				end
+				@block_table = {} # ブロック初期化！
+				@ruler_table = {} # ルーラー初期化！
+				@game_level = [@game_level*2, cleared_group.force].max
+				@groups.each do |id, group|
+					group.pos = initial_pos(group.force)
+					group.log.add_text(false, <<~EOS)
+						〇〇**ここできてない！**によって王城が攻略され、ゲームがクリアされました！
+						それによって、ブロック・位置などが初期化され、すべての敵が強くなりました！
+					EOS
+				end
+				@kings_history << cleared_group
+				cleared_group.initial_soldier_and_items()
+			end
 		end
 	end
 end

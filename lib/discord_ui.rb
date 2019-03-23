@@ -105,10 +105,10 @@ class UI < DiscordUIBase
 			アイテム・その他情報は(`i`)
 		EOS
 		block_text = if ruler == @group
-			building = if block==Block::EMPTY
+			building = if block==GameData::EMPTY
 				"施設を建設するには(`c`)"
 			else
-				if Block::CAN_BUILD_LIST[block]
+				if GameData::CAN_BUILD_LIST[block]
 					<<~EOS
 						施設を使用するには(`u`)
 						施設を撤去するには(`v`)
@@ -201,22 +201,21 @@ class UI < DiscordUIBase
 		result = @game_table.war(@group)
 		case result
 		when :win
-			if @group.tutorial_level == 2 || @group.tutorial_level == 3
-				if block == Block::EMPTY
-					@group.tutorial_level = 4
-					@add_msg << <<~EOS
-						<チュートリアル>
-						リーダー！ここにはなにか建物を建てられそうですよ！
-						炉を作り、銅の剣を作りましょう！
-					EOS
-				else
-					@group.tutorial_level = 3
-					@add_msg << <<~EOS
-						<チュートリアル>
-						リーダー！ここではアイテムが取れそうです！私が行ってくるんで、リーダーはここで一分くらい待っててくださいね！
-						それはそうと、あっちの方には更地があって、なにか作れそうですよ？
-					EOS
-				end
+			if @group.tutorial_level == 2 || @group.tutorial_level == 3 and block == GameData::EMPTY
+				@group.tutorial_level = 4
+				@add_msg << <<~EOS
+					<チュートリアル>
+					リーダー！ここにはなにか建物を建てられそうですよ！
+					炉を作り、銅の剣を作りましょう！
+				EOS
+			end
+			if @group.tutorial_level == 2 && block != GameData::EMPTY
+				@group.tutorial_level = 3
+				@add_msg << <<~EOS
+					<チュートリアル>
+					リーダー！ここではアイテムが取れそうです！私が行ってくるんで、リーダーはここで一分くらい待っててくださいね！
+					それはそうと、あっちの方には更地があって、なにか作れそうですよ？
+				EOS
 			end
 			@add_msg << "やった！勝ちました！\n"
 		when :lose
@@ -225,7 +224,7 @@ class UI < DiscordUIBase
 	end
 	
 	def build_building()
-		if block != Block::EMPTY
+		if block != GameData::EMPTY
 			msg(<<~EOS)
 				既に建物が立っていて、土地がありません・・・
 			EOS
@@ -238,7 +237,7 @@ class UI < DiscordUIBase
 			throw :return_no_map
 		end
 		
-		select_block = Block::CAN_BUILD_LIST
+		select_block = GameData::CAN_BUILD_LIST
 			.map
 			.with_index{|b, i|[(i+?a.ord).chr, b]}
 			.to_h
@@ -319,7 +318,7 @@ class UI < DiscordUIBase
 				end
 			end
 		end
-		if @group.tutorial_level == 4 && items[Item::COPPER_SWORD] > 0
+		if @group.tutorial_level == 4 && items[GameData::COPPER_SWORD] > 0
 			@group.tutorial_level = 5
 			@add_msg << <<~EOS
 				<チュートリアル>

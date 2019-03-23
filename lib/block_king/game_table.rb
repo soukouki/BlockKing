@@ -87,15 +87,15 @@ class GameTable
 	def select_object(pos)
 		case pos
 		when AbPos::CENTER
-			Block::CASTLE
+			GameData::CASTLE
 		else
 			case rand(5)
 			when 0
-				[Block::IRON_MINE, Block::COPPER_MINE, Block::MARSH].sample
+				[GameData::IRON_MINE, GameData::COPPER_MINE, GameData::MARSH].sample
 			when 1, 2
-				Block::FOREST
+				GameData::FOREST
 			else
-				Block::EMPTY
+				GameData::EMPTY
 			end
 		end
 	end

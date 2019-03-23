@@ -47,7 +47,7 @@ class Group
 	end
 	
 	def force
-		re, fo = Item::SWORD_ATTACK_POWER_HASH
+		re, fo = GameData::SWORD_ATTACK_POWER_HASH
 			.to_a
 			.sort_by{|i,atk|atk}
 			.reverse
@@ -111,7 +111,7 @@ class Group
 	
 	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはUI側で行っているので、省略する
 	def build(game_table, block)
-		need_items = Block::CAN_BUILD_LIST[block]
+		need_items = GameData::CAN_BUILD_LIST[block]
 		need_items
 			.each do |item,count|
 				i = @items[item] || 0
@@ -127,8 +127,8 @@ class Group
 	def remove(game_table)
 		block = game_table.block(@pos)
 		ruler = game_table.ruler(@pos)
-		need_items = Block::CAN_BUILD_LIST[block]
-		if block==Block::EMPTY
+		need_items = GameData::CAN_BUILD_LIST[block]
+		if block==GameData::EMPTY
 			return [false, "「そもそも更地をどう解体するんですか・・？馬鹿なんですか・・？」"]
 		end
 		unless need_items
@@ -137,8 +137,10 @@ class Group
 		if ruler!=self
 			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
 		end
-		game_table.set_block(@pos, Block::EMPTY)
-		need_items.each{|item, count|add_item(true, "#{block}の解体で", item, count)}
+		game_table.set_block(@pos, GameData::EMPTY)
+		need_items
+			.map{|item, count|[item, rand((count/2)..count)]}
+			.each{|(item, count)|add_item(true, "#{block}の解体で", item, count)}
 		return [true, <<~EOS]
 			無事に解体できました！
 		EOS

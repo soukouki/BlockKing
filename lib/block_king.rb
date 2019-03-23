@@ -20,10 +20,9 @@ Item = Struct.new(:name) do
 	end
 end
 class Block
-	attr_reader :builder, :level
-	def initialize(level)
-		@builder = nil
-		@level = level
+	attr_reader :level
+	def initialize()
+		ここは来ないはずです・・
 	end
 	def eql?(o)
 		name.eql?(o.name) && level.eql?(o.level)
@@ -37,14 +36,48 @@ class Block
 	def empty?
 		false
 	end
-	def get_turn_items
-		GameData::GET_TURN_ITEMS_HASH[name] || {}
-	end
 	def creation_items
 		GameData::CREATION_ITEMS_HASH[name] || {}
 	end
 end
+class Nature < Block
+	attr_accessor :remaining_items
+	def initialize(level)
+		@level = level
+		@remaining_items = level * 10
+		@maximum_items = @remaining_items
+	end
+	def turn_items()
+		item = get_items_when_turning
+		if item && @remaining_items > 0
+			count = if @remaining_items > @maximum_items/2
+				level*2
+			else
+				(level*2.0 * @remaining_items*1.0 / @maximum_items).ceil
+			end
+			[item, count]
+		else
+			[]
+		end
+	end
+	def remaining_items_text
+		case 1.0 * @remaining_items / @maximum_items
+		when -Float::INFINITY..0.1
+			"ここには殆ど残っていなさそうです。"
+		when 0..0.3
+			"残り少なくなりました。移ったほうがいいかもしれません。"
+		when 0..0.5
+			"だいぶ減ってきました"
+		when 0..0.9
+			"まだまだあります！"
+		else
+			"たくさんあります！"
+		end
+	end
+	def get_items_when_turning; nil end
+end
 class Building < Block
+	attr_reader :builder
 	def initialize(builder, level)
 		@builder = builder
 		@level = level
@@ -52,6 +85,8 @@ class Building < Block
 	def == o
 		self == o && o.builder == @builder
 	end
+	def turn_items; [] end
+	def get_items_when_turning; nil end
 	def need_items
 		GameData::CAN_BUILD_LIST[self.class]
 	end

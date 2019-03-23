@@ -46,10 +46,10 @@ class GameTable
 				.each do |pos, ruler|
 					next if ruler.nil?
 					block = block(pos)
-					geted_items = block.get_turn_items()
-					geted_items.each do |item, count|
-						ruler.add_item(false, "#{block}を支配し", item, count)
-					end
+					get_item, count = block.turn_items()
+					next if get_item.nil? || !ruler.is_a?(Group)
+					block.remaining_items -= count
+					ruler.add_item(false, "#{block}を支配し", get_item, count)
 				end
 		end
 	end

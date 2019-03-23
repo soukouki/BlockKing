@@ -108,15 +108,13 @@ class UI < DiscordUIBase
 		block_text = if ruler == @group
 			building = if block.empty?
 				"施設を建設するには(`c`)"
+			elsif block.is_a?(Building)
+				<<~EOS
+					施設を使用するには(`u`)
+					施設を撤去するには(`v`)
+				EOS
 			else
-				if block.is_a?(Building)
-					<<~EOS
-						施設を使用するには(`u`)
-						施設を撤去するには(`v`)
-					EOS
-				else
-					""
-				end
+				""
 			end
 			building+"\n"+<<~EOS
 				現在このブロックを支配しています。
@@ -127,6 +125,10 @@ class UI < DiscordUIBase
 				このブロックを支配するには(`x`)
 				#{@group.compare_force(ruler)}相手でしょう。
 			EOS
+		end + if block.get_items_when_turning.nil?
+			""
+		else
+			"ここのアイテムは"+block.remaining_items_text
 		end
 		if @group.tutorial_level == 0
 			@group.tutorial_level = 1

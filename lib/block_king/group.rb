@@ -2,7 +2,7 @@
 class Group
 	attr_reader :id, :log, :soldier, :items
 	attr_accessor :name, :state, :pos, :tutorial_level
-	def initialize(id, name, game_table)
+	def initialize(id, game_table)
 		@id = id
 		@name = ""
 		initial_soldier_and_items()

@@ -11,26 +11,30 @@ module GameData
 	CLAY = Item.new("粘土")
 	BRICK = Item.new("レンガ")
 	
-	class EMPTY < Block
+	class EMPTY < Nature
 		def name; "    " end
 		def empty?
 			true
 		end
 	end
-	class CASTLE < Block
+	class CASTLE < Nature
 		def name; "王城" end
 	end
-	class COPPER_MINE < Block
+	class COPPER_MINE < Nature
 		def name; "銅鉱" end
+		def get_items_when_turning; COPPER_ORE end
 	end
-	class IRON_MINE < Block
+	class IRON_MINE < Nature
 		def name; "鉄鉱" end
+		def get_items_when_turning; IRON_ORE end
 	end
-	class FOREST < Block
+	class FOREST < Nature
 		def name; "森林" end
+		def get_items_when_turning; WOOD end
 	end
-	class MARSH < Block
+	class MARSH < Nature
 		def name; " 沼 " end
+		def get_items_when_turning; CLAY end
 	end
 	class LOW_LEVEL_FURNACE < Building
 		def name; "下炉" end
@@ -42,13 +46,6 @@ module GameData
 	SWORD_ATTACK_POWER_HASH = {
 		COPPER_SWORD => 2,
 		IRON_SWORD => 4,
-	}
-	
-	GET_TURN_ITEMS_HASH = {
-		"銅鉱" => {COPPER_ORE => 20},
-		"鉄鉱" => {IRON_ORE => 20},
-		"森林" => {WOOD => 20},
-		" 沼 " => {CLAY => 20},
 	}
 	CREATION_ITEMS_HASH = {
 		"下炉" => {

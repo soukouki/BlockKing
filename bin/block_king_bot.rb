@@ -45,7 +45,7 @@ bot.command(:help) do |event|
 		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
 		
-		プログラム : sou7
+		プログラム : @sou7#0094
 		テストプレイ : ねこらんさん、uuuさん、その他
 	EOS
 end

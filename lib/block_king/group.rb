@@ -55,7 +55,7 @@ class Group
 				m = [remaining_soldier, having_count].min
 				[remaining_soldier-m, force+m*attack_power]
 			end
-		fo + re
+		(re+fo).to_i
 	end
 	
 	def make_map(game_table)

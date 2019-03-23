@@ -31,6 +31,7 @@ bot.command(:rank) do |event|
 			.groups
 			.values
 			.sort_by{|g|g.force}
+			.reverse
 			.take(10)
 			.map
 			.with_index(1){|g, i|"第#{i}位 : `#{g.name}`"}
@@ -42,7 +43,6 @@ bot.command(:his) do |event|
 		"歴代王の記録\n"+
 		game_table
 			.kings_history
-			.reverse
 			.map
 			.with_index(1){|k,i|"第#{i}代 : `#{k.name}`"}
 			.join("\n")
@@ -72,7 +72,7 @@ begin
 		sleep(60 - Time.now.sec)
 		puts "定期処理 #{Time.now}"
 		game_table.turn()
-		if Time.now.min%5 == 0
+		if Time.now.min%15 == 0
 			puts "定時保存"
 			save_load.save
 		end

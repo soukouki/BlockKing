@@ -6,7 +6,9 @@ class UI < DiscordUIBase
 	private def msg(text)
 		server = @channel.server
 		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first}"
-		@channel.send_message(text)
+		characters_count_or_less_text(2000, text).each do |p_text|
+			@channel.send_message(p_text)
+		end
 	end
 	
 	def start(game_table)
@@ -29,7 +31,7 @@ class UI < DiscordUIBase
 			case @group.state
 			when :first_story
 				@group.state = nil
-				#first_story()
+				first_story()
 			when :ending
 				@group.state = nil
 				ending_story()

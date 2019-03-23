@@ -55,7 +55,7 @@ class Nature < Block
 			else
 				(level*2.0 * @remaining_items*1.0 / @maximum_items).ceil
 			end
-			[item, [count, group.soldier].min]
+			[item, [count, ((group.soldier*1.5 + 15) * rand(0.7..1)).to_i].min]
 		else
 			[]
 		end

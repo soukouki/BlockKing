@@ -151,4 +151,27 @@ class DiscordUIBase
 				.each{|emoji|msg.create_reaction(emoji)}
 		end
 	end
+	
+	# 結果の配列のテキストの最後の改行は、origin_textによる
+	# n文字以上改行がないテキストも受け入れるから少し長い
+	def characters_count_or_less_text(n, origin_text)
+		origin_text
+			.lines
+			.inject([]) do |arr,part_s| # なんか汚い
+				new_parts = (part_s.chomp.length/n.to_f)
+					.ceil
+					.times
+					.map.with_index do |i|
+						part_s[i*n..(i+1)*n]
+					end
+				
+				new_parts.inject(arr) do |arr, part|
+					if (arr.last||"").length+part.length >= n
+						arr+[part]
+					else
+						arr[0..-2]+[(arr[-1]||"")+part]
+					end
+				end
+			end
+	end
 end

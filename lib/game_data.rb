@@ -55,9 +55,9 @@ module GameData
 	end
 	
 	SWORD_ATTACK_POWER_HASH = {
-		COPPER_SWORD => 2,
-		IRON_SWORD => 4,
-		HIGH_IRON_SWORD => 7,
+		COPPER_SWORD => 1.5,
+		IRON_SWORD => 2.5,
+		HIGH_IRON_SWORD => 5,
 		FIRE_SWORD => 12,
 	}
 	CREATION_ITEMS_HASH = {
@@ -67,8 +67,8 @@ module GameData
 		},
 		"中炉" => {
 			{IRON_ORE => 15, WOOD => 30} => {IRON_SWORD => 5},
-			{HIGH_IRON_SWORD => 30, WOOD => 80} => {HIGH_IRON_SWORD => 5},
-			{FIRE_CRYSTAL => 5, BRICK => 10} => {FIRE_BRICK => 5},
+			{IRON_ORE => 30, WOOD => 80} => {HIGH_IRON_SWORD => 5},
+			{FIRE_CRYSTAL => 20, BRICK => 40} => {FIRE_BRICK => 20},
 		},
 		"炎炉" => {
 			{FIRE_CRYSTAL => 20, IRON_ORE => 50} => {FIRE_SWORD => 5},
@@ -77,7 +77,7 @@ module GameData
 	CAN_BUILD_LIST = {
 		LOW_LEVEL_FURNACE => {WOOD => 40},
 		MEDIUM_LEVEL_FURNACE => {BRICK => 40, WOOD => 10},
-		FIRE_FURNACE => {FIRE_BRICK => 80, BRICK => 40, WOOD => 20},
+		FIRE_FURNACE => {FIRE_BRICK => 60, BRICK => 40, WOOD => 20},
 	}
 	
 end

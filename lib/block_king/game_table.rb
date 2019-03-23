@@ -6,6 +6,7 @@ class GameTable
 		@ruler_table = {}
 		@ruler_table_mutex = Mutex.new
 		@groups = {}
+		@level = 100
 	end
 	
 	def group(id)
@@ -77,7 +78,7 @@ class GameTable
 	
 	def initial_pos
 		r = rand(0..Math::PI*2)
-		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*15).round})
+		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*((@level/6)+1)).ceil})
 	end
 	
 	private
@@ -102,11 +103,9 @@ class GameTable
 	def initial_ruler(pos)
 		case pos
 		when AbPos::CENTER
-			NPCEnemy.new(140)
+			NPCEnemy.new(level)
 		else
-			force = (
-				(140 / Math.log(Math.sqrt((pos.x).abs+(pos.y).abs)+0.5, 1.09)) * rand(0.7..(1/0.7))
-			).to_i
+			force = (140.0 / Math.sqrt((pos.x ** 2).abs+(pos.y ** 2).abs+1) * rand(0.7..(1/0.7))).to_i
 			NPCEnemy.new(force)
 		end
 	end

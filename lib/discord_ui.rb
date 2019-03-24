@@ -204,7 +204,7 @@ class UI < DiscordUIBase
 		enemy = ruler
 		if enemy == @group
 			msg(<<~EOS)
-				この場所は既に支配しています。
+				リーダー？もうここは支配済みですよ？
 			EOS
 			throw :return_no_map
 		end
@@ -225,7 +225,7 @@ class UI < DiscordUIBase
 				@add_msg << <<~EOS
 					<チュートリアル>
 					リーダー！ここではアイテムが取れそうです！私が行ってくるんで、リーダーはここで一分くらい待っててくださいね！
-					それはそうと、あっちの方には更地があって、なにか作れそうですよ？
+					ちなみに、あっちの方には更地があって、なにか作れそうですよ？帰ってきたら支配してみましょうよ！
 				EOS
 			end
 			true
@@ -336,6 +336,7 @@ class UI < DiscordUIBase
 			@add_msg << <<~EOS
 				<チュートリアル>
 				銅の剣ができました！この調子で鉄の剣も作っていきましょう！
+				ちなみに、敵が強いほどいっぱいアイテムが手に入るそうですよ？
 			EOS
 		end
 		true

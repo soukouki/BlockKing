@@ -82,16 +82,23 @@ class GameTable
 		not @groups.values.reject{|l|l == group}.select{|l|l.pos == pos}.empty?
 	end
 	
+	# 10進むごとに5倍の戦力、マンハッタン距離を使用
+	GO_DISTANCE = 10
+	UP_MAGNIFICATION = 3
 	def initial_pos(force)
-		r = rand(0..Math::PI*2)
-		AbPos.new(*[Math.cos(r), Math.sin(r)].map{|x|(x*((@game_level/force)+1)).ceil})
+		p_or_m = ->{rand(2)*2-1}
+		len = GO_DISTANCE*Math.log(1.0*@game_level/force, UP_MAGNIFICATION)
+		x_l = rand(0..len).round
+		y_l = (len-x_l).round
+		AbPos.new(x_l*p_or_m[], y_l*p_or_m[])
 	end
-	
 	def calc_level(pos)
+		len = pos.x.abs + pos.y.abs
+		return @game_level if len == 0
 		(
 			1.0 *
 			@game_level /
-			Math.sqrt((pos.x ** 2).abs+(pos.y ** 2).abs+1) *
+			UP_MAGNIFICATION**(1.0*len/GO_DISTANCE) *
 			rand(0.7..(1/0.7))
 		).ceil # 取れるアイテム数の関係
 	end
@@ -144,7 +151,7 @@ class GameTable
 				end
 				@block_table = {} # ブロック初期化！
 				@ruler_table = {} # ルーラー初期化！
-				@game_level = [@game_level*2, cleared_group.force].max
+				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*4].min
 				@groups.each do |id, group|
 					group.pos = initial_pos(group.force)
 					group.log.add_text(false, <<~EOS)

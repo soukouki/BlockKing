@@ -98,7 +98,7 @@ class Group
 			#{5.times.reverse_each.map{|y|ll[y-2]+"\n"+ol[y-2]+"\n"+bl}.join("\n")}
 			#{al}
 			```
-			G...他のグループ
+			Y:現在地, G:他のグループ
 		EOS
 	end
 	
@@ -160,7 +160,7 @@ class Group
 	end
 	
 	def weaken_at_win(sync_log)
-		count = rand(0..1.0*@soldier/6).round
+		count = rand(0..1.0*Math.log(@soldier, 2)).round
 		if count != 0
 			@soldier += count
 			@log.add_text(sync_log, "戦闘に勝利し、`#{count}`人が加わりました！")
@@ -221,7 +221,7 @@ class Group
 		ang = (y<0)? 360-ac_ang : ac_ang
 		piece = 360.0/(8*2)
 		str = ["西", "南西", "南", "南東", "東", "北東", "北", "北西"][((ang/piece)/2).round % 8]
-		"王都は"+str+"の方向。"
+		"王城は"+str+"の方向。"
 	end
 end
 

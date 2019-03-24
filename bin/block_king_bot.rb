@@ -4,17 +4,31 @@ require_relative "../lib/discord_ui"
 require_relative "../lib/save_load"
 
 token = ARGV[0]
+is_maintenance = false
 
 bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
 
-save_load = SaveLoad.new("data", ->{GameTable.new})
-game_table = save_load.value
+unless is_maintenance
+	save_load = SaveLoad.new("data", ->{GameTable.new})
+	game_table = save_load.value
+end
 
 # ハッシュの中にハッシュが入ってる
 uis = {}
 bot.command(:k) do |event|
+	if is_maintenance
+		event.respond <<~EOS
+			現在、メンテナンス中です。終了時刻は数分後です。しばらくお待ち下さい。
+		EOS
+	end
 	user = event.user
 	old_ui = uis[user.id]
+	if user.bot_account?
+		return <<~EOS
+			現在、BOTはプレイできません。
+			いつか開発するBOT対戦機能をご期待下さい！
+		EOS
+	end
 	
 	if old_ui.nil?
 		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
@@ -67,6 +81,8 @@ bot.command(:help) do |event|
 		このbotでは、ユーザーネームが公開されます。
 		公衆良俗に反するようなユーザーネームの場合、削除することがあります。
 		プログラムの更新等により、セーブデータに影響が出ないよう努力しますが、場合によっては影響が出る場合があります。
+		
+		https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot
 	EOS
 end
 bot.command(:exit) do |event|
@@ -76,7 +92,11 @@ bot.command(:exit) do |event|
 end
 
 bot.ready do
-	bot.game = "ゲームスタートは`Bk`(Bは大文字)"
+	bot.game = if is_maintenance
+		"現在メンテ中"
+	else
+		"ゲームスタートはBk(Bは大文字)"
+	end
 end
 
 bot.run :async

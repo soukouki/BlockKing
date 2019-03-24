@@ -3,6 +3,7 @@ require "discordrb"
 require_relative "../lib/discord_ui_base"
 
 class UI < DiscordUIBase
+	attr_accessor :channel
 	private def msg(text)
 		server = @channel.server
 		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first}"
@@ -103,7 +104,7 @@ class UI < DiscordUIBase
 	def map()
 		constant_text = <<~EOS
 			#{@group.make_map(@game_table)}
-			現在の位置は(#{pos})です。#{Group.direction_of_castle(pos)}
+			現在の位置は(#{pos})、#{Group.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテム・その他情報は(`i`)
 		EOS
@@ -130,7 +131,11 @@ class UI < DiscordUIBase
 		end + if block.get_items_when_turning.nil?
 			""
 		else
-			"ここのアイテムは"+block.remaining_items_text
+			"ここのアイテムは"+block.remaining_items_text+"\n"
+		end + if @game_table.groups_by_pos(pos).length == 1 # 自分を含めて
+			""
+		else
+			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.inject("、")+"がいます。\n"
 		end
 		if @group.tutorial_level == 0
 			@group.tutorial_level = 1

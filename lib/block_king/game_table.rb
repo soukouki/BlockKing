@@ -14,6 +14,9 @@ class GameTable
 	def group(id)
 		@groups[id]
 	end
+	def groups_by_pos(pos)
+		@groups.values.select{|g|g.pos == pos}
+	end
 	def add_group(group)
 		@groups[group.id] = group
 	end

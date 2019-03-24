@@ -10,6 +10,7 @@ bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
 save_load = SaveLoad.new("data", ->{GameTable.new})
 game_table = save_load.value
 
+# ハッシュの中にハッシュが入ってる
 uis = {}
 bot.command(:k) do |event|
 	user = event.user
@@ -18,10 +19,13 @@ bot.command(:k) do |event|
 	if old_ui.nil?
 		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)
-	else
-		old_ui = uis[user.id]
+	elsif old_ui.channel == event.channel
 		old_ui.stop_waiting()
 		old_ui.start(game_table)
+	else
+		old_ui.stop_waiting()
+		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
+		ui.start(game_table)
 	end
 end
 bot.command(:rank) do |event|
@@ -55,10 +59,20 @@ bot.command(:help) do |event|
 		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
 		`Bhis` : 過去の王が見れます。
+		`Bexit` : コマンドに反応しないようになります。
 		
 		プログラム : @sou7#0094
 		テストプレイ : ねこらんさん、uuuさん、その他
+		
+		このbotでは、ユーザーネームが公開されます。
+		公衆良俗に反するようなユーザーネームの場合、削除することがあります。
+		プログラムの更新等により、セーブデータに影響が出ないよう努力しますが、場合によっては影響が出る場合があります。
 	EOS
+end
+bot.command(:exit) do |event|
+	ui = uis[event.user.id]
+	ui&.stop_waiting()
+	"反応しないようになりました。"
 end
 
 bot.ready do

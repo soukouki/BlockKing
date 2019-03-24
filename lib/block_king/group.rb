@@ -61,7 +61,7 @@ class Group
 	def make_map(game_table)
 		l = lambda do |x, y|
 			ypos = (x==0 && y==0)? "Y" : " "
-			game_table.is_there_a_group_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? " #{ypos}L " : " #{ypos}  "
+			game_table.is_there_a_group_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? " #{ypos}G " : " #{ypos}  "
 		end
 		ll = lambda do |y|
 			"   |"+
@@ -98,8 +98,7 @@ class Group
 			#{5.times.reverse_each.map{|y|ll[y-2]+"\n"+ol[y-2]+"\n"+bl}.join("\n")}
 			#{al}
 			```
-			Y...あなたのいる位置
-			L...他のリーダー
+			G...他のグループ
 		EOS
 	end
 	

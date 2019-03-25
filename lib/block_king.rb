@@ -37,7 +37,10 @@ class Block
 		false
 	end
 	def creation_items
-		GameData::CREATION_ITEMS_HASH[name] || {}
+		GameData::CREATION_ITEMS_HASH[self.class] || {}
+	end
+	def map_name
+		name
 	end
 end
 class Nature < Block

@@ -70,7 +70,7 @@ class Group
 				.join("|")+"|"
 		end
 		o = lambda do |x, y|
-			game_table.block(@pos.diff_to_ab_pos(x, y)).to_s
+			game_table.block(@pos.diff_to_ab_pos(x, y)).map_name
 		end
 		ol = lambda do |y|
 			fullwidth_count = 0
@@ -79,7 +79,7 @@ class Group
 				.map{|i|i-2}
 				.map{|x|[x, o[x, y]]}
 				.map do |(x, s)|
-					fullwidth_count += s.length - s.count(" ")
+					fullwidth_count += s.length - s.count(" 0-9a-zA-Z")
 					if fullwidth_count>=4 && x<2
 						fullwidth_count -= 4
 						s+" "
@@ -160,7 +160,7 @@ class Group
 	end
 	
 	def weaken_at_win(sync_log)
-		count = rand(0..1.0*Math.log(@soldier, 2)).round
+		count = rand(0..Math.log(@soldier, 2)).round
 		if count != 0
 			@soldier += count
 			@log.add_text(sync_log, "戦闘に勝利し、`#{count}`人が加わりました！")

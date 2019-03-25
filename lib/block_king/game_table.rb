@@ -110,21 +110,31 @@ class GameTable
 		when AbPos::CENTER
 			GameData::CASTLE
 		else
-			case rand(5)
+			case rand(8)
 			when 0
-				case rand(10)
+				case rand(14)
 				when 0, 1, 2
 					GameData::IRON_MINE
 				when 3, 4, 5
 					GameData::COPPER_MINE
 				when 6, 7, 8
 					GameData::MARSH
-				else # 9
+				when 9 , 10
+					GameData::LIME_MINE
+				when 11 # ちょっと量を減らす
+					GameData::COAL_MINE
+				when 12
 					GameData::FIRE_CRYSTAL_MINE
+				else
+					if rand(4) == 0
+						GameData::GOLD_MINE
+					else
+						GameData::SILVER_MINE
+					end
 				end
-			when 1, 2
+			when 1, 2, 3
 				GameData::FOREST
-			else # 3, 4
+			else # 4, 5, 6, 7
 				GameData::EMPTY
 			end
 		end.new(calc_level(pos))

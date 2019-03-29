@@ -18,17 +18,17 @@ uis = {}
 bot.command(:k) do |event|
 	if is_maintenance
 		event.respond <<~EOS
-			現在、メンテナンス中です。終了時刻は19時30分頃予定です。しばらくお待ち下さい。
+			現在、メンテナンス中です。終了時刻は3時45分頃予定です。しばらくお待ち下さい。
 		EOS
 	end
 	user = event.user
-	old_ui = uis[user.id]
 	if user.bot_account?
 		return <<~EOS
 			現在、BOTはプレイできません。
 			いつか開発するBOT対戦機能をご期待下さい！
 		EOS
 	end
+	old_ui = uis[user.id]
 	
 	if old_ui.nil?
 		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
@@ -90,6 +90,18 @@ bot.command(:exit) do |event|
 	ui&.stop_waiting()
 	"反応しないようになりました。"
 end
+bot.command(:end) do |event|
+	next unless event.user==bot.bot_app.owner
+	uis
+		.values
+		.select{|ui|ui.latest_msg_time > Time.now-120}
+		.each{|ui|ui.msg("再起動を行います。30秒ほど待った後、`Bk`でスタートしてください。")}
+	s = Time.now
+	puts "臨時保存開始 #{s}"
+	save_load&.save
+	puts "臨時保存終了 #{Time.now-s}"
+	exit
+end
 
 bot.ready do
 	bot.game = if is_maintenance
@@ -105,13 +117,17 @@ begin
 	loop do
 		sleep(60 - Time.now.sec)
 		puts "定期処理 #{Time.now}"
-		game_table.turn()
+		game_table&.turn()
 		if Time.now.min%15 == 0
+			s = Time.now
 			puts "定時保存"
-			save_load.save
+			save_load&.save
+			puts "定時保存完了 #{Time.now-s}"
 		end
 	end
 ensure
-	puts "エラー時終了処理"
+	puts "例外保存"
 	save_load.save
+	puts "例外保存終了"
+	puts "例外終了"
 end

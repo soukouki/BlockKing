@@ -110,7 +110,7 @@ class GameTable
 		when AbPos::CENTER
 			GameData::CASTLE
 		else
-			case rand(8)
+			case rand(6)
 			when 0
 				case rand(14)
 				when 0, 1, 2
@@ -119,9 +119,9 @@ class GameTable
 					GameData::COPPER_MINE
 				when 6, 7, 8
 					GameData::MARSH
-				when 9 , 10
+				when 9
 					GameData::LIME_MINE
-				when 11 # ちょっと量を減らす
+				when 10, 11
 					GameData::COAL_MINE
 				when 12
 					GameData::FIRE_CRYSTAL_MINE
@@ -132,9 +132,9 @@ class GameTable
 						GameData::SILVER_MINE
 					end
 				end
-			when 1, 2, 3
+			when 1, 2
 				GameData::FOREST
-			else # 4, 5, 6, 7
+			else # 3, 4, 5
 				GameData::EMPTY
 			end
 		end.new(calc_level(pos))
@@ -153,6 +153,7 @@ class GameTable
 		@block_table_mutex.synchronize do
 			@ruler_table_mutex.synchronize do
 				@block_table.each do |pos, block|
+					p block.class
 					if block.is_a?(Building)
 						block.need_items do |item, count|
 							block.builder.add_item(false, "#{block}を建て", item, count)

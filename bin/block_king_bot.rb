@@ -18,15 +18,17 @@ uis = {}
 bot.command(:k) do |event|
 	if is_maintenance
 		event.respond <<~EOS
-			現在、メンテナンス中です。終了時刻は3時45分頃予定です。しばらくお待ち下さい。
+			現在、メンテナンス中です。終了時刻は18時00分頃予定です。しばらくお待ち下さい。
 		EOS
+		next
 	end
 	user = event.user
 	if user.bot_account?
-		return <<~EOS
+		<<~EOS
 			現在、BOTはプレイできません。
 			いつか開発するBOT対戦機能をご期待下さい！
 		EOS
+		next
 	end
 	old_ui = uis[user.id]
 	
@@ -43,16 +45,17 @@ bot.command(:k) do |event|
 	end
 end
 bot.command(:rank) do |event|
+	sorted_groups = game_table
+		.groups
+		.sort_by{|id, g|g.force}
+		.reverse
+	rank = sorted_groups.find_index{|id,g|id == event.user.id}&.+(1)
 	event.respond(
-		"ランキング\n"+
-		game_table
-			.groups
-			.values
-			.sort_by{|g|g.force}
-			.reverse
+		"ランキング(#{(rank.nil?)? "あなたはまだ参加していません！Bkで参加できますよ！" : "あなたの順位は#{rank}位です！"})\n"+
+		sorted_groups
 			.take(10)
 			.map
-			.with_index(1){|g, i|"第#{i}位 : `#{g.name}`"}
+			.with_index(1){|(id, g), i|"第#{i}位 : `#{g.name}`"}
 			.join("\n")
 	)
 end
@@ -81,8 +84,10 @@ bot.command(:help) do |event|
 		このbotでは、ユーザーネームが公開されます。
 		公衆良俗に反するようなユーザーネームの場合、削除することがあります。
 		プログラムの更新等により、セーブデータに影響が出ないよう努力しますが、場合によっては影響が出る場合があります。
+		bot、外部ツール等を使ってのプレイは、公平性の面と、PCへの負荷のため禁止します。
 		
-		https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot
+		招待URL : https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot
+		公式サーバー : https://discord.gg/nJ5QVJu
 	EOS
 end
 bot.command(:exit) do |event|
@@ -96,10 +101,7 @@ bot.command(:end) do |event|
 		.values
 		.select{|ui|ui.latest_msg_time > Time.now-120}
 		.each{|ui|ui.msg("再起動を行います。30秒ほど待った後、`Bk`でスタートしてください。")}
-	s = Time.now
-	puts "臨時保存開始 #{s}"
-	save_load&.save
-	puts "臨時保存終了 #{Time.now-s}"
+	# ensureに入る
 	exit
 end
 
@@ -125,9 +127,9 @@ begin
 			puts "定時保存完了 #{Time.now-s}"
 		end
 	end
-ensure
+ensure # Bend時はこの部分を実行する
 	puts "例外保存"
-	save_load.save
+	save_load&.save
 	puts "例外保存終了"
 	puts "例外終了"
 end

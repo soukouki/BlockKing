@@ -24,11 +24,12 @@ module GameData
 	FIRE_SWORD = Item.new("火の剣")
 	WOOD_CRYSTAL = Item.new("木の結晶")
 	WOOD_SWORD = Item.new("木の剣")
-	INFERIOR_DARK_CRYSTAL = Item.new("劣化闇の結晶")
-	DARK_CRYSTAL = Item.new("闇の結晶")
 	INFERIOR_LIGHT_CRYSTAL = Item.new("劣化光の結晶")
 	INFERIOR_LIGHT_SWORD = Item.new("劣・光の剣")
+	INFERIOR_DARK_CRYSTAL = Item.new("劣化闇の結晶")
+	INFERIOR_DARK_SWORD = Item.new("劣・闇の剣")
 	LIGHT_CRYSTAL = Item.new("光の結晶")
+	DARK_CRYSTAL = Item.new("闇の結晶")
 	
 	BLAZE_CRYSTAL = Item.new("炎の結晶")
 	BLAZE_BRICK = Item.new("炎のレンガ")
@@ -40,8 +41,9 @@ module GameData
 		IRON_SWORD => 2.5,
 		HIGH_IRON_SWORD => 5,
 		FIRE_SWORD => 12,
-		WOOD_SWORD => 30,
-		INFERIOR_LIGHT_SWORD => 70,
+		WOOD_SWORD => 40,
+		INFERIOR_LIGHT_SWORD => 100,
+		INFERIOR_DARK_SWORD => 200,
 	}
 	
 	SORT_ORDER = [
@@ -129,6 +131,10 @@ module GameData
 		def name; "金属の精錬台" end
 		def map_name; "金錬" end
 	end
+	class ANCIENT_REFINERY < Building
+		def name; "古の精錬台" end
+		def map_name; "古錬" end
+	end
 	
 	CREATION_ITEMS_HASH = {
 		LOW_LEVEL_FURNACE => {
@@ -146,23 +152,28 @@ module GameData
 			{FIRE_CRYSTAL => 20, IRON_ORE => 50} => {FIRE_SWORD => 5},
 			{FIRE_CRYSTAL => 200} => {INFERIOR_MAGIC_CRYSTAL => 10},
 			{FIRE_CRYSTAL => 4000} => {INFERIOR_MAGIC_CRYSTAL => 200},
-			{FIRE_CRYSTAL => 300, CLAY => 400} => {FIRE_BRICK => 200},
+			{FIRE_CRYSTAL => 600, CLAY => 800} => {FIRE_BRICK => 400},
 		},
 		INFERIOR_MAGIC_WORKBENCH => {
-			{INFERIOR_MAGIC_CRYSTAL => 50, WOOD_CRYSTAL => 800} => {WOOD_SWORD => 10},
+			{INFERIOR_MAGIC_CRYSTAL => 50, WOOD_CRYSTAL => 600} => {WOOD_SWORD => 10},
 			{INFERIOR_MAGIC_CRYSTAL => 100, INFERIOR_LIGHT_CRYSTAL => 40} => {INFERIOR_LIGHT_SWORD => 10},
+			{INFERIOR_MAGIC_CRYSTAL => 400, INFERIOR_DARK_CRYSTAL => 80} => {INFERIOR_DARK_SWORD => 20},
 		},
 		WOOD_REFINERY => {
-			{WOOD => 10000} => {WOOD_CRYSTAL => 400},
+			{WOOD => 20000} => {WOOD_CRYSTAL => 800},
+			{WOOD_CRYSTAL => 800} => {INFERIOR_MAGIC_CRYSTAL => 200},
 		},
 		LARGE_FURNACE => {
-			{GOLD_ORE => 1000, COAL => 500} => {GOLD => 350},
-			{SILVER_ORE => 1000, COAL => 700} => {SILVER => 350},
-			{COPPER_ORE => 1000, COAL => 1000} => {COPPER => 350},
-			{IRON_ORE => 1000, COAL => 1000, LIME => 500} => {IRON => 350},
+			{GOLD_ORE => 1200, COAL => 600} => {GOLD => 400}, # 1 : 1/2 : 3/1
+			{SILVER_ORE => 3600, COAL => 2800} => {SILVER => 1200}, # 1 : 4/5 : 3/1
+			{COPPER_ORE => 6000, COAL => 6000} => {COPPER => 2000}, # 1 :  1  : 3/1
+			{IRON_ORE => 9000, COAL => 9000, LIME => 4500} => {IRON => 3000}, # 1 : 1 : 2/1 : 3/1
 		},
 		METAL_REFINERY => {
-			{INFERIOR_MAGIC_CRYSTAL => 200, GOLD => 400, SILVER => 1200, COPPER => 3200, IRON => 4000, FIRE_CRYSTAL => 2000} => {INFERIOR_LIGHT_CRYSTAL => 20},
+			{INFERIOR_MAGIC_CRYSTAL => 200, GOLD => 400, SILVER => 1200, COPPER => 2000, IRON => 3000, FIRE_CRYSTAL => 2000} => {INFERIOR_LIGHT_CRYSTAL => 20},
+		},
+		ANCIENT_REFINERY => {
+			{INFERIOR_MAGIC_CRYSTAL => 1000, COAL => 100000, LIME => 100000} => {INFERIOR_DARK_CRYSTAL => 40},
 		},
 	}
 	CAN_BUILD_LIST = {
@@ -173,6 +184,7 @@ module GameData
 		WOOD_REFINERY => {INFERIOR_MAGIC_CRYSTAL => 100, GOLD => 5, SILVER => 20},
 		LARGE_FURNACE => {FIRE_BRICK => 1000, WOOD => 2000},
 		METAL_REFINERY => {INFERIOR_MAGIC_CRYSTAL => 200, IRON => 100},
+		ANCIENT_REFINERY => {INFERIOR_MAGIC_CRYSTAL => 500, FIRE_CRYSTAL => 5000, FIRE_BRICK => 2000},
 	}
 	
 end

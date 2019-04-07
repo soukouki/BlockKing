@@ -13,7 +13,7 @@ class UI < DiscordUIBase
 	
 	def msg(text)
 		server = @channel.server
-		print "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first}\r"
+		print "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first.chomp}\r"
 		@latest_msg_time = Time.now
 		characters_count_or_less_text(2000, text).each do |p_text|
 			@channel.send_message(p_text)
@@ -100,6 +100,7 @@ class UI < DiscordUIBase
 			
 			「リーダー...ここまで、長かったですね...
 			また、新しい夢を作って、叶えていきましょう！」
+			
 			<ゲームクリアです！>
 		EOS
 		text
@@ -143,7 +144,7 @@ class UI < DiscordUIBase
 		end + if @game_table.groups_by_pos(pos).length == 1 # 自分を含めて
 			""
 		else
-			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.inject("、")+"がいます。\n"
+			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.join("、")+"がいます。\n"
 		end
 		if @group.tutorial_level == 0
 			@group.tutorial_level = 1
@@ -155,7 +156,6 @@ class UI < DiscordUIBase
 					左(西)には`a`
 					右(東)には`d`
 					下(南)には`s` です！
-				PCゲームでおなじみの移動法です！
 			EOS
 		end
 		
@@ -167,29 +167,29 @@ class UI < DiscordUIBase
 		wait_respons do |res|
 			catch(:return_no_map) do
 				case res
-				when "w"
+				when "w", "W"
 					move(0, 1)
-				when "a"
+				when "a", "A"
 					move(-1, 0)
-				when "s"
+				when "s", "S"
 					move(0, -1)
-				when "d"
+				when "d", "D"
 					move(1, 0)
-				when "i"
+				when "i", "I"
 					text = if items.empty?
 						"現在アイテムは持っていません。"
 					else
-						items.map{|i,c|"#{i} : `#{c}`"}.join("\n")
+						items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : `#{c}`"}.join("\n")
 					end
-					msg(text+"\n兵士 : `#{@group.soldier}`")
+					msg("兵士 : `#{@group.soldier}`\n"+text)
 					throw :return_no_map
-				when "x"
+				when "x", "X"
 					war()
-				when "c"
+				when "c", "C"
 					build_building()
-				when "v"
+				when "v", "V"
 					remove_building()
-				when "u"
+				when "u", "U"
 					craft_using_building()
 				end
 			end
@@ -202,7 +202,7 @@ class UI < DiscordUIBase
 			@add_msg << <<~EOS
 				<チュートリアル>
 				無事に移動できました！
-				敵は王城から離れるほど弱くなります！
+				敵は王城から離れるほど弱くなります！自分たちにあった強さの敵を選びましょう！
 			EOS
 		end
 		result = @group.move(@game_table, x, y)
@@ -233,8 +233,8 @@ class UI < DiscordUIBase
 				@group.tutorial_level = 3
 				@add_msg << <<~EOS
 					<チュートリアル>
-					リーダー！ここではアイテムが取れそうです！私が行ってくるんで、リーダーはここで一分くらい待っててくださいね！
-					ちなみに、あっちの方には更地があって、なにか作れそうですよ？帰ってきたら支配してみましょうよ！
+					上手く支配できましたね！それにしてもここは資源が採れそうです、ここで1分くらい待ってくださいね！私が資源を採っておきます。
+					ちなみに、あっちの方には更地があって、なにか建てられそうですよ？帰ってきたら支配してみましょうよ！
 				EOS
 			end
 			true
@@ -283,7 +283,7 @@ class UI < DiscordUIBase
 			if res == "ret"
 				return true
 			end
-			sel = select_block[res.to_str]
+			sel = select_block[res.to_str.downcase]
 			catch(:return_inner_wait) do
 				unless sel.nil?
 					result_tuple(@group.build(@game_table, sel[0].new(@game_table.calc_level(pos), @group)), :return_inner_wait)
@@ -333,7 +333,7 @@ class UI < DiscordUIBase
 			if res == "ret"
 				return true
 			end
-			recipe = creation_items[res.to_str]
+			recipe = creation_items[res.to_str.downcase]
 			catch(:return_inner_wait) do
 				unless recipe.nil?
 					result_tuple(@group.craft_using_building(@game_table, recipe), :return_inner_wait)

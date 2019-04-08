@@ -88,7 +88,7 @@ class GameTable
 	def initial_pos(force)
 		p_or_m = ->{rand(2)*2-1}
 		len = GO_DISTANCE*Math.log(1.0*@game_level/force, UP_MAGNIFICATION)
-		return AbPos.new(0, 0) if len == 0
+		return AbPos.new(0, 0) if len < 0
 		x_l = rand(0..len).round
 		y_l = (len-x_l).round
 		AbPos.new(x_l*p_or_m[], y_l*p_or_m[])
@@ -153,18 +153,16 @@ class GameTable
 	def game_clear(cleared_group)
 		@block_table_mutex.synchronize do
 			@ruler_table_mutex.synchronize do
-				# セーブデータのbuilderに変な値が入っているので、とりあえずコメントアウト
-				#@block_table
-				#	.select{|pos,block|block.is_a?(Building)}
-				#	.each do |pos, block|
-				#		p [block, block.builder]
-				#		block.need_items.each do |item, count|
-				#			block.builder.add_item(false, "#{block}を建てていたため", item, count)
-				#		end
-				#	end
+				@block_table
+					.select{|pos,block|block.is_a?(Building)}
+					.each do |pos, block|
+						block.need_items.each do |item, count|
+							block.builder.add_item(false, "#{block}を建てていたため", item, count)
+						end
+					end
 				@ruler_table = {} # ルーラー初期化！
 				@block_table = {} # ブロック初期化！
-				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min
+				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
 				@groups.each do |id, group|
 					group.pos = initial_pos(group.force)
 					group.log.add_text(false, <<~EOS)

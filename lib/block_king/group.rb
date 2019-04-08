@@ -188,6 +188,8 @@ class Group
 	def compare_force(enemy)
 		# インフレしたらいろいろ入れてみたい
 		case 1.0 * enemy.force / force
+		when 0..0.01
+			"敵は噂を聞いただけで逃げていく"
 		when 0..0.1
 			"敵が裸足で逃げていく"
 		when 0..0.3
@@ -208,8 +210,10 @@ class Group
 			"敵は余裕で負ける"
 		when 0..(1/0.1)
 			"敵は逃げたくなるような"
-		else
+		when 0..(1/0.01)
 			"敵は裸足で逃げたくなるような"
+		else
+			"敵は噂だけで逃げたくなるような"
 		end
 	end
 	

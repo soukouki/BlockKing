@@ -174,4 +174,12 @@ class DiscordUIBase
 				end
 			end
 	end
+	
+	def slow_message(text)
+		text
+			.lines
+			.map(&:chomp)
+			.each{|line|sleep 1; line.empty? || msg(line)}
+	end
+	
 end

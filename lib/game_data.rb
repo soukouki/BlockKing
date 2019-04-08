@@ -24,10 +24,12 @@ module GameData
 	FIRE_SWORD = Item.new("火の剣")
 	WOOD_CRYSTAL = Item.new("木の結晶")
 	WOOD_SWORD = Item.new("木の剣")
-	INFERIOR_LIGHT_CRYSTAL = Item.new("劣化光の結晶")
-	INFERIOR_LIGHT_SWORD = Item.new("劣・光の剣")
-	INFERIOR_DARK_CRYSTAL = Item.new("劣化闇の結晶")
-	INFERIOR_DARK_SWORD = Item.new("劣・闇の剣")
+	# 先にアイテム名を変更したので、内部名はまだ変わっていません。
+	# 時間空いたら取り組む！
+	INFERIOR_LIGHT_CRYSTAL = Item.new("明の結晶")
+	INFERIOR_LIGHT_SWORD = Item.new("明の剣")
+	INFERIOR_DARK_CRYSTAL = Item.new("暗の結晶")
+	INFERIOR_DARK_SWORD = Item.new("暗の剣")
 	LIGHT_CRYSTAL = Item.new("光の結晶")
 	DARK_CRYSTAL = Item.new("闇の結晶")
 	
@@ -42,8 +44,8 @@ module GameData
 		HIGH_IRON_SWORD => 5,
 		FIRE_SWORD => 12,
 		WOOD_SWORD => 40,
-		INFERIOR_LIGHT_SWORD => 100,
-		INFERIOR_DARK_SWORD => 200,
+		INFERIOR_LIGHT_SWORD => 120,
+		INFERIOR_DARK_SWORD => 360,
 	}
 	
 	SORT_ORDER = [

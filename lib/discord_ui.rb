@@ -42,8 +42,12 @@ class UI < DiscordUIBase
 				@group.state = nil
 				first_story()
 			when :ending
+				@group.state = :ending2
+				ending_story1()
+				break
+			when :ending2
 				@group.state = nil
-				ending_story()
+				ending_story2()
 			else
 				map()
 			end
@@ -66,7 +70,7 @@ class UI < DiscordUIBase
 	end
 	
 	def first_story()
-		text = <<~EOS
+		slow_message(<<~EOS)
 			・・・・・・・・・・
 			
 			戦いばかりが続くこの国。
@@ -79,14 +83,10 @@ class UI < DiscordUIBase
 			
 			「リーダー！そんなのんびりしてたら、おいてっちゃいますよー！？」
 		EOS
-		text
-			.lines
-			.map(&:chomp)
-			.each{|line|sleep 1; line.empty? || msg(line)}
 	end
 	
-	def ending_story()
-		text = <<~EOS
+	def ending_story1()
+		slow_message(<<~EOS)
 			・・・・・・・・・・
 			
 			
@@ -102,12 +102,31 @@ class UI < DiscordUIBase
 			また、新しい夢を作って、叶えていきましょう！」
 			
 			<ゲームクリアです！>
+			(`Bk`で続きます。)
 		EOS
-		text
-			.lines
-			.map(&:chomp)
-			.each{|line|sleep 1; line.empty? || msg(line)}
 		sleep 5
+	end
+	
+	def ending_story2()
+		slow_message(<<~EOS)
+			・・・・・・・・・・
+			
+			数年がたったある日、突如それは起こった。
+			部下の一人が、兵士を伴って反乱を起こしたのだ。
+			通路で応戦し、
+			反乱に加わらなかった兵士と合流し・・・
+			
+			なんとか隠し通路から逃げ切ることは出来た。
+			だが、
+			王の権力は乗っ取られ、
+			兵士も半分になり、
+			武器は兵士が持っていた分のみ。
+			
+			果たして、この青年は王座を奪還することができるのだろうか・・・？
+			
+			「減ったとしても、貴方を信頼してついてきてくれた仲間がいるんです！
+			諦めずに行かないと！」
+		EOS
 	end
 	
 	def map()
@@ -264,7 +283,7 @@ class UI < DiscordUIBase
 		select_text = select_block
 			.map do |char, (block_class, need_items)|
 				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
-				block = block_class.new(@game_table.calc_level(pos), @group)
+				block = block_class.new(@group, @game_table.calc_level(pos))
 				"`#{char}` : "+(
 					if can_build
 						"#{block.name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
@@ -286,7 +305,7 @@ class UI < DiscordUIBase
 			sel = select_block[res.to_str.downcase]
 			catch(:return_inner_wait) do
 				unless sel.nil?
-					result_tuple(@group.build(@game_table, sel[0].new(@game_table.calc_level(pos), @group)), :return_inner_wait)
+					result_tuple(@group.build(@game_table, sel[0].new(@group, @game_table.calc_level(pos))), :return_inner_wait)
 				end
 			end
 		end

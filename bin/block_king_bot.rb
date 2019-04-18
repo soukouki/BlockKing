@@ -18,7 +18,7 @@ uis = {}
 bot.command(:k) do |event|
 	if is_maintenance
 		event.respond <<~EOS
-			現在、メンテナンス中です。終了時刻は23時10分頃予定です。しばらくお待ち下さい。
+			現在、メンテナンス中です。終了時刻は16時30分頃予定です。しばらくお待ち下さい。
 		EOS
 		next
 	end

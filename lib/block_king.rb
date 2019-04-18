@@ -65,16 +65,18 @@ class Nature < Block
 	end
 	def remaining_items_text
 		case 1.0 * @remaining_items / @maximum_items
-		when -Float::INFINITY..0.1
-			"殆ど残っていなさそうです。"
-		when 0..0.3
-			"残り少なくなりました。移ったほうがいいかもしれません。"
-		when 0..0.5
-			"だいぶ減ってきました。"
-		when 0..0.9
-			"まだまだあります！"
-		else
+		when 0.9..Float::INFINITY
 			"たくさんあります！"
+		when 0.7..1
+			"まだまだあります！"
+		when 0.5..1
+			"だいぶ減ってきました。"
+		when 0.3..1
+			"残り少なくなりました。移ったほうがいいかもしれません。"
+		when 0.1..1
+			"もう少ししか残っていません。移ったほうがいいかもしれません。"
+		else
+			"殆ど残ってなさそうです。移ったほうがいいでしょう。"
 		end
 	end
 	def get_items_when_turning; nil end

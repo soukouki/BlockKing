@@ -24,8 +24,7 @@ module GameData
 	FIRE_SWORD = Item.new("火の剣")
 	WOOD_CRYSTAL = Item.new("木の結晶")
 	WOOD_SWORD = Item.new("木の剣")
-	# 先にアイテム名を変更したので、内部名はまだ変わっていません。
-	# 時間空いたら取り組む！
+	# 新しい英語訳が見つからないので、とりあえずはこのままで
 	INFERIOR_LIGHT_CRYSTAL = Item.new("明の結晶")
 	INFERIOR_LIGHT_SWORD = Item.new("明の剣")
 	INFERIOR_DARK_CRYSTAL = Item.new("暗の結晶")
@@ -38,14 +37,15 @@ module GameData
 	BLAZE_SWORD = Item.new("炎の剣")
 	
 	
+	# 攻撃力順に並べる！
 	SWORD_ATTACK_POWER_HASH = {
 		COPPER_SWORD => 1.5,
 		IRON_SWORD => 2.5,
 		HIGH_IRON_SWORD => 5,
 		FIRE_SWORD => 12,
-		WOOD_SWORD => 40,
-		INFERIOR_LIGHT_SWORD => 120,
-		INFERIOR_DARK_SWORD => 360,
+		WOOD_SWORD => 60,
+		INFERIOR_LIGHT_SWORD => 300,
+		INFERIOR_DARK_SWORD => 500,
 	}
 	
 	SORT_ORDER = [
@@ -94,11 +94,13 @@ module GameData
 		def get_items_when_turning; CLAY end
 	end
 	class LIME_MINE < Nature
-		def name; "石灰" end
+		def name; "石灰鉱山" end
+		def map_name; "石灰" end
 		def get_items_when_turning; LIME end
 	end
 	class COAL_MINE < Nature
-		def name; "石炭" end
+		def name; "石炭鉱山" end
+		def map_name; "石炭" end
 		def get_items_when_turning; COAL end
 	end
 	class FIRE_CRYSTAL_MINE < Nature
@@ -136,6 +138,10 @@ module GameData
 	class ANCIENT_REFINERY < Building
 		def name; "古の精錬台" end
 		def map_name; "古錬" end
+	end
+	class NORMAK_MAGIC_WORKBENCH < Building
+		def name; "魔法作業台" end
+		def map_name; "普魔" end
 	end
 	
 	CREATION_ITEMS_HASH = {

@@ -5,7 +5,8 @@ class Group
 	def initialize(id, game_table)
 		@id = id
 		@name = ""
-		initial_soldier_and_items()
+		@soldier = 6
+		@items = {}
 		@pos = game_table.initial_pos(@soldier)
 		@state = :first_story
 		@log = LogBasket.new
@@ -45,17 +46,23 @@ class Group
 		end
 	end
 	
-	def force
-		re, fo = GameData::SWORD_ATTACK_POWER_HASH
+	def weapon_allocation
+		remaining_soldier, weapon_allocation = GameData::SWORD_ATTACK_POWER_HASH
 			.to_a
-			.sort_by{|i,atk|atk}
 			.reverse
-			.map{|sword,atk|[atk, @items[sword]||0]}
-			.reduce([@soldier, 0]) do |(remaining_soldier, force), (attack_power, having_count)|
+			.map{|sword,atk|[sword, @items[sword]||0]}
+			.reduce([@soldier, {}]) do |(remaining_soldier, weapon_allocation), (sword, having_count)|
 				m = [remaining_soldier, having_count].min
-				[remaining_soldier-m, force+m*attack_power]
+				weapon_allocation[sword] = m unless m == 0
+				[remaining_soldier-m, weapon_allocation]
 			end
-		(re+fo).to_i
+		weapon_allocation
+	end
+	
+	def force
+		allocation = weapon_allocation
+		@soldier-allocation.values.sum + # 素手兵士
+		allocation.map{|sword,count|GameData::SWORD_ATTACK_POWER_HASH[sword] * count}.sum
 	end
 	
 	def make_map(game_table)
@@ -174,15 +181,17 @@ class Group
 		end
 	end
 	
+	def rebellion_occurred()
+		@items = weapon_allocation
+			.map{|sword, count|[sword, count/2]} # 半分(切り捨て)
+			.to_h
+		@soldier = [@soldier/2, 6].max # 最小6
+	end
+	
 	def add_item(sync, cause, item, count)
 		@items[item] ||= 0
 		@items[item] += count
 		@log.add_item(sync, cause, item, count)
-	end
-	
-	def initial_soldier_and_items()
-		@soldier = 6
-		@items = {}
 	end
 	
 	def compare_force(enemy)

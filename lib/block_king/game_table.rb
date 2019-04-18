@@ -111,8 +111,8 @@ class GameTable
 		when AbPos::CENTER
 			GameData::CASTLE
 		else
-			case rand(6)
-			when 0
+			case rand(9)
+			when 0, 1
 				case rand(14)
 				when 0, 1, 2
 					GameData::IRON_MINE
@@ -133,9 +133,9 @@ class GameTable
 						GameData::SILVER_MINE
 					end
 				end
-			when 1, 2
+			when 2, 3, 4
 				GameData::FOREST
-			else # 3, 4, 5
+			else # 5, 6, 7, 8
 				GameData::EMPTY
 			end
 		end.new(calc_level(pos))
@@ -171,7 +171,7 @@ class GameTable
 					EOS
 				end
 				@kings_history << cleared_group
-				cleared_group.initial_soldier_and_items()
+				cleared_group.rebellion_occurred()
 			end
 		end
 	end

@@ -33,6 +33,9 @@ bot.command(:k) do |event|
 	old_ui = uis[user.id]
 	
 	if old_ui.nil?
+		event.respond <<~EOS
+			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
+		EOS
 		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)
 	elsif old_ui.channel == event.channel
@@ -69,6 +72,13 @@ bot.command(:his) do |event|
 			.join("\n")
 	)
 end
+bot.command(:stats) do |event|
+	event.respond(<<~EOS)
+		このボットのステータス
+		サーバー数 : #{bot.servers.length}
+		登録ユーザー数 : #{game_table.groups.length}
+	EOS
+end
 bot.command(:help) do |event|
 	event.respond <<~EOS
 		コマンドの一覧です。
@@ -76,6 +86,7 @@ bot.command(:help) do |event|
 		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
 		`Bhis` : 過去の王が見れます。
+		`Bstats` : このゲームの情報が見れます。
 		`Bexit` : コマンドに反応しないようになります。
 		
 		プログラム : @sou7#0094
@@ -87,7 +98,7 @@ bot.command(:help) do |event|
 		(2019年4月3日から)bot、外部ツール等を使ってのプレイは、公平性の面と、PCへの負荷のため禁止します。
 		(2019年4月9日から)複数アカウントを使用し、ゲームを有利に進める行為を禁止します。
 		
-		招待URL : https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot
+		招待URL : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
 		公式サーバー : https://discord.gg/nJ5QVJu
 	EOS
 end

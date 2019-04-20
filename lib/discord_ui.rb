@@ -68,6 +68,12 @@ class UI < DiscordUIBase
 	def items
 		@group.items
 	end
+	def adjacent_buildings
+		x = pos.x
+		y = pos.y
+		p = ->(x,y){@game_table.block(AbPos.new(x,y)).class}
+		[block.class,p[x+1,y],p[x-1,y],p[x,y+1],p[x,y-1]].uniq
+	end
 	
 	def first_story()
 		slow_message(<<~EOS)
@@ -125,7 +131,7 @@ class UI < DiscordUIBase
 			果たして、この青年は王座を奪還することができるのだろうか・・・？
 			
 			「減ったとしても、貴方を信頼してついてきてくれた仲間がいるんです！
-			諦めずに行かないと！」
+			諦めずにいかないと！」
 		EOS
 	end
 	
@@ -198,9 +204,9 @@ class UI < DiscordUIBase
 					text = if items.empty?
 						"現在アイテムは持っていません。"
 					else
-						items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : `#{c}`"}.join("\n")
+						items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c}"}.join("\n")
 					end
-					msg("兵士 : `#{@group.soldier}`\n"+text)
+					msg("```javascript\n兵士 : #{@group.soldier}\n"+text+"\n```")
 					throw :return_no_map
 				when "x", "X"
 					war()
@@ -324,21 +330,31 @@ class UI < DiscordUIBase
 		creation_items = block
 			.creation_items
 			.map
-			.with_index{|recipe, i|[(i+(?a.ord)).chr, recipe]}
-			.to_h
+			.with_index do |recipe, i|
+				cc = recipe.can_craft?(adjacent_buildings, items)
+				{key: (cc)? (i+(?a.ord)).chr : "_", recipe:recipe, can_craft:cc}
+			end
 		if creation_items.empty?
 			msg("「#{block}では何も作れないですよ？」")
 			throw :return_no_map
 		end
 		creation_items_text = creation_items
-			.map do |char, (need_items, finished_items)|
-				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
-				"`#{char}` : "+(
-					finished_item_name = finished_items.map{|item,count|"#{(can_build)? item.name : "■"*item.name.length}を`#{count}`"}.join("、")
-					if can_build
-						"#{finished_item_name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
-					else
-						"#{finished_item_name}(#{not_enough_item_text(need_items)}必要)"
+			.map do |hash|
+				key = hash[:key]
+				recipe = hash[:recipe]
+				can_craft = hash[:can_craft]
+				"`#{key}` : "+(
+					finished_item_name = recipe.result.map{|item,count|"#{(can_craft)? item.name : "■"*item.name.length}を`#{count}`"}.join("、")
+					not_enough_building = (recipe.buildings-adjacent_buildings).map(&:type_name).join("、")
+					case [recipe.enough_items?(items), recipe.enough_adjacent_buildings?(adjacent_buildings)]
+					when [true, true]
+						"#{finished_item_name}(#{recipe.items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
+					when [true, false]
+						"#{finished_item_name}(隣接マスに#{not_enough_building}が必要)"
+					when [false, true]
+						"#{finished_item_name}(#{not_enough_item_text(recipe.items)}必要)"
+					when [false, false]
+						"#{finished_item_name}(隣接マスに#{not_enough_building}と、#{not_enough_item_text(recipe.items)}必要)"
 					end
 				)
 			end
@@ -348,14 +364,25 @@ class UI < DiscordUIBase
 			#{creation_items_text}
 			`ret` : 前の画面に戻る
 		EOS
-		recipe = wait_respons() do |res|
-			if res == "ret"
-				return true
-			end
-			recipe = creation_items[res.to_str.downcase]
-			catch(:return_inner_wait) do
-				unless recipe.nil?
-					result_tuple(@group.craft_using_building(@game_table, recipe), :return_inner_wait)
+		wait_respons() do |res|
+			case res
+			when "ret"
+				true
+			when "_"
+				@add_msg << <<~EOS
+					「それを作るには、なにか足りないものがあるみたいですよ？」
+				EOS
+				true
+			else
+				recipe_hash = creation_items.select{|h|h[:key] == res.to_str.downcase}.first
+				if recipe_hash.nil?
+					nil
+				else
+					@group.craft_using_building(@game_table, recipe_hash[:recipe])
+					@add_msg << <<~EOS
+						無事に制作できました！
+					EOS
+					true
 				end
 			end
 		end

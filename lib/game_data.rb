@@ -24,17 +24,19 @@ module GameData
 	FIRE_SWORD = Item.new("火の剣")
 	WOOD_CRYSTAL = Item.new("木の結晶")
 	WOOD_SWORD = Item.new("木の剣")
-	# 新しい英語訳が見つからないので、とりあえずはこのままで
-	INFERIOR_LIGHT_CRYSTAL = Item.new("明の結晶")
+	INFERIOR_LIGHT_CRYSTAL = Item.new("明の結晶") # 新しい英語訳が見つからないので、とりあえずはこのままで
 	INFERIOR_LIGHT_SWORD = Item.new("明の剣")
 	INFERIOR_DARK_CRYSTAL = Item.new("暗の結晶")
 	INFERIOR_DARK_SWORD = Item.new("暗の剣")
-	LIGHT_CRYSTAL = Item.new("光の結晶")
-	DARK_CRYSTAL = Item.new("闇の結晶")
+	
+	MAGIC_CRYSTAL = Item.new("魔法結晶")
 	
 	BLAZE_CRYSTAL = Item.new("炎の結晶")
 	BLAZE_BRICK = Item.new("炎のレンガ")
 	BLAZE_SWORD = Item.new("炎の剣")
+	TREE_CRYSTAL = Item.new("樹の結晶")
+	LIGHT_CRYSTAL = Item.new("光の結晶")
+	DARK_CRYSTAL = Item.new("闇の結晶")
 	
 	
 	# 攻撃力順に並べる！
@@ -54,136 +56,121 @@ module GameData
 		GOLD, SILVER, COPPER, IRON,
 		BRICK, FIRE_BRICK, BLAZE_BRICK,
 		INFERIOR_MAGIC_CRYSTAL, FIRE_CRYSTAL, WOOD_CRYSTAL, INFERIOR_LIGHT_CRYSTAL, INFERIOR_DARK_CRYSTAL,
-		DARK_CRYSTAL, LIGHT_CRYSTAL,
+		MAGIC_CRYSTAL, BLAZE_CRYSTAL, TREE_CRYSTAL, DARK_CRYSTAL, LIGHT_CRYSTAL,
 		*SWORD_ATTACK_POWER_HASH.keys,
 	]
 	
-	class EMPTY < Nature
-		def name; "更地" end
-		def map_name; "    " end
-		def empty?
-			true
-		end
+	
+	EMPTY = Nature.new_type("更地") do |c|
+		c.defi(:map_name){"    "}
+		c.defi(:empty?){true}
 	end
-	class CASTLE < Nature
-		def name; "王城" end
+	CASTLE = Nature.new_type("王城") do |c|
 	end
-	class GOLD_MINE < Nature
-		def name; "金鉱" end
-		def get_items_when_turning; GOLD_ORE end
+	GOLD_MINE = Nature.new_type("金鉱") do |c|
+		c.defi(:get_items_when_turning){GOLD_ORE}
 	end
-	class SILVER_MINE < Nature
-		def name; "銀鉱" end
-		def get_items_when_turning; SILVER_ORE end
+	SILVER_MINE = Nature.new_type("銀鉱") do |c|
+		c.defi(:get_items_when_turning){SILVER_ORE}
 	end
-	class COPPER_MINE < Nature
-		def name; "銅鉱" end
-		def get_items_when_turning; COPPER_ORE end
+	COPPER_MINE = Nature.new_type("銅鉱") do |c|
+		c.defi(:get_items_when_turning){COPPER_ORE}
 	end
-	class IRON_MINE < Nature
-		def name; "鉄鉱" end
-		def get_items_when_turning; IRON_ORE end
+	IRON_MINE = Nature.new_type("鉄鉱") do |c|
+		c.defi(:get_items_when_turning){IRON_ORE}
 	end
-	class FOREST < Nature
-		def name; "森林" end
-		def get_items_when_turning; WOOD end
+	FOREST = Nature.new_type("森林") do |c|
+		c.defi(:get_items_when_turning){WOOD}
 	end
-	class MARSH < Nature
-		def name; "沼" end
-		def map_name; " 沼 " end
-		def get_items_when_turning; CLAY end
+	MARSH = Nature.new_type("沼") do |c|
+		c.defi(:map_name){" 沼 "}
+		c.defi(:get_items_when_turning){CLAY}
 	end
-	class LIME_MINE < Nature
-		def name; "石灰鉱山" end
-		def map_name; "石灰" end
-		def get_items_when_turning; LIME end
+	LIME_MINE = Nature.new_type("石灰鉱山") do |c|
+		c.defi(:map_name){"石灰"}
+		c.defi(:get_items_when_turning){LIME}
 	end
-	class COAL_MINE < Nature
-		def name; "石炭鉱山" end
-		def map_name; "石炭" end
-		def get_items_when_turning; COAL end
+	COAL_MINE = Nature.new_type("石炭鉱山") do |c|
+		c.defi(:map_name){"石炭"}
+		c.defi(:get_items_when_turning){COAL}
 	end
-	class FIRE_CRYSTAL_MINE < Nature
-		def name; "火晶" end
-		def get_items_when_turning; FIRE_CRYSTAL end
+	FIRE_CRYSTAL_MINE = Nature.new_type("火晶") do |c|
+		c.defi(:get_items_when_turning){FIRE_CRYSTAL}
 	end
-	class LOW_LEVEL_FURNACE < Building
-		def name; "下位の炉" end
-		def map_name; "下炉" end
+	
+	LOW_LEVEL_FURNACE = Building.new_type("下位の炉") do |c|
+		c.defi(:map_name){"下炉"}
 	end
-	class MEDIUM_LEVEL_FURNACE < Building
-		def name; "中位の炉" end
-		def map_name; "中炉" end
+	MEDIUM_LEVEL_FURNACE = Building.new_type("中位の炉") do |c|
+		c.defi(:map_name){"中炉"}
 	end
-	class LARGE_FURNACE < Building
-		def name; "大型の炉" end
-		def map_name; "大炉" end
+	LARGE_FURNACE = Building.new_type("大型の炉") do |c|
+		c.defi(:map_name){"大炉"}
 	end
-	class FIRE_FURNACE < Building
-		def name; "火の炉" end
-		def map_name; "火炉" end
+	FIRE_FURNACE = Building.new_type("火の炉") do |c|
+		c.defi(:map_name){"火炉"}
 	end
-	class INFERIOR_MAGIC_WORKBENCH < Building
-		def name; "劣・魔法作業台" end
-		def map_name; "劣魔" end
+	INFERIOR_MAGIC_WORKBENCH = Building.new_type("劣・魔法作業台") do |c|
+		c.defi(:map_name){"劣魔"}
 	end
-	class WOOD_REFINERY < Building
-		def name; "木の精錬台" end
-		def map_name; "木錬" end
+	WOOD_REFINERY = Building.new_type("木の精錬台") do |c|
+		c.defi(:map_name){"木錬"}
 	end
-	class METAL_REFINERY < Building
-		def name; "金属の精錬台" end
-		def map_name; "金錬" end
+	METAL_REFINERY = Building.new_type("金属の精錬台") do |c|
+		c.defi(:map_name){"金錬"}
 	end
-	class ANCIENT_REFINERY < Building
-		def name; "古の精錬台" end
-		def map_name; "古錬" end
+	ANCIENT_REFINERY = Building.new_type("古の精錬台") do |c|
+		c.defi(:map_name){"古錬"}
 	end
-	class NORMAK_MAGIC_WORKBENCH < Building
-		def name; "魔法作業台" end
-		def map_name; "普魔" end
+	NORMAK_MAGIC_WORKBENCH = Building.new_type("魔法作業台") do |c|
+		c.defi(:map_name){"普魔"}
 	end
 	
 	CREATION_ITEMS_HASH = {
-		LOW_LEVEL_FURNACE => {
+		[LOW_LEVEL_FURNACE] => {
 			{COPPER_ORE => 10, WOOD => 30} => {COPPER_SWORD => 5},
 			{CLAY => 20, WOOD => 40} => {BRICK => 20},
 			{GOLD_ORE => 30, WOOD => 60} => {GOLD => 10},
 		},
-		MEDIUM_LEVEL_FURNACE => {
+		[MEDIUM_LEVEL_FURNACE] => {
 			{IRON_ORE => 15, WOOD => 40} => {IRON_SWORD => 5},
 			{IRON_ORE => 30, WOOD => 100} => {HIGH_IRON_SWORD => 5},
 			{FIRE_CRYSTAL => 20, BRICK => 40} => {FIRE_BRICK => 20},
 			{SILVER_ORE => 30, WOOD => 120} => {SILVER => 10},
 		},
-		FIRE_FURNACE => {
+		[FIRE_FURNACE] => {
 			{FIRE_CRYSTAL => 20, IRON_ORE => 50} => {FIRE_SWORD => 5},
 			{FIRE_CRYSTAL => 200} => {INFERIOR_MAGIC_CRYSTAL => 10},
 			{FIRE_CRYSTAL => 4000} => {INFERIOR_MAGIC_CRYSTAL => 200},
 			{FIRE_CRYSTAL => 600, CLAY => 800} => {FIRE_BRICK => 400},
 		},
-		INFERIOR_MAGIC_WORKBENCH => {
+		[INFERIOR_MAGIC_WORKBENCH] => {
 			{INFERIOR_MAGIC_CRYSTAL => 50, WOOD_CRYSTAL => 600} => {WOOD_SWORD => 10},
 			{INFERIOR_MAGIC_CRYSTAL => 100, INFERIOR_LIGHT_CRYSTAL => 40} => {INFERIOR_LIGHT_SWORD => 10},
 			{INFERIOR_MAGIC_CRYSTAL => 400, INFERIOR_DARK_CRYSTAL => 80} => {INFERIOR_DARK_SWORD => 20},
 		},
-		WOOD_REFINERY => {
+		[INFERIOR_MAGIC_WORKBENCH, FIRE_FURNACE, WOOD_REFINERY, METAL_REFINERY, ANCIENT_REFINERY] => {
+			{INFERIOR_MAGIC_CRYSTAL => 100, FIRE_CRYSTAL => 1600, WOOD_CRYSTAL => 8000, INFERIOR_LIGHT_CRYSTAL => 400, INFERIOR_DARK_CRYSTAL => 200} =>
+				{MAGIC_CRYSTAL => 0}
+		},
+		[WOOD_REFINERY] => {
 			{WOOD => 20000} => {WOOD_CRYSTAL => 800},
 			{WOOD_CRYSTAL => 800} => {INFERIOR_MAGIC_CRYSTAL => 200},
 		},
-		LARGE_FURNACE => {
+		[LARGE_FURNACE] => {
 			{GOLD_ORE => 1200, COAL => 600} => {GOLD => 400}, # 1 : 1/2 : 3/1
 			{SILVER_ORE => 3600, COAL => 2800} => {SILVER => 1200}, # 1 : 4/5 : 3/1
 			{COPPER_ORE => 6000, COAL => 6000} => {COPPER => 2000}, # 1 :  1  : 3/1
 			{IRON_ORE => 9000, COAL => 9000, LIME => 4500} => {IRON => 3000}, # 1 : 1 : 2/1 : 3/1
 		},
-		METAL_REFINERY => {
+		[METAL_REFINERY] => {
 			{INFERIOR_MAGIC_CRYSTAL => 200, GOLD => 400, SILVER => 1200, COPPER => 2000, IRON => 3000, FIRE_CRYSTAL => 2000} => {INFERIOR_LIGHT_CRYSTAL => 20},
 		},
-		ANCIENT_REFINERY => {
+		[ANCIENT_REFINERY] => {
 			{INFERIOR_MAGIC_CRYSTAL => 1000, COAL => 100000, LIME => 100000} => {INFERIOR_DARK_CRYSTAL => 40},
 		},
 	}
+	
 	CAN_BUILD_LIST = {
 		LOW_LEVEL_FURNACE => {WOOD => 40},
 		MEDIUM_LEVEL_FURNACE => {BRICK => 40, WOOD => 10},

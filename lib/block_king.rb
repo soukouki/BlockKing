@@ -20,6 +20,19 @@ Item = Struct.new(:name) do
 	end
 end
 class Block
+	Recipe = Struct.new(:buildings, :items, :result) do
+		def can_craft?(adjacent_buildings, owns_items)
+			enough_adjacent_buildings?(adjacent_buildings) && enough_items?(owns_items)
+		end
+		
+		def enough_adjacent_buildings?(adjacent_buildings)
+			buildings.all?{|b|adjacent_buildings.include? b}
+		end
+		def enough_items?(owns_items)
+			items.all?{|item,count|(owns_items[item]||0) >= count}
+		end
+	end
+	
 	attr_reader :level
 	def initialize()
 		ここは来ないはずです・・
@@ -37,7 +50,10 @@ class Block
 		false
 	end
 	def creation_items
-		GameData::CREATION_ITEMS_HASH[self.class] || {}
+		GameData::CREATION_ITEMS_HASH
+			.select{|k,v|k[0] == self.class}
+			.map{|b,v|v.map{|(i,r)|Recipe.new(b,i,r)}}
+			.flatten || {}
 	end
 	def map_name
 		name
@@ -94,6 +110,21 @@ class Building < Block
 	def get_items_when_turning; nil end
 	def need_items
 		GameData::CAN_BUILD_LIST[self.class]
+	end
+end
+
+def Block.new_type(type_name, &block)
+	Class.new(self) do # ここのselfはNatureとかになる
+		define_method(:name) do
+			type_name
+		end
+		define_singleton_method(:type_name) do
+			type_name
+		end
+		define_singleton_method(:defi) do |key, &defi_block|
+			define_method(key){defi_block.call}
+		end
+		block.call(self)
 	end
 end
 

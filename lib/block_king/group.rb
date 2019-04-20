@@ -151,19 +151,10 @@ class Group
 		EOS
 	end
 	
-	# 支配できていない・このレシピが作れうかどうか、のチェックはUI側で行っているので、省略する
+	# チェックはUIにて行う
 	def craft_using_building(game_table, recipe)
-		need_items, finished_items = recipe
-		need_items
-			.each do |item,count|
-				i = @items[item] || 0
-				return [false, "#{item}が#{count-i}足りません。"] if i < count
-			end
-		need_items.each{|item,count|@items[item] -= count}
-		finished_items.each{|item,count|add_item(true, "クラフトで", item, count)}
-		[true, <<~EOS]
-			無事に制作できました！
-		EOS
+		recipe.items.each{|item,count|@items[item] -= count}
+		recipe.result.each{|item,count|add_item(true, "クラフトで", item, count)}
 	end
 	
 	def weaken_at_win(sync_log)

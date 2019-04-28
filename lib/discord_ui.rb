@@ -13,7 +13,7 @@ class UI < DiscordUIBase
 	
 	def msg(text)
 		server = @channel.server
-		print "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first.chomp}\r"
+		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first.chomp}"
 		@latest_msg_time = Time.now
 		characters_count_or_less_text(2000, text).each do |p_text|
 			@channel.send_message(p_text)
@@ -171,6 +171,7 @@ class UI < DiscordUIBase
 		else
 			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.join("、")+"がいます。\n"
 		end
+		
 		if @group.tutorial_level == 0
 			@group.tutorial_level = 1
 			@add_msg << <<~EOS
@@ -188,7 +189,7 @@ class UI < DiscordUIBase
 		@add_msg = ""
 		@group.log.clear()
 		
-		msg(constant_text+(block_text||"")+"\n"+log_text) # よくわからないけど、eachをつけないとうまく動かなかった
+		msg(constant_text+block_text+tips+"\n"+log_text)
 		wait_respons do |res|
 			catch(:return_no_map) do
 				case res
@@ -218,6 +219,65 @@ class UI < DiscordUIBase
 					craft_using_building()
 				end
 			end
+		end
+	end
+	
+	def tips
+		unless @last_tips_candidates_time.nil? || Time.now - @last_tips_candidates_time > 60
+			@last_tips_candidates_time = Time.now
+			return ""
+		else
+			@last_tips_candidates_time = Time.now
+		end
+		all_text = {
+			<<~EOS => 1..4,
+				王都に近づくと、敵が強くなります。敵が強くなると、アイテムがいっぱい手に入ります。
+				つまり、王都に近づくと、アイテムがいっぱい・・？
+			EOS
+			<<~EOS => 1..4,
+				アイテムは、ブロックを支配した状態で1分くらい待つと手に入ります。
+				私達は仕事が速いんです……！
+			EOS
+			<<~EOS => 2..4,
+				剣を作るには、素材を集め、更地を支配し、施設を建てないといけません！
+				面倒ですね！
+			EOS
+			<<~EOS => 3..5,
+				リストの下の方にある建物では、もっと強い剣を作れるらしいです。
+				兵士にはできるだけ強い武器をもたせてあげたいですね！
+			EOS
+			<<~EOS => 3..5,
+				剣は作って持っていれば勝手に使ってくれるそうです！
+				でも、兵士の数を超えたら扱い切れなさそうですね……
+			EOS
+			<<~EOS => 3..6,
+				強い武器はどれか・・？
+				いつもアイテム一覧では下の方に強い武器を並べてるので、それを見ればわかります！
+			EOS
+			<<~EOS => 4..6,
+				建物を隣接させることによって、新たに使えるようになるレシピがあるみたいです。
+				いい空き地を見つけてみましょう！
+			EOS
+			<<~EOS => 4..6,
+				建物を隣接させるときは、東西南北の4マスだけです！斜めには使えません！
+			EOS
+			<<~EOS => 4..7,
+				ちなみに、施設は壊し合ったり、共有したりできるそうです。
+				他のグループと一緒に攻略するのも面白そうですね！
+			EOS
+		}
+		text = if rand(2)==0
+			all_text
+				.select{|text,level|level.include?(@group.tutorial_level)}
+				.keys
+				.sample
+		else
+			nil
+		end
+		if text.nil?
+			""
+		else
+			"<TIPS>\n#{text}\n"
 		end
 	end
 	
@@ -390,8 +450,25 @@ class UI < DiscordUIBase
 			@group.tutorial_level = 5
 			@add_msg << <<~EOS
 				<チュートリアル>
-				銅の剣ができました！この調子で鉄の剣も作っていきましょう！
+				銅の剣ができました！みんな使ってみてます！
+				この調子で鉄の剣も作っていきましょう！
 				ちなみに、敵が強いほどいっぱいアイテムが手に入るそうですよ？
+			EOS
+		end
+		if @group.tutorial_level == 5 && (items[GameData::FIRE_SWORD] || 0) > 0
+			@group.tutorial_level = 6
+			@add_msg << <<~EOS
+				<チュートリアル>
+				おお！ついに火の剣ができました！
+				これから先は魔法との付き合いが重要になりますね！
+			EOS
+		end
+		if @group.tutorial_level == 6 && (items[GameData::MAGIC_CRYSTAL] || 0) > 0
+			@group.tutorial_level = 7
+			@add_msg << <<~EOS
+				<チュートリアル>
+				つ、ついに劣化してない魔法結晶が作れました！
+				これを使って更に先の世界を目指しましょう！
 			EOS
 		end
 		true

@@ -51,9 +51,9 @@ class Block
 	end
 	def creation_items
 		GameData::CREATION_ITEMS_HASH
-			.select{|k,v|k[0] == self.class}
-			.map{|b,v|v.map{|(i,r)|Recipe.new(b,i,r)}}
-			.flatten || {}
+			.select{|(bs,rs)|bs[0] == self.class}
+			.map{|(bs,rs)|rs.map{|(i,r)|Recipe.new(bs,i,r)}}
+			.flatten || []
 	end
 	def map_name
 		name

@@ -35,6 +35,7 @@ bot.command(:k) do |event|
 	if old_ui.nil?
 		event.respond <<~EOS
 			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
+			GWはBlockKing！
 		EOS
 		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)
@@ -72,11 +73,22 @@ bot.command(:his) do |event|
 			.join("\n")
 	)
 end
-bot.command(:stats) do |event|
+bot.command(:bots) do |event|
 	event.respond(<<~EOS)
-		このボットのステータス
-		サーバー数 : #{bot.servers.length}
-		登録ユーザー数 : #{game_table.groups.length}
+		兄弟bot一覧！
+		__Greetingbot__
+			挨拶botです！挨拶に関してはかなりのものだと思ってます！
+				導入url : <https://discordapp.com/oauth2/authorize?client_id=394876010438328321&scope=bot&permissions=2048>
+				prefix : `n.`
+		__M-putit__
+			気象・地震・津波情報関連のbotです！気象庁が発表する色んな情報をチャンネルに流せます！(設定に時間がかかります。ご了承ください)
+				導入url <https://discordapp.com/oauth2/authorize?scope=bot&client_id=505357370306592788&permissions=2048>
+				prefix : `m.`
+		__BlockKing__
+			:crossed_swords: **アイテムを集めてクラフトし、強力な剣で王座を狙うゲームです！** :fire:
+				導入url : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
+				公式サーバー(プレイもできる) : <https://discord.gg/nJ5QVJu>
+				prefix : `B`
 	EOS
 end
 bot.command(:help) do |event|
@@ -86,8 +98,8 @@ bot.command(:help) do |event|
 		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
 		`Bhis` : 過去の王が見れます。
-		`Bstats` : このゲームの情報が見れます。
 		`Bexit` : コマンドに反応しないようになります。
+		`Bbots` : 兄弟botを紹介します！ぜひ導入してみてください！
 		
 		プログラム : @sou7#0094
 		テストプレイ : ねこらんさん、uuuさん、その他

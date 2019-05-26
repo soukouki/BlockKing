@@ -254,14 +254,18 @@ class UI < DiscordUIBase
 				強い武器はどれか・・？
 				いつもアイテム一覧では下の方に強い武器を並べてるので、それを見ればわかります！
 			EOS
-			<<~EOS => 4..6,
+			<<~EOS => 5..6,
 				建物を隣接させることによって、新たに使えるようになるレシピがあるみたいです。
 				いい空き地を見つけてみましょう！
 			EOS
-			<<~EOS => 4..6,
+			<<~EOS => 5..6,
 				建物を隣接させるときは、東西南北の4マスだけです！斜めには使えません！
 			EOS
-			<<~EOS => 4..7,
+			<<~EOS => 5..7,
+				兵士がいっぱいいると、作業のスピードも上がってアイテムが集めやすくなります！
+				いっぱいアイテムを集めるときは、いっぱい戦闘をして兵士を集めましょう！
+			EOS
+			<<~EOS => 5..7,
 				ちなみに、施設は壊し合ったり、共有したりできるそうです。
 				他のグループと一緒に攻略するのも面白そうですね！
 			EOS
@@ -352,9 +356,9 @@ class UI < DiscordUIBase
 				block = block_class.new(@group, @game_table.calc_level(pos))
 				"`#{char}` : "+(
 					if can_build
-						"#{block.name}(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
+						"**#{block.name}**(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
 					else
-						"#{"■"*block.name.length}(#{not_enough_item_text(need_items)}必要)"
+						"~~#{block.name}~~(#{not_enough_item_text(need_items)}必要)"
 					end
 				)
 			end
@@ -404,7 +408,16 @@ class UI < DiscordUIBase
 				recipe = hash[:recipe]
 				can_craft = hash[:can_craft]
 				"`#{key}` : "+(
-					finished_item_name = recipe.result.map{|item,count|"#{(can_craft)? item.name : "■"*item.name.length}を`#{count}`"}.join("、")
+					finished_item_name = recipe
+						.result
+						.map do |item,count|
+							if can_craft
+								"**#{item.name}**を`#{count}`"
+							else
+								"~~#{item.name}を`#{count}`~~"
+							end
+						end
+						.join("、")
 					not_enough_building = (recipe.buildings-adjacent_buildings).map(&:type_name).join("、")
 					case [recipe.enough_items?(items), recipe.enough_adjacent_buildings?(adjacent_buildings)]
 					when [true, true]

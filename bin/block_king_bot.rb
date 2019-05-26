@@ -5,6 +5,9 @@ require_relative "../lib/save_load"
 
 token = ARGV[0]
 is_maintenance = false
+maintenance_message = <<~EOS
+	現在、メンテナンス中です。終了時刻は18時00分頃予定です。しばらくお待ち下さい。
+EOS
 
 bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
 
@@ -17,9 +20,7 @@ end
 uis = {}
 bot.command(:k) do |event|
 	if is_maintenance
-		event.respond <<~EOS
-			現在、メンテナンス中です。終了時刻は16時30分頃予定です。しばらくお待ち下さい。
-		EOS
+		event.respond maintenance_message
 		next
 	end
 	user = event.user
@@ -35,7 +36,6 @@ bot.command(:k) do |event|
 	if old_ui.nil?
 		event.respond <<~EOS
 			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
-			GWはBlockKing！
 		EOS
 		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)

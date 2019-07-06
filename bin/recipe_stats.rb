@@ -4,6 +4,7 @@ puts "前提として、複数の生産物が出ない状態を扱う"
 
 
 
+# 一個あたりの個数に整形
 recipes_by_result = GameData::CREATION_ITEMS_HASH
 	.flat_map{|facility,recipes|recipes}
 	.inject({}, &:merge)
@@ -16,7 +17,8 @@ known_recipes = []
 known_parts_recipes = []
 
 # 上から順に作り安い順にアイテムが並んでないとバグる
-loop do #loop do
+loop do
+	# 通常のレシピについて
 	target, target_materials = recipes_by_result.find{|result,rs|!(known_recipes.include?(result)) && (rs.flat_map{|r|r.keys} - natural_materials).empty?}
 	known_recipes << target if target
 	
@@ -43,6 +45,7 @@ loop do #loop do
 	
 	puts "**#{target.name}**"
 	
+	# ターゲットのアイテムが含まれるレシピに埋め込んでいく
 	recipes_by_result.transform_values! do |recipes|
 		recipes
 			.flat_map do |recipe|
@@ -63,13 +66,28 @@ item = (GameData::SORT_ORDER - natural_materials)
 	.each.with_index{|item, idx|puts "#{idx}:#{item.name}"}
 	.tap{||puts "どのアイテムを表示しますか？(すべての場合は最後の数字の次の値を)"}[gets.to_i]
 
+puts "上書き保存する先のファイル名(保存しない場合はそのまま)"
+file_name = gets.chomp
+output = if file_name.empty?
+	STDOUT
+else
+	File.open(file_name, "w")
+end
+
 ((item.nil?)? recipes_by_result : recipes_by_result.select{|r,_|r == item})
 	.each do |result,recipes|
-		puts result.name
-		recipes.each.with_index(1) do |recipe, idx|
-			puts idx
-			puts "\t"+recipe.map{|materials,count|"#{materials.name} : #{count}"}.join("\n\t")
-		end
+		output.puts result.name
+		recipes
+			.each.with_index(1) do |recipe, idx|
+				output.puts idx
+				output.puts "\t"+(
+					recipe
+						.sort_by{|m,_c|GameData::SORT_ORDER.index(m) || -1}
+						.reverse
+						.map{|materials,count|"#{materials.name} : #{count}"}
+						.join("\n\t")
+				)
+			end
 	end
 
 

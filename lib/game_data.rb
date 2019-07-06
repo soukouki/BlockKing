@@ -17,6 +17,7 @@ module GameData
 	CLAY = Item.new("粘土")
 	BRICK = Item.new("レンガ")
 	HIGH_IRON_SWORD = Item.new("上・鉄の剣")
+	DEBUG = Item.new("**このレシピは利用できません**")
 	
 	INFERIOR_MAGIC_CRYSTAL = Item.new("劣化魔法結晶")
 	FIRE_CRYSTAL = Item.new("火の結晶")
@@ -205,6 +206,9 @@ module GameData
 			{MAGIC_CRYSTAL => 20, FIRE_CRYSTAL => 5_0000, WOOD_CRYSTAL => 20_0000} => {BLAZE_CRYSTAL => 10},
 		}],
 		#   低級魔法剣大量生産レシピ
+		[[FIRE_FURNACE, MAGIC_WORKBENCH, LARGE_FURNACE], {
+			{FIRE_CRYSTAL => 1000, IRON => 500} => {FIRE_SWORD => 200},
+		}],
 		[[WOOD_REFINERY, MAGIC_WORKBENCH], {
 			{WOOD => 800_0000} => {WOOD_CRYSTAL => 32_0000},
 			{WOOD_CRYSTAL => 32_0000} => {INFERIOR_MAGIC_CRYSTAL => 8_0000},

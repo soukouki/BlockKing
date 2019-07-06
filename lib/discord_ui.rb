@@ -348,7 +348,7 @@ class UI < DiscordUIBase
 		
 		select_block = GameData::CAN_BUILD_LIST
 			.map
-			.with_index{|b, i|[(i+?a.ord).chr, b]}
+			.with_index(1){|b, i|[i.to_s, b]}
 			.to_h
 		select_text = select_block
 			.map do |char, (block_class, need_items)|
@@ -394,9 +394,9 @@ class UI < DiscordUIBase
 		creation_items = block
 			.creation_items
 			.map
-			.with_index do |recipe, i|
+			.with_index(1) do |recipe, i|
 				cc = recipe.can_craft?(adjacent_buildings, items)
-				{key: (cc)? (i+(?a.ord)).chr : "_", recipe:recipe, can_craft:cc}
+				{key: (cc)? i.to_s : "_", recipe:recipe, can_craft:cc}
 			end
 		if creation_items.empty?
 			msg("「#{block}では何も作れないですよ？」")

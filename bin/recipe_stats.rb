@@ -43,7 +43,7 @@ loop do
 	
 	break if target.nil?
 	
-	puts "**#{target.name}**"
+	puts "#{target.name}(#{target_materials.length}通り)"
 	
 	# ターゲットのアイテムが含まれるレシピに埋め込んでいく
 	recipes_by_result.transform_values! do |recipes|

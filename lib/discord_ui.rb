@@ -6,6 +6,20 @@ class UI < DiscordUIBase
 	attr_reader :latest_msg_time
 	attr_accessor :channel
 	
+	# モンキーパッチしてます
+	# 自動化ツール対策用！
+	def wait_respons(message=nil, &block)
+		res = super
+		elapsed_time = if @previous_message_time
+			Time.now - @previous_message_time
+		else
+			"first_time"
+		end
+		@previous_message_time = Time.now
+		server = @channel.server
+		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{elapsed_time}"
+	end
+	
 	def initialize(*args)
 		@latest_msg_time = Time.now
 		super

@@ -167,6 +167,7 @@ end
 
 class SaveLoad
 	attr_reader :value
+	attr_accessor :path
 	def initialize(path, default_proc)
 		@path = path
 		@value = if File.exist?(main_file_path)

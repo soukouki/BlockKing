@@ -1,4 +1,6 @@
 
+require "fileutils"
+
 require_relative "../lib/block_king"
 require_relative "../lib/discord_ui"
 require_relative "../lib/save_load"
@@ -33,6 +35,7 @@ bot.command(:k) do |event|
 	end
 	old_ui = uis[user.id]
 	
+	# この部分Mutexつけるべき
 	if old_ui.nil?
 		event.respond <<~EOS
 			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
@@ -142,14 +145,45 @@ bot.run :async
 begin
 	loop do
 		sleep(60 - Time.now.sec)
+		
+		next if game_table.nil?
+		
 		puts "定期処理 #{Time.now}"
-		game_table&.turn()
-		if Time.now.min%15 == 0
-			s = Time.now
+		game_table.turn()
+		
+		start_time = Time.now
+		
+		if start_time.min%5 == 0
 			puts "定時保存"
-			save_load&.save
-			puts "定時保存完了 #{Time.now-s}"
+			save_load.save
+			puts "定時保存完了 #{Time.now-start_time}"
 		end
+		
+		if start_time.min == 0
+			
+			# バックアップ用
+			sl = save_load.clone
+			rm_and_save = lambda do |path|
+				FileUtils.remove_entry_secure(path) if Dir.exist?(path)
+				sl.path = path
+				sl.save()
+			end
+			
+			puts "毎時バックアップ"
+			rm_and_save["data/hourly-backup/#{start_time.hour}"]
+			
+			if start_time.hour == 0
+				puts "毎日バックアップ"
+				rm_and_save["data/daily-backup/#{start_time.day}"]
+				
+				if start_time.day == 0
+					puts "毎月バックアップ"
+					rm_and_save["data/monthly-backup/#{start_time.year}-#{start_time.month}"]
+				end
+			end
+		end
+		
+		puts "定期処理終了"
 	end
 ensure # Bend時はこの部分を実行する
 	puts "例外保存"

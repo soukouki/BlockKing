@@ -33,12 +33,8 @@ class BlockKingUI < DiscordUIBase
 		)
 		@group.name = @user.name
 		@add_msg = ""
-		@exists_log = false
-		@group.log.callback = lambda do |sync|
-			if !@exists_log && !sync
-				@exists_log = true
-				msg("現在、ログがあります。確認するには(`Bk`)")
-			end
+		@group.log.callback = lambda do |text|
+			msg(text)
 		end
 		main_loop()
 	end
@@ -455,16 +451,12 @@ class BlockKingUI < DiscordUIBase
 				if recipe.nil?
 					nil
 				else
+					@group.start_crafting(recipe)
 					msg(<<~EOS)
 						#{recipe.products_hash.map{|i,c|"**#{i}**を`#{c}`"}.join("、")}を作ります。
-						「多分・・・#{recipe.production_time}秒くらい、#{Time.now+recipe.production_time}くらいまで待っててください！」
+						「多分・・・#{recipe.production_time}秒くらい・・・#{Time.now+recipe.production_time}(**TODO**あとでいい感じに表示するようにする)くらいまで待っててください！」
 					EOS
-					
-					@group.craft_using_building(@game_table, recipe)
-					@add_msg << <<~EOS
-						無事に制作できました！
-					EOS
-					true
+					false
 				end
 			end
 		end

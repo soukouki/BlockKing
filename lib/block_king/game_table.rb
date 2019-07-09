@@ -165,7 +165,7 @@ class GameTable
 				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
 				@groups.each do |id, group|
 					group.pos = initial_pos(group.force)
-					group.log.add_text(false, <<~EOS)
+					group.log.add_text(group, nil, <<~EOS)
 						`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
 						それによって、ブロック・位置などが初期化され、敵が強くなりました！
 					EOS

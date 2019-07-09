@@ -1,6 +1,6 @@
 
 class Group
-	attr_reader :id, :log, :soldier, :items
+	attr_reader :id, :log, :soldier, :items, :craft_end_time
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def initialize(id, game_table)
 		@id = id
@@ -21,14 +21,16 @@ class Group
 			@callback = ->{}
 		end
 		def add_item(sync, cause, item, count)
+			causes_empty = @causes.empty?
 			@causes[cause] ||= {}
 			@causes[cause][item] ||= 0
 			@causes[cause][item] += count
-			@callback.call(sync)
+			@callback.call("「アイテムが手に入りました！確認してみてください！」") if !sync && causes_empty
 		end
-		def add_text(sync, text)
-			@text_logs << Time.now.strftime("[%d日%H時%M分]")+text
-			@callback.call(sync)
+		# short_text_or_nilがnilのときは通知をしない
+		def add_text(group, short_text_or_nil, text)
+			@text_logs << Time.now.strftime("[%m月%d日%H時%M分]")+text
+			@callback.call("<@#{group.id}>\n#{short_text_or_nil}") if short_text_or_nil
 		end
 		def clear()
 			@causes = {}
@@ -106,7 +108,7 @@ class Group
 			無事に解体できました！
 		EOS
 	end
-	
+
 	# チェックはBlockKingUIにて行う
 	def craft_using_building(game_table, recipe)
 		recipe.materials_hash.each{|item,count|@items[item] -= count}
@@ -117,14 +119,14 @@ class Group
 		count = rand(0..Math.log(@soldier, 2)).round
 		if count != 0
 			@soldier += count
-			@log.add_text(sync_log, "戦闘に勝利し、`#{count}`人が加わりました！")
+			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
 		end
 	end
 	def weaken_at_lose(sync_log)
 		count = rand(0..1.0*@soldier/4).to_i
 		if count != 0
 			@soldier -= count
-			@log.add_text(sync_log, "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")
+			@log.add_text(self, !sync_log && "「残念ながら、戦闘に敗北してしまいました・・・」", "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")
 		end
 	end
 	

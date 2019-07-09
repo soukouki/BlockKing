@@ -151,8 +151,8 @@ class BlockKingUI < DiscordUIBase
 	
 	def map()
 		constant_text = <<~EOS
-			#{make_map(@group, @game_table)}
-			現在の位置は(#{pos})、#{direction_of_castle(pos)}
+			#{BlockKingUI.make_map(@group, @game_table)}
+			現在の位置は(#{pos})、#{BlockKingUI.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテム・その他情報は(`i`)
 		EOS
@@ -174,7 +174,7 @@ class BlockKingUI < DiscordUIBase
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				#{compare_force(@group.force, ruler.force)}相手でしょう。
+				#{BlockKingUI.compare_force(@group.force, ruler.force)}相手でしょう。
 			EOS
 		end + if block.get_items_when_turning.nil?
 			""
@@ -526,7 +526,7 @@ class BlockKingUI < DiscordUIBase
 			pos = group.pos
 			l = lambda do |x, y|
 				ypos = (x==0 && y==0)? "Y" : " "
-				game_table.is_there_a_group_other_than_myself?(self, pos.diff_to_ab_pos(x, y))? " #{ypos}G " : " #{ypos}  "
+				game_table.is_there_a_group_other_than_myself?(group, pos.diff_to_ab_pos(x, y))? " #{ypos}G " : " #{ypos}  "
 			end
 			ll = lambda do |y|
 				"   |"+

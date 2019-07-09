@@ -425,13 +425,13 @@ class BlockKingUI < DiscordUIBase
 					not_enough_building = (recipe.auxiliary_buildings-adjacent_buildings).map(&:type_name).join("、")
 					case [recipe.enough_items?(items), recipe.enough_adjacent_buildings?(adjacent_buildings)]
 					when [true, true]
-						"#{finished_item_name}(#{recipe.materials_hash.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
+						"#{finished_item_name}「#{recipe.materials_hash.map{|item,count|"#{item}を`#{count}`"}.join("、")}使います！」"
 					when [true, false]
-						"#{finished_item_name}(隣接マスに#{not_enough_building}が必要)"
+						"#{finished_item_name}「隣のブロックに#{not_enough_building}が必要です！」"
 					when [false, true]
-						"#{finished_item_name}(#{not_enough_item_text(recipe.materials_hash)}必要)"
+						"#{finished_item_name}「あと#{not_enough_item_text(recipe.materials_hash)}必要です！」"
 					when [false, false]
-						"#{finished_item_name}(隣接マスに#{not_enough_building}と、#{not_enough_item_text(recipe.materials_hash)}必要)"
+						"#{finished_item_name}「隣のブロックに#{not_enough_building}と、あと#{not_enough_item_text(recipe.materials_hash)}必要です！」"
 					end
 				)
 			end
@@ -451,11 +451,16 @@ class BlockKingUI < DiscordUIBase
 				EOS
 				true
 			else
-				recipe_hash = creatable_items.select{|h|h[:input_text] == res.to_str.downcase}.first
-				if recipe_hash.nil?
+				recipe = creatable_items.select{|h|h[:input_text] == res.to_str.downcase}.first&.[](:recipe)
+				if recipe.nil?
 					nil
 				else
-					@group.craft_using_building(@game_table, recipe_hash[:recipe])
+					msg(<<~EOS)
+						#{recipe.products_hash.map{|i,c|"**#{i}**を`#{c}`"}.join("、")}を作ります。
+						「多分・・・#{recipe.production_time}秒くらい、#{Time.now+recipe.production_time}くらいまで待っててください！」
+					EOS
+					
+					@group.craft_using_building(@game_table, recipe)
 					@add_msg << <<~EOS
 						無事に制作できました！
 					EOS

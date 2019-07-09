@@ -65,56 +65,12 @@ class Group
 		allocation.map{|sword,count|GameData::SWORD_ATTACK_POWER_HASH[sword] * count}.sum
 	end
 	
-	def make_map(game_table)
-		l = lambda do |x, y|
-			ypos = (x==0 && y==0)? "Y" : " "
-			game_table.is_there_a_group_other_than_myself?(self, @pos.diff_to_ab_pos(x, y))? " #{ypos}G " : " #{ypos}  "
-		end
-		ll = lambda do |y|
-			"   |"+
-			5.times
-				.map{|i|l[i-2, y]}
-				.join("|")+"|"
-		end
-		o = lambda do |x, y|
-			game_table.block(@pos.diff_to_ab_pos(x, y)).map_name
-		end
-		ol = lambda do |y|
-			fullwidth_count = 0
-			"   |"+
-			5.times
-				.map{|i|i-2}
-				.map{|x|[x, o[x, y]]}
-				.map do |(x, s)|
-					fullwidth_count += s.length - s.count(" 0-9a-zA-Z")
-					if fullwidth_count>=4 && x<2
-						fullwidth_count -= 4
-						s+" "
-					else
-						s
-					end
-				end
-				.join("|")+"|"
-		end
-		al = "   :#{"    :"*5}"
-		bl = "...+#{"----+"*5}..."
-		<<~EOS
-			```
-			#{al}
-			#{bl}
-			#{5.times.reverse_each.map{|y|ll[y-2]+"\n"+ol[y-2]+"\n"+bl}.join("\n")}
-			#{al}
-			```
-			Y:現在地, G:他のグループ
-		EOS
-	end
-	
 	def move(game_table, m_x, m_y)
 		game_table.set_ruler(@pos, nil) if game_table.ruler(@pos) == self
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
-	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはUI側で行っているので、省略する
+	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはBlockKingUI側で行っているので、省略する
 	def build(game_table, block)
 		need_items = block.need_items
 		need_items
@@ -151,7 +107,7 @@ class Group
 		EOS
 	end
 	
-	# チェックはUIにて行う
+	# チェックはBlockKingUIにて行う
 	def craft_using_building(game_table, recipe)
 		recipe.items.each{|item,count|@items[item] -= count}
 		recipe.result.each{|item,count|add_item(true, "クラフトで", item, count)}
@@ -183,49 +139,6 @@ class Group
 		@items[item] ||= 0
 		@items[item] += count
 		@log.add_item(sync, cause, item, count)
-	end
-	
-	def compare_force(enemy)
-		# インフレしたらいろいろ入れてみたい
-		case 1.0 * enemy.force / force
-		when 0..0.01
-			"敵は噂を聞いただけで逃げていく"
-		when 0..0.1
-			"敵が裸足で逃げていく"
-		when 0..0.3
-			"敵が逃げていく"
-		when 0..0.5
-			"敵は余裕で勝てる"
-		when 0..0.7
-			"敵はほぼ確実に勝てる"
-		when 0..0.9
-			"敵はおそらく勝てる"
-		when 0..(1/0.9)
-			"敵は勝つか負けるかわからない"
-		when 0..(1/0.7)
-			"敵はおそらく負ける"
-		when 0..2
-			"敵はほぼ確実に負ける"
-		when 0..(1/0.3)
-			"敵は余裕で負ける"
-		when 0..(1/0.1)
-			"敵は逃げたくなるような"
-		when 0..(1/0.01)
-			"敵は裸足で逃げたくなるような"
-		else
-			"敵は噂だけで逃げたくなるような"
-		end
-	end
-	
-	def self.direction_of_castle(pos)
-		x, y = [pos.x, pos.y]
-		return "" if pos == AbPos::CENTER
-		l = Math.sqrt(x*x+y*y)
-		ac_ang = Math.acos(x/l)*180/Math::PI
-		ang = (y<0)? 360-ac_ang : ac_ang
-		piece = 360.0/(8*2)
-		str = ["西", "南西", "南", "南東", "東", "北東", "北", "北西"][((ang/piece)/2).round % 8]
-		"王城は"+str+"の方向。"
 	end
 end
 

@@ -2,7 +2,7 @@
 require "discordrb"
 require_relative "../lib/discord_ui_base"
 
-class UI < DiscordUIBase
+class BlockKingUI < DiscordUIBase
 	attr_reader :latest_msg_time
 	attr_accessor :channel
 	
@@ -151,8 +151,8 @@ class UI < DiscordUIBase
 	
 	def map()
 		constant_text = <<~EOS
-			#{@group.make_map(@game_table)}
-			現在の位置は(#{pos})、#{Group.direction_of_castle(pos)}
+			#{make_map(@group, @game_table)}
+			現在の位置は(#{pos})、#{direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテム・その他情報は(`i`)
 		EOS
@@ -174,7 +174,7 @@ class UI < DiscordUIBase
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				#{@group.compare_force(ruler)}相手でしょう。
+				#{compare_force(@group.force, ruler.force)}相手でしょう。
 			EOS
 		end + if block.get_items_when_turning.nil?
 			""
@@ -519,5 +519,95 @@ class UI < DiscordUIBase
 			.select{|(i,c,hc)|c>hc}
 			.map{|(i,c,hc)|"#{i}があと`#{c-hc}`"}
 			.join("、")
+	end
+	
+	class << self
+		def make_map(group, game_table)
+			pos = group.pos
+			l = lambda do |x, y|
+				ypos = (x==0 && y==0)? "Y" : " "
+				game_table.is_there_a_group_other_than_myself?(self, pos.diff_to_ab_pos(x, y))? " #{ypos}G " : " #{ypos}  "
+			end
+			ll = lambda do |y|
+				"   |"+
+				5.times
+					.map{|i|l[i-2, y]}
+					.join("|")+"|"
+			end
+			o = lambda do |x, y|
+				game_table.block(pos.diff_to_ab_pos(x, y)).map_name
+			end
+			ol = lambda do |y|
+				fullwidth_count = 0
+				"   |"+
+				5.times
+					.map{|i|i-2}
+					.map{|x|[x, o[x, y]]}
+					.map do |(x, s)|
+						fullwidth_count += s.length - s.count(" 0-9a-zA-Z")
+						if fullwidth_count>=4 && x<2
+							fullwidth_count -= 4
+							s+" "
+						else
+							s
+						end
+					end
+					.join("|")+"|"
+			end
+			al = "   :#{"    :"*5}"
+			bl = "...+#{"----+"*5}..."
+			<<~EOS
+				```
+				#{al}
+				#{bl}
+				#{5.times.reverse_each.map{|y|ll[y-2]+"\n"+ol[y-2]+"\n"+bl}.join("\n")}
+				#{al}
+				```
+				Y:現在地, G:他のグループ
+			EOS
+		end
+		
+		def compare_force(group_force, enemy_force)
+			# インフレしたらいろいろ入れてみたい
+			case 1.0 * enemy_force / group_force
+			when 0..0.01
+				"敵は噂を聞いただけで逃げていく"
+			when 0..0.1
+				"敵が裸足で逃げていく"
+			when 0..0.3
+				"敵が逃げていく"
+			when 0..0.5
+				"敵は余裕で勝てる"
+			when 0..0.7
+				"敵はほぼ確実に勝てる"
+			when 0..0.9
+				"敵はおそらく勝てる"
+			when 0..(1/0.9)
+				"敵は勝つか負けるかわからない"
+			when 0..(1/0.7)
+				"敵はおそらく負ける"
+			when 0..2
+				"敵はほぼ確実に負ける"
+			when 0..(1/0.3)
+				"敵は余裕で負ける"
+			when 0..(1/0.1)
+				"敵は逃げたくなるような"
+			when 0..(1/0.01)
+				"敵は裸足で逃げたくなるような"
+			else
+				"敵は噂だけで逃げたくなるような"
+			end
+		end
+		
+		def direction_of_castle(pos)
+			x, y = [pos.x, pos.y]
+			return "" if pos == AbPos::CENTER
+			l = Math.sqrt(x*x+y*y)
+			ac_ang = Math.acos(x/l)*180/Math::PI
+			ang = (y<0)? 360-ac_ang : ac_ang
+			piece = 360.0/(8*2)
+			str = ["西", "南西", "南", "南東", "東", "北東", "北", "北西"][((ang/piece)/2).round % 8]
+			"王城は"+str+"の方向。"
+		end
 	end
 end

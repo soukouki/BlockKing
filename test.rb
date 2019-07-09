@@ -2,6 +2,7 @@
 require "pp"
 
 require_relative "lib/block_king"
+require_relative "lib/discord_ui"
 
 public def test(x)
 	if (x==self || x===self)

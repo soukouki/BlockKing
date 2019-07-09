@@ -40,14 +40,14 @@ bot.command(:k) do |event|
 		event.respond <<~EOS
 			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
 		EOS
-		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
+		ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)
 	elsif old_ui.channel == event.channel
 		old_ui.stop_waiting()
 		old_ui.start(game_table)
 	else
 		old_ui.stop_waiting()
-		ui = uis[user.id] = UI.new(bot: bot, channel: event.channel, user: user)
+		ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)
 	end
 end

@@ -128,4 +128,6 @@ def Block.new_type(type_name, &block)
 	end
 end
 
+Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :products_hash, :production_time)
+
 require_relative "game_data"

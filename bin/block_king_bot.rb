@@ -131,7 +131,7 @@ bot.command(:end) do |event|
 	next unless event.user==bot.bot_app.owner
 	uis
 		.values
-		.select{|ui|ui.latest_msg_time > Time.now-120}
+		.select{|ui|ui.last_operation_time > Time.now-120}
 		.each{|ui|ui.msg("再起動を行います。30秒ほど待った後、`Bk`でスタートしてください。")}
 	# ensureに入る
 	exit

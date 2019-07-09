@@ -3,32 +3,22 @@ require "discordrb"
 require_relative "../lib/discord_ui_base"
 
 class BlockKingUI < DiscordUIBase
-	attr_reader :latest_msg_time
+	attr_reader :last_operation_time
 	attr_accessor :channel
 	
 	# モンキーパッチしてます
 	# 自動化ツール対策用！
 	def wait_respons(message=nil, &block)
 		res = super
-		elapsed_time = if @previous_message_time
-			Time.now - @previous_message_time
-		else
-			"first_time"
-		end
-		@previous_message_time = Time.now
+		@last_operation_elapsed_time = Time.now - @last_operation_time
+		@last_operation_time = Time.now
 		server = @channel.server
-		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{elapsed_time}"
-	end
-	
-	def initialize(*args)
-		@latest_msg_time = Time.now
-		super
+		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{@last_operation_elapsed_time}"
 	end
 	
 	def msg(text)
 		server = @channel.server
 		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{text.lines.first.chomp}"
-		@latest_msg_time = Time.now
 		characters_count_or_less_text(2000, text).each do |p_text|
 			@channel.send_message(p_text)
 		end
@@ -36,6 +26,7 @@ class BlockKingUI < DiscordUIBase
 	
 	def start(game_table)
 		@game_table = game_table
+		@last_operation_time = Time.now
 		@group = game_table.group(@user.id) || (
 			l = Group.new(@user.id, game_table)
 			game_table.add_group(l)
@@ -237,12 +228,8 @@ class BlockKingUI < DiscordUIBase
 	end
 	
 	def tips
-		unless @last_tips_candidates_time.nil? || Time.now - @last_tips_candidates_time > 60
-			@last_tips_candidates_time = Time.now
-			return ""
-		else
-			@last_tips_candidates_time = Time.now
-		end
+		p [:loe, @last_operation_elapsed_time]
+		return "" unless @last_operation_elapsed_time.nil? || @last_operation_elapsed_time > 60
 		all_text = {
 			<<~EOS => 1..4,
 				王都に近づくと、敵が強くなります。敵が強くなると、アイテムがいっぱい手に入ります。

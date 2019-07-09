@@ -5,10 +5,8 @@ puts "前提として、複数の生産物が出ない状態を扱う"
 
 
 # 一個あたりの個数に整形
-recipes_by_result = GameData::CREATION_ITEMS_HASH
-	.flat_map{|facility,recipes|recipes}
-	.inject({}, &:merge)
-	.map{|materials,results|c = results.values.first; [results.keys.first, materials.transform_values{|v|1.0*v / c}]}
+recipes_by_result = GameData::RECIPES
+	.map{|r|c = r.products_hash.values.first; [r.products_hash.keys.first, r.materials_hash.transform_values{|v|1.0*v / c}]}
 	.group_by{|(result, materials)|result}
 	.transform_values{|rs|rs.map{|(_result, materials)|materials}}
 

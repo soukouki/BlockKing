@@ -20,19 +20,6 @@ Item = Struct.new(:name) do
 	end
 end
 class Block
-	Recipe = Struct.new(:buildings, :items, :result) do
-		def can_craft?(adjacent_buildings, owns_items)
-			enough_adjacent_buildings?(adjacent_buildings) && enough_items?(owns_items)
-		end
-		
-		def enough_adjacent_buildings?(adjacent_buildings)
-			buildings.all?{|b|adjacent_buildings.include? b}
-		end
-		def enough_items?(owns_items)
-			items.all?{|item,count|(owns_items[item]||0) >= count}
-		end
-	end
-	
 	attr_reader :level
 	def initialize()
 		ここは来ないはずです・・
@@ -49,11 +36,8 @@ class Block
 	def empty?
 		false
 	end
-	def creation_items
-		GameData::CREATION_ITEMS_HASH
-			.select{|(bs,rs)|bs[0] == self.class}
-			.map{|(bs,rs)|rs.map{|(i,r)|Recipe.new(bs,i,r)}}
-			.flatten || []
+	def creatable_items
+		GameData::RECIPES.select{|r|r.main_building == self.class}
 	end
 	def map_name
 		name
@@ -128,6 +112,18 @@ def Block.new_type(type_name, &block)
 	end
 end
 
-Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :products_hash, :production_time)
+Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :products_hash, :production_time) do
+	# items, result 移行注意
+	def can_craft?(now_location_building, adjacent_buildings, owns_items)
+		main_building == now_location_building && enough_adjacent_buildings?(adjacent_buildings) && enough_items?(owns_items)
+	end
+	
+	def enough_adjacent_buildings?(adjacent_buildings)
+		auxiliary_buildings.all?{|b|adjacent_buildings.include? b}
+	end
+	def enough_items?(owns_items)
+		materials_hash.all?{|item,count|(owns_items[item]||0) >= count}
+	end
+end
 
 require_relative "game_data"

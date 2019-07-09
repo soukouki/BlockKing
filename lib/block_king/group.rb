@@ -109,8 +109,8 @@ class Group
 	
 	# チェックはBlockKingUIにて行う
 	def craft_using_building(game_table, recipe)
-		recipe.items.each{|item,count|@items[item] -= count}
-		recipe.result.each{|item,count|add_item(true, "クラフトで", item, count)}
+		recipe.materials_hash.each{|item,count|@items[item] -= count}
+		recipe.products_hash.each{|item,count|add_item(true, "クラフトで", item, count)}
 	end
 	
 	def weaken_at_win(sync_log)

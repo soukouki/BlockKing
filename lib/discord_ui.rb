@@ -80,7 +80,7 @@ class BlockKingUI < DiscordUIBase
 		x = pos.x
 		y = pos.y
 		p = ->(x,y){@game_table.block(AbPos.new(x,y)).class}
-		[block.class,p[x+1,y],p[x-1,y],p[x,y+1],p[x,y-1]].uniq
+		[p[x+1,y],p[x-1,y],p[x,y+1],p[x,y-1]].uniq
 	end
 	
 	def first_story()
@@ -395,25 +395,25 @@ class BlockKingUI < DiscordUIBase
 			msg("「ここを支配してる奴らに邪魔されて出来ませんよ！」")
 			throw :return_no_map
 		end
-		creation_items = block
-			.creation_items
+		creatable_items = block
+			.creatable_items
 			.map
 			.with_index(1) do |recipe, i|
-				cc = recipe.can_craft?(adjacent_buildings, items)
-				{key: (cc)? i.to_s : "_", recipe:recipe, can_craft:cc}
+				cc = recipe.can_craft?(block.class, adjacent_buildings, items)
+				{input_text: (cc)? i.to_s : "_", recipe:recipe, can_craft:cc}
 			end
-		if creation_items.empty?
+		if creatable_items.empty?
 			msg("「#{block}では何も作れないですよ？」")
 			throw :return_no_map
 		end
-		creation_items_text = creation_items
+		creatable_items_text = creatable_items
 			.map do |hash|
-				key = hash[:key]
+				input_text = hash[:input_text]
 				recipe = hash[:recipe]
 				can_craft = hash[:can_craft]
-				"`#{key}` : "+(
+				"`#{input_text}` : "+(
 					finished_item_name = recipe
-						.result
+						.products_hash
 						.map do |item,count|
 							if can_craft
 								"**#{item.name}**を`#{count}`"
@@ -422,23 +422,23 @@ class BlockKingUI < DiscordUIBase
 							end
 						end
 						.join("、")
-					not_enough_building = (recipe.buildings-adjacent_buildings).map(&:type_name).join("、")
+					not_enough_building = (recipe.auxiliary_buildings-adjacent_buildings).map(&:type_name).join("、")
 					case [recipe.enough_items?(items), recipe.enough_adjacent_buildings?(adjacent_buildings)]
 					when [true, true]
-						"#{finished_item_name}(#{recipe.items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
+						"#{finished_item_name}(#{recipe.materials_hash.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
 					when [true, false]
 						"#{finished_item_name}(隣接マスに#{not_enough_building}が必要)"
 					when [false, true]
-						"#{finished_item_name}(#{not_enough_item_text(recipe.items)}必要)"
+						"#{finished_item_name}(#{not_enough_item_text(recipe.materials_hash)}必要)"
 					when [false, false]
-						"#{finished_item_name}(隣接マスに#{not_enough_building}と、#{not_enough_item_text(recipe.items)}必要)"
+						"#{finished_item_name}(隣接マスに#{not_enough_building}と、#{not_enough_item_text(recipe.materials_hash)}必要)"
 					end
 				)
 			end
 			.join("\n")
 		msg(<<~EOS)
 			レシピリスト
-			#{creation_items_text}
+			#{creatable_items_text}
 			`ret` : 前の画面に戻る
 		EOS
 		wait_respons() do |res|
@@ -451,7 +451,7 @@ class BlockKingUI < DiscordUIBase
 				EOS
 				true
 			else
-				recipe_hash = creation_items.select{|h|h[:key] == res.to_str.downcase}.first
+				recipe_hash = creatable_items.select{|h|h[:input_text] == res.to_str.downcase}.first
 				if recipe_hash.nil?
 					nil
 				else

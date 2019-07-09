@@ -39,6 +39,7 @@ bot.command(:k) do |event|
 	if old_ui.nil?
 		event.respond <<~EOS
 			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
+			現在新バージョン開発中！お楽しみに！
 		EOS
 		ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
 		ui.start(game_table)

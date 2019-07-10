@@ -126,4 +126,16 @@ Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :prod
 	end
 end
 
+RecipeAndCount = Struct.new(:recipe, :count) do
+	def need_items
+		recipe.materials_hash.transform_values{|c|c*count}
+	end
+	def products_times_count
+		recipe.products_hash.transform_values{|c|c*count}
+	end
+	def craft_time
+		recipe.production_time * count
+	end
+end
+
 require_relative "game_data"

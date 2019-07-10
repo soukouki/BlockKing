@@ -41,21 +41,26 @@ class BlockKingUI < DiscordUIBase
 	
 	private
 	
-	def main_loop
-		loop do
-			case @group.state
-			when :first_story
-				@group.state = nil
-				first_story()
-			when :ending
-				@group.state = :ending2
-				ending_story1()
-				break
-			when :ending2
-				@group.state = nil
-				ending_story2()
-			else
-				map()
+	def main_loop()
+		catch(:return_main_loop) do
+			loop do
+				case @group.state
+				when :first_story
+					@group.state = nil
+					first_story()
+				when :ending
+					@group.state = :ending2
+					ending_story1()
+					break
+				when :ending2
+					@group.state = nil
+					ending_story2()
+				when :crafting
+					@group.check_crafting_and_finish(true)
+					craft_view()
+				else
+					map()
+				end
 			end
 		end
 	end
@@ -448,15 +453,26 @@ class BlockKingUI < DiscordUIBase
 				true
 			else
 				recipe = creatable_items.select{|h|h[:input_text] == res.to_str.downcase}.first&.[](:recipe)
-				if recipe.nil?
-					nil
+				next if recipe.nil?
+				
+				# 仮
+				count = 1
+				
+				msg(<<~EOS)
+					#{recipe.products_hash.map{|i,c|"**#{i}**を`#{c*count}`"}.join("、")}作ります。
+					「多分・・・#{recipe.production_time*count}秒くらい・・・#{Time.now+recipe.production_time*count}(**TODO**あとでいい感じに表示するようにする、ログと共通？)くらいまで待っててください！」
+				EOS
+				recipe_and_count = RecipeAndCount.new(recipe, count)
+				text_or_nil = @group.start_crafting(recipe_and_count)
+				if text_or_nil.nil?
+					Thread.new do
+						sleep recipe_and_count.craft_time
+						@group.check_crafting_and_finish(false)
+					end
+					throw(:return_main_loop)
 				else
-					@group.start_crafting(recipe)
-					msg(<<~EOS)
-						#{recipe.products_hash.map{|i,c|"**#{i}**を`#{c}`"}.join("、")}を作ります。
-						「多分・・・#{recipe.production_time}秒くらい・・・#{Time.now+recipe.production_time}(**TODO**あとでいい感じに表示するようにする)くらいまで待っててください！」
-					EOS
-					false
+					msg(text_or_nil)
+					true
 				end
 			end
 		end
@@ -506,6 +522,10 @@ class BlockKingUI < DiscordUIBase
 			.select{|(i,c,hc)|c>hc}
 			.map{|(i,c,hc)|"#{i}があと`#{c-hc}`"}
 			.join("、")
+	end
+	
+	def craft_view()
+		msg("クラフトビュー(工事中)")
 	end
 	
 	class << self

@@ -1,6 +1,6 @@
 
 class Group
-	attr_reader :id, :log, :soldier, :items, :craft_end_time
+	attr_reader :id, :log, :soldier, :items
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def initialize(id, game_table)
 		@id = id
@@ -109,10 +109,49 @@ class Group
 		EOS
 	end
 
-	# チェックはBlockKingUIにて行う
-	def craft_using_building(game_table, recipe)
-		recipe.materials_hash.each{|item,count|@items[item] -= count}
-		recipe.products_hash.each{|item,count|add_item(true, "クラフトで", item, count)}
+	# チェック(そのブロックで作れるのか、そのアイテムで作れるのか、など)はBlockKingUIにて行う
+	def start_crafting(recipe_and_count)
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			if @status == :crafting || @craft_start_time || @crafting_recipe_and_count
+				p [@status, @craft_start_time, @crafting_recipe_and_count]
+				if @status.nil?
+					@craft_start_time = nil
+					@crafting_recipe_and_count = nil
+					return "「あれ、作業班が変なの作ってます。止めてきますね」"
+				else
+					return "「あれ、作業班はもうなにか作っているみたいです」"
+				end
+			end
+			@craft_start_time = Time.now
+			@crafting_recipe_and_count = recipe_and_count
+			@status = :crafting
+			nil
+		end
+	end
+	def check_crafting_and_finish(sync_log)
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			unless @status == :crafting && @craft_start_time && @crafting_recipe_and_count
+				@status = nil
+				@craft_start_time = nil
+				@crafting_recipe_and_count = nil
+				@log.add_text(self, !sync_log && "エラーが発生したため、クラフトを打ち切りました。", "エラーが発生したため、クラフトを打ち切りました。")
+				return
+			end
+			
+			# まだできてない
+			return if Time.now - @craft_start_time > @crafting_recipe_and_count.craft_time
+			
+			recipe_and_count = @crafting_recipe_and_count
+			@status = nil
+			@craft_start_time = nil
+			@crafting_recipe_and_count = nil
+			
+			recipe_and_count.need_items.each{|item,count|@items[item] -= count}
+			@log.add_text(self, !sync_log && "「クラフトが終わりました！」", "「アイテムを作り終えました！」")
+			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
+		end
 	end
 	
 	def weaken_at_win(sync_log)

@@ -129,7 +129,7 @@ module GameData
 	
 	
 	RECIPES = [
-		Recipe.new(LOW_LEVEL_FURNACE, [], {COPPER_ORE => 10, WOOD => 30}, {COPPER_SWORD => 5}, 15)
+		Recipe.new(LOW_LEVEL_FURNACE, [], {COPPER_ORE => 10, WOOD => 30}, {COPPER_SWORD => 5}, 5)
 	]
 	
 	CREATION_ITEMS_HASH = [

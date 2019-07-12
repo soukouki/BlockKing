@@ -18,6 +18,11 @@ Item = Struct.new(:name) do
 	def to_s
 		name
 	end
+	
+	# どこに置くか悩んでる
+	def self.count_by_items_hash_to_s(hash, join_str)
+		hash.map{|item,count|"#{item}を`#{count}`"}.join(join_str)
+	end
 end
 class Block
 	attr_reader :level
@@ -123,6 +128,13 @@ Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :prod
 	end
 	def enough_items?(owns_items)
 		materials_hash.all?{|item,count|(owns_items[item]||0) >= count}
+	end
+	
+	def materials_to_s(join_str = "、")
+		Item.count_by_items_hash_to_s(materials_hash, join_str)
+	end
+	def products_to_s(join_str = "、")
+		Item.count_by_items_hash_to_s(products_hash, join_str)
 	end
 end
 

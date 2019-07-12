@@ -108,50 +108,59 @@ class Group
 			無事に解体できました！
 		EOS
 	end
-
+	
+	# もし変な値が入っていたときに処理する部分、強制終了時など
+	# 正常時trueを返す
+	def check_crafting_value()
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			if @state == :crafting && @time_crafting_started.nil? || @crafting_recipe_and_count.nil?
+				@state = nil
+				@time_crafting_started = nil
+				@crafting_recipe_and_count = nil
+				false
+			else
+				true
+			end
+		end
+	end
 	# チェック(そのブロックで作れるのか、そのアイテムで作れるのか、など)はBlockKingUIにて行う
 	def start_crafting(recipe_and_count)
 		@crafting_mutex ||= Mutex.new
 		@crafting_mutex.synchronize do
-			if @status == :crafting || @craft_start_time || @crafting_recipe_and_count
-				p [@status, @craft_start_time, @crafting_recipe_and_count]
-				if @status.nil?
-					@craft_start_time = nil
-					@crafting_recipe_and_count = nil
-					return "「あれ、作業班が変なの作ってます。止めてきますね」"
-				else
-					return "「あれ、作業班はもうなにか作っているみたいです」"
-				end
-			end
-			@craft_start_time = Time.now
+			return "「あれ、作業班はもうなにか作っているみたいです」" if @state == :crafting
+			@time_crafting_started = Time.now
 			@crafting_recipe_and_count = recipe_and_count
-			@status = :crafting
+			@state = :crafting
 			nil
 		end
 	end
-	def check_crafting_and_finish(sync_log)
+	def check_crafting_and_finish()
 		@crafting_mutex ||= Mutex.new
 		@crafting_mutex.synchronize do
-			unless @status == :crafting && @craft_start_time && @crafting_recipe_and_count
-				@status = nil
-				@craft_start_time = nil
+			unless @state == :crafting && @time_crafting_started && @crafting_recipe_and_count
+				@state = nil
+				@time_crafting_started = nil
 				@crafting_recipe_and_count = nil
-				@log.add_text(self, !sync_log && "エラーが発生したため、クラフトを打ち切りました。", "エラーが発生したため、クラフトを打ち切りました。")
+				@log.add_text(self, nil, "エラーが発生したため、クラフトを打ち切りました。")
 				return
 			end
 			
 			# まだできてない
-			return if Time.now - @craft_start_time > @crafting_recipe_and_count.craft_time
+			return if Time.now - @time_crafting_started < @crafting_recipe_and_count.craft_time
 			
 			recipe_and_count = @crafting_recipe_and_count
-			@status = nil
-			@craft_start_time = nil
+			@state = nil
+			@time_crafting_started = nil
 			@crafting_recipe_and_count = nil
 			
 			recipe_and_count.need_items.each{|item,count|@items[item] -= count}
-			@log.add_text(self, !sync_log && "「クラフトが終わりました！」", "「アイテムを作り終えました！」")
+			@log.add_text(self, nil, "「アイテムを作り終えました！」")
 			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
 		end
+	end
+	def remaining_craft_time
+		@time_crafting_started + @crafting_recipe_and_count.craft_time - Time.now
 	end
 	
 	def weaken_at_win(sync_log)

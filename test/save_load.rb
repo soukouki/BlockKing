@@ -182,6 +182,22 @@ def 値関連()
 	
 	File.delete(path+"/main.json")
 	Dir.delete(path)
+	
+	sl9 = SaveLoad.new(path, lambda do
+		[Time.new(2019,7,11,1,2,3,3600*9), Time.new(2019,7,11,1,2,3.123456789,3600*9)]
+	end)
+	sl9.save
+	
+	sl10 = SaveLoad.new(path, ->{ここは来ないはず})
+	v10 = sl10.value
+	v10[0].test(Time.new(2019,7,11,1,2,3,3600*9))
+	v10_t1 = Time.new(2019,7,11,1,2,3.123456789,3600*9)
+	# 浮動少数あたりの関係でほんのちょっとだけ誤差が出る
+	(v10_t1<v10[1]+0.0000000000000001).test(true)
+	(v10[1]<v10_t1).test(true)
+	
+	File.delete(path+"/main.json")
+	Dir.delete(path)
 end
 値関連()
 

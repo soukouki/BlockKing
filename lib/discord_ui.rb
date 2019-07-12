@@ -42,7 +42,7 @@ class BlockKingUI < DiscordUIBase
 	private
 	
 	def main_loop()
-		catch(:return_main_loop) do
+		catch(:break_main_loop) do
 			loop do
 				case @group.state
 				when :first_story
@@ -56,10 +56,11 @@ class BlockKingUI < DiscordUIBase
 					@group.state = nil
 					ending_story2()
 				when :crafting
-					@group.check_crafting_and_finish(true)
 					craft_view()
 				else
-					map()
+					catch(:break_map_loop) do
+						map()
+					end
 				end
 			end
 		end
@@ -361,7 +362,7 @@ class BlockKingUI < DiscordUIBase
 				block = block_class.new(@group, @game_table.calc_level(pos))
 				"`#{char}` : "+(
 					if can_build
-						"**#{block.name}**(#{need_items.map{|item,count|"#{item}を`#{count}`"}.join("、")}使う)"
+						"**#{block.name}**(#{Item.count_by_items_hash_to_s(need_items, "、")}使う)"
 					else
 						"~~#{block.name}~~(#{not_enough_item_text(need_items)}必要)"
 					end
@@ -426,7 +427,7 @@ class BlockKingUI < DiscordUIBase
 					not_enough_building = (recipe.auxiliary_buildings-adjacent_buildings).map(&:type_name).join("、")
 					case [recipe.enough_items?(items), recipe.enough_adjacent_buildings?(adjacent_buildings)]
 					when [true, true]
-						"#{finished_item_name}「#{recipe.materials_hash.map{|item,count|"#{item}を`#{count}`"}.join("、")}使います！」"
+						"#{finished_item_name}「#{recipe.materials_to_s}使います！」"
 					when [true, false]
 						"#{finished_item_name}「隣のブロックに#{not_enough_building}が必要です！」"
 					when [false, true]
@@ -447,32 +448,41 @@ class BlockKingUI < DiscordUIBase
 			when "ret"
 				true
 			when "_"
-				@add_msg << <<~EOS
-					「それを作るには、なにか足りないものがあるみたいですよ？」
-				EOS
+				@add_msg << "「それを作るには、なにか足りないものがあるみたいですよ？」"
 				true
 			else
 				recipe = creatable_items.select{|h|h[:input_text] == res.to_str.downcase}.first&.[](:recipe)
 				next if recipe.nil?
 				
-				# 仮
-				count = 1
+				max_can_craft_count = recipe.materials_hash.map{|i,c|items[i] / c}.min
+				msg(<<~EOS)
+					「#{recipe.products_hash.map{|i,c|"#{i.name}を`#{c}`"}.join("、")}を何回作りますか・・？」
+					1回あたり必要アイテム数
+						#{recipe.materials_to_s("\n\t")}
+					`0` - `#{max_can_craft_count}` の中から選んでください。
+				EOS
+				
+				count = wait_respons() do |res_count|
+					str = res_count.to_str
+					break str.to_i if str.to_i.to_s == str
+				end
+				
+				if count == 0
+					@add_msg << "「あれ、やっぱ何も作らないんですか？」"
+					break true
+				end
 				
 				msg(<<~EOS)
 					#{recipe.products_hash.map{|i,c|"**#{i}**を`#{c*count}`"}.join("、")}作ります。
-					「多分・・・#{recipe.production_time*count}秒くらい・・・#{Time.now+recipe.production_time*count}(**TODO**あとでいい感じに表示するようにする、ログと共通？)くらいまで待っててください！」
+					「多分・・・#{recipe.production_time*count}秒くらい・・・#{Time.now+recipe.production_time*count}
+					(**TODO**あとでいい感じに表示するようにする、ログと共通？)くらいまで待っててください！」
 				EOS
 				recipe_and_count = RecipeAndCount.new(recipe, count)
 				text_or_nil = @group.start_crafting(recipe_and_count)
 				if text_or_nil.nil?
-					Thread.new do
-						sleep recipe_and_count.craft_time
-						@group.check_crafting_and_finish(false)
-					end
-					throw(:return_main_loop)
+					throw(:break_map_loop)
 				else
 					msg(text_or_nil)
-					true
 				end
 			end
 		end
@@ -525,7 +535,11 @@ class BlockKingUI < DiscordUIBase
 	end
 	
 	def craft_view()
+		return unless @group.check_crafting_value()
+		remaining_time = @group.remaining_craft_time
 		msg("クラフトビュー(工事中)")
+		sleep remaining_time if remaining_time.positive?
+		@group.check_crafting_and_finish()
 	end
 	
 	class << self

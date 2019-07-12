@@ -162,6 +162,18 @@ class UnboundMethod
 		Class.from_convertable_to_json(hash["@owner"], opt).instance_method(hash["@name"].to_sym)
 	end
 end
+class Time
+	def to_convertable_to_json(opt)
+		{
+			"*save_load" => Time,
+			"*values" => [year, month, day, hour, min, sec, nsec, utc_offset]
+		}
+	end
+	def self.from_convertable_to_json(hash, opt)
+		arr = hash["*values"]
+		Time.new(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5] + arr[6] * 10**-9, arr[7])
+	end
+end
 
 
 

@@ -1,6 +1,6 @@
 
 class Group
-	attr_reader :id, :log, :soldier, :items
+	attr_reader :id, :log, :soldier, :items, :crafting_recipe_and_count
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def initialize(id, game_table)
 		@id = id
@@ -155,8 +155,17 @@ class Group
 			@crafting_recipe_and_count = nil
 			
 			recipe_and_count.need_items.each{|item,count|@items[item] -= count}
-			@log.add_text(self, nil, "「アイテムを作り終えました！」")
+			@log.add_text(self, "「アイテムを作り終えました！」", "「アイテムを作り終えました！」")
 			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
+		end
+	end
+	def cancel_crafting()
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			return unless @state == :crafting
+			@state = nil
+			@time_crafting_started = nil
+			@crafting_recipe_and_count = nil
 		end
 	end
 	def remaining_craft_time

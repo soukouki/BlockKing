@@ -56,6 +56,13 @@ class GameTable
 					ruler.add_item(false, "#{block}を支配し", get_item, count)
 				end
 		end
+		
+		@groups
+			.values
+			.select{|group|group.state == :crafting}
+			.each do |group|
+				group.check_crafting_and_finish()
+			end
 	end
 	
 	def war(group)

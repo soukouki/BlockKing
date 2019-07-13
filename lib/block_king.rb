@@ -20,8 +20,9 @@ Item = Struct.new(:name) do
 	end
 	
 	# どこに置くか悩んでる
-	def self.count_by_items_hash_to_s(hash, join_str)
-		hash.map{|item,count|"#{item}を`#{count}`"}.join(join_str)
+	def self.count_by_items_hash_to_s(hash, join_str: "、", inline_code_count: true)
+		cc = (inline_code_count)? "`" : ""
+		hash.map{|item,count|"#{item}を#{cc}#{count}#{cc}"}.join(join_str)
 	end
 end
 class Block
@@ -130,11 +131,11 @@ Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :prod
 		materials_hash.all?{|item,count|(owns_items[item]||0) >= count}
 	end
 	
-	def materials_to_s(join_str = "、")
-		Item.count_by_items_hash_to_s(materials_hash, join_str)
+	def materials_to_s(**args)
+		Item.count_by_items_hash_to_s(materials_hash, **args)
 	end
-	def products_to_s(join_str = "、")
-		Item.count_by_items_hash_to_s(products_hash, join_str)
+	def products_to_s(**args)
+		Item.count_by_items_hash_to_s(products_hash, **args)
 	end
 end
 
@@ -147,6 +148,13 @@ RecipeAndCount = Struct.new(:recipe, :count) do
 	end
 	def craft_time
 		recipe.production_time * count
+	end
+	
+	def materials_to_s(**args)
+		Item.count_by_items_hash_to_s(recipe.materials_hash.transform_values{|c|c*count}, **args)
+	end
+	def products_to_s(**args)
+		Item.count_by_items_hash_to_s(recipe.products_hash.transform_values{|c|c*count}, **args)
 	end
 end
 

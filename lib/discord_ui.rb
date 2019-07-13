@@ -1,4 +1,5 @@
 
+require "timeout"
 require "discordrb"
 require_relative "../lib/discord_ui_base"
 
@@ -157,7 +158,7 @@ class BlockKingUI < DiscordUIBase
 				"施設を建設するには(`c`)"
 			elsif block.is_a?(Building)
 				<<~EOS
-					施設を使用するには(`u`)
+					アイテムをクラフトするには(`u`)
 					施設を撤去するには(`v`)
 				EOS
 			else
@@ -201,6 +202,7 @@ class BlockKingUI < DiscordUIBase
 		
 		msg(constant_text+block_text+tips+"\n"+log_text)
 		wait_respons do |res|
+			# falseを返せばいい話ではあるけど、可読性の面でthrow-catchを使う
 			catch(:return_no_map) do
 				case res
 				when "w", "W"
@@ -212,13 +214,8 @@ class BlockKingUI < DiscordUIBase
 				when "d", "D"
 					move(1, 0)
 				when "i", "I"
-					text = if items.empty?
-						"現在アイテムは持っていません。"
-					else
-						items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c}"}.join("\n")
-					end
-					msg("```javascript\n兵士 : #{@group.soldier}\n"+text+"\n```")
-					throw :return_no_map
+					items_view()
+					throw(:return_no_map)
 				when "x", "X"
 					war()
 				when "c", "C"
@@ -303,6 +300,15 @@ class BlockKingUI < DiscordUIBase
 		result = @group.move(@game_table, x, y)
 	end
 	
+	def items_view()
+		text = if items.empty?
+			"現在アイテムは持っていません。"
+		else
+			items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c}"}.join("\n")
+		end
+		msg("```javascript\n兵士 : #{@group.soldier}\n"+text+"\n```")
+	end
+	
 	def war()
 		enemy = ruler
 		if enemy == @group
@@ -362,7 +368,7 @@ class BlockKingUI < DiscordUIBase
 				block = block_class.new(@group, @game_table.calc_level(pos))
 				"`#{char}` : "+(
 					if can_build
-						"**#{block.name}**(#{Item.count_by_items_hash_to_s(need_items, "、")}使う)"
+						"**#{block.name}**(#{Item.count_by_items_hash_to_s(need_items, join_str:"、")}使う)"
 					else
 						"~~#{block.name}~~(#{not_enough_item_text(need_items)}必要)"
 					end
@@ -458,13 +464,14 @@ class BlockKingUI < DiscordUIBase
 				msg(<<~EOS)
 					「#{recipe.products_hash.map{|i,c|"#{i.name}を`#{c}`"}.join("、")}を何回作りますか・・？」
 					1回あたり必要アイテム数
-						#{recipe.materials_to_s("\n\t")}
+						#{recipe.materials_to_s(join_str:"\n\t")}
 					`0` - `#{max_can_craft_count}` の中から選んでください。
 				EOS
 				
 				count = wait_respons() do |res_count|
 					str = res_count.to_str
-					break str.to_i if str.to_i.to_s == str
+					i = str.to_i
+					break i if i.to_s == str && i >= 0 && i <= max_can_craft_count
 				end
 				
 				if count == 0
@@ -472,11 +479,6 @@ class BlockKingUI < DiscordUIBase
 					break true
 				end
 				
-				msg(<<~EOS)
-					#{recipe.products_hash.map{|i,c|"**#{i}**を`#{c*count}`"}.join("、")}作ります。
-					「多分・・・#{recipe.production_time*count}秒くらい・・・#{Time.now+recipe.production_time*count}
-					(**TODO**あとでいい感じに表示するようにする、ログと共通？)くらいまで待っててください！」
-				EOS
 				recipe_and_count = RecipeAndCount.new(recipe, count)
 				text_or_nil = @group.start_crafting(recipe_and_count)
 				if text_or_nil.nil?
@@ -537,8 +539,44 @@ class BlockKingUI < DiscordUIBase
 	def craft_view()
 		return unless @group.check_crafting_value()
 		remaining_time = @group.remaining_craft_time
-		msg("クラフトビュー(工事中)")
-		sleep remaining_time if remaining_time.positive?
+		
+		if remaining_time.positive?
+			begin
+				Timeout.timeout(remaining_time) do
+					crafting_recipe_and_count = @group.crafting_recipe_and_count
+					
+					msg(<<~EOS)
+						```
+						#{crafting_recipe_and_count.products_to_s(inline_code_count: false)}
+						
+						素材 :  #{crafting_recipe_and_count.materials_to_s(inline_code_count: false)}
+						必要時間 : #{crafting_recipe_and_count.craft_time}秒
+						
+						完成予想 : #{(Time.now + remaining_time).strftime("%m月%d日%H時%M分")}頃
+						```
+						
+						アイテム・その他情報は(`i`)
+						クラフト中止は(`c`)
+					EOS
+					
+					wait_respons() do |res|
+						case res
+						when "i"
+							items_view()
+							false
+						when "c"
+							@group.cancel_crafting()
+							@add_msg << "クラフトをキャンセルしました。"
+							
+							return
+						end
+					end
+				end
+			rescue Timeout::Error
+				# 時間になりました。
+			end
+		end
+		
 		@group.check_crafting_and_finish()
 	end
 	

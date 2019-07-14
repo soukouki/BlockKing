@@ -52,8 +52,13 @@ class GameTable
 					block = block(pos)
 					get_item, count = block.turn_items(ruler)
 					next if get_item.nil?
+					is_few_remaining_item = block.few_remaining_item?
 					block.remaining_items -= count
 					ruler.add_item(false, "#{block}を支配し", get_item, count)
+					if !is_few_remaining_item && block.few_remaining_item?
+						ruler.log.add_text(ruler, "「今支配してるブロックの残りアイテムがだいぶ少なくなってきました。そろそろ移動してもいい頃じゃないですか？」",
+							"支配しているブロックの残りアイテムが少なくなってきました。")
+					end
 				end
 		end
 		

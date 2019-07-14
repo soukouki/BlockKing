@@ -146,7 +146,7 @@ module GameData
 		#  銅の剣
 		Recipe.new(LOW_LEVEL_FURNACE, [], {COPPER_ORE => 10, WOOD => 30}, {COPPER_SWORD => 5}, 150),
 		#    鉄の剣準備
-		Recipe.new(LOW_LEVEL_FURNACE, [], {CLAY => 20, WOOD => 40}, {BRICK => 20}, 100),
+		Recipe.new(LOW_LEVEL_FURNACE, [], {CLAY => 20, WOOD => 40}, {BRICK => 20}, 50),
 		Recipe.new(LOW_LEVEL_FURNACE, [], {GOLD_ORE => 15, WOOD => 30}, {GOLD => 5}, 100),
 		#  鉄の剣
 		Recipe.new(MEDIUM_LEVEL_FURNACE, [], {IRON_ORE => 15, WOOD => 40}, {IRON_SWORD => 5}, 150),
@@ -168,30 +168,26 @@ module GameData
 		Recipe.new(WOOD_REFINERY, [INFERIOR_MAGIC_WORKBENCH], {WOOD_CRYSTAL => 800}, {INFERIOR_MAGIC_CRYSTAL => 200}, 2_000),
 		#  木の剣
 		Recipe.new(INFERIOR_MAGIC_WORKBENCH, [], {INFERIOR_MAGIC_CRYSTAL => 25, WOOD_CRYSTAL => 300}, {WOOD_SWORD => 5}, 500),
-		#    光の剣準備
+		#    明の剣準備
+		Recipe.new(LARGE_FURNACE, [], {GOLD_ORE => 1_200, COAL => 600}, {GOLD => 400}, 500), # 1 : 1/2 : 1/3
+		Recipe.new(LARGE_FURNACE, [], {SILVER_ORE => 3_600, COAL => 2_800}, {SILVER => 1_200}, 500), # 1 : 4/5 : 1/3
+		Recipe.new(LARGE_FURNACE, [], {COPPER_ORE => 6_000, COAL => 6_000}, {COPPER => 2_000}, 500), # 1 : 1 : 1/3
+		Recipe.new(LARGE_FURNACE, [], {IRON_ORE => 9_000, COAL => 9_000, LIME => 4500}, {IRON => 3_000}, 500), # 1 : 1 : 1/2 : 1/3
+		Recipe.new(METAL_REFINERY, [],
+			{INFERIOR_MAGIC_CRYSTAL => 200, GOLD => 400, SILVER => 1_200, COPPER => 2_000, IRON => 3_000, FIRE_CRYSTAL => 2_000},
+			{INFERIOR_LIGHT_CRYSTAL => 20}, 1500),
+		#  明の剣
+		Recipe.new(INFERIOR_MAGIC_WORKBENCH, [], {INFERIOR_MAGIC_CRYSTAL => 50, INFERIOR_LIGHT_CRYSTAL => 20}, {INFERIOR_LIGHT_SWORD => 5}, 1000),
+		#    暗の剣準備
+		Recipe.new(ANCIENT_REFINERY, [], {INFERIOR_MAGIC_CRYSTAL => 250, COAL => 25_000, LIME => 25_000}, {INFERIOR_DARK_CRYSTAL => 10}, 2000),
+		#  暗の剣
+		Recipe.new(INFERIOR_MAGIC_WORKBENCH, [], {INFERIOR_MAGIC_CRYSTAL => 100, INFERIOR_DARK_CRYSTAL => 20}, {INFERIOR_DARK_SWORD => 5}, 2000),
+		# 魔法結晶レシピ
+		# =====
+		#   最初の魔法結晶
 	]
 	
 	CREATION_ITEMS_HASH = [
-		# 低級魔法
-		# =====
-		[[INFERIOR_MAGIC_WORKBENCH], {
-			{INFERIOR_MAGIC_CRYSTAL => 50, WOOD_CRYSTAL => 600} => {WOOD_SWORD => 10},
-			{INFERIOR_MAGIC_CRYSTAL => 100, INFERIOR_LIGHT_CRYSTAL => 40} => {INFERIOR_LIGHT_SWORD => 10},
-			{INFERIOR_MAGIC_CRYSTAL => 400, INFERIOR_DARK_CRYSTAL => 80} => {INFERIOR_DARK_SWORD => 20},
-		}],
-		[[LARGE_FURNACE], {
-			{GOLD_ORE => 1200, COAL => 600} => {GOLD => 400}, # 1 : 1/2 : 3/1
-			{SILVER_ORE => 3600, COAL => 2800} => {SILVER => 1200}, # 1 : 4/5 : 3/1
-			{COPPER_ORE => 6000, COAL => 6000} => {COPPER => 2000}, # 1 :  1  : 3/1
-			{IRON_ORE => 9000, COAL => 9000, LIME => 4500} => {IRON => 3000}, # 1 : 1 : 2/1 : 3/1
-		}],
-		[[METAL_REFINERY], {
-			{INFERIOR_MAGIC_CRYSTAL => 200, GOLD => 400, SILVER => 1200, COPPER => 2000, IRON => 3000, FIRE_CRYSTAL => 2000} => {INFERIOR_LIGHT_CRYSTAL => 20},
-		}],
-		[[ANCIENT_REFINERY], {
-			{INFERIOR_MAGIC_CRYSTAL => 1000, COAL => 100000, LIME => 100000} => {INFERIOR_DARK_CRYSTAL => 40},
-		}],
-		
 		# 普通魔法
 		# =====
 		#   魔法結晶レシピ

@@ -544,15 +544,17 @@ class BlockKingUI < DiscordUIBase
 			begin
 				Timeout.timeout(remaining_time) do
 					crafting_recipe_and_count = @group.crafting_recipe_and_count
+					progress = remaining_time / crafting_recipe_and_count.craft_time
 					
 					msg(<<~EOS)
 						```
 						#{crafting_recipe_and_count.products_to_s(inline_code_count: false)}
 						
 						素材 :  #{crafting_recipe_and_count.materials_to_s(inline_code_count: false)}
-						必要時間 : #{crafting_recipe_and_count.craft_time.to_i}秒
+						必要時間 : #{crafting_recipe_and_count.craft_time.to_i}秒(残り#{remaining_time.to_i}秒)
 						
 						完成予想 : #{(Time.now + remaining_time).strftime("%m月%d日%H時%M分")}頃
+						進捗 : |#{"*"*((1-progress)*20).to_i}#{"-"*(progress*20).to_i}|
 						```
 						
 						アイテム・その他情報は(`i`)
@@ -561,10 +563,10 @@ class BlockKingUI < DiscordUIBase
 					
 					wait_respons() do |res|
 						case res
-						when "i"
+						when "i", "I"
 							items_view()
 							false
-						when "c"
+						when "c", "C"
 							@group.cancel_crafting()
 							@add_msg << "クラフトをキャンセルしました。"
 							

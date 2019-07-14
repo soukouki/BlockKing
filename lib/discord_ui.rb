@@ -3,8 +3,7 @@ require "discordrb"
 require_relative "../lib/discord_ui_base"
 
 class BlockKingUI < DiscordUIBase
-	attr_reader :last_operation_time
-	attr_accessor :channel
+	attr_reader :last_operation_time, :channel
 	
 	# モンキーパッチしてます
 	# 自動化ツール対策用！
@@ -228,7 +227,6 @@ class BlockKingUI < DiscordUIBase
 	end
 	
 	def tips
-		p [:loe, @last_operation_elapsed_time]
 		return "" unless @last_operation_elapsed_time.nil? || @last_operation_elapsed_time > 60
 		all_text = {
 			<<~EOS => 1..4,

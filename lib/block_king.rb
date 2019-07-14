@@ -139,7 +139,7 @@ Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :prod
 	end
 end
 
-RecipeAndCount = Struct.new(:recipe, :count) do
+RecipeAndCount = Struct.new(:recipe, :count, :group) do
 	def need_items
 		recipe.materials_hash.transform_values{|c|c*count}
 	end
@@ -147,7 +147,9 @@ RecipeAndCount = Struct.new(:recipe, :count) do
 		recipe.products_hash.transform_values{|c|c*count}
 	end
 	def craft_time
-		recipe.production_time * count
+		# recipe.production_time * count / Math.log10(group.soldier)
+		# 一時的な処置
+		recipe.production_time * count / Math.log10(group&.soldier || 10)
 	end
 	
 	def materials_to_s(**args)

@@ -479,7 +479,7 @@ class BlockKingUI < DiscordUIBase
 					break true
 				end
 				
-				recipe_and_count = RecipeAndCount.new(recipe, count)
+				recipe_and_count = RecipeAndCount.new(recipe, count, @group)
 				text_or_nil = @group.start_crafting(recipe_and_count)
 				if text_or_nil.nil?
 					throw(:break_map_loop)
@@ -550,7 +550,7 @@ class BlockKingUI < DiscordUIBase
 						#{crafting_recipe_and_count.products_to_s(inline_code_count: false)}
 						
 						素材 :  #{crafting_recipe_and_count.materials_to_s(inline_code_count: false)}
-						必要時間 : #{crafting_recipe_and_count.craft_time}秒
+						必要時間 : #{crafting_recipe_and_count.craft_time.to_i}秒
 						
 						完成予想 : #{(Time.now + remaining_time).strftime("%m月%d日%H時%M分")}頃
 						```

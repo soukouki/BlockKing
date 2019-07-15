@@ -43,25 +43,23 @@ class BlockKingUI < DiscordUIBase
 	private
 	
 	def main_loop()
-		catch(:break_main_loop) do
-			loop do
-				case @group.state
-				when :first_story
-					@group.state = nil
-					first_story()
-				when :ending
-					@group.state = :ending2
-					ending_story1()
-					break
-				when :ending2
-					@group.state = nil
-					ending_story2()
-				when :crafting
-					craft_view()
-				else
-					catch(:break_map_loop) do
-						map()
-					end
+		loop do
+			case @group.state
+			when :first_story
+				@group.state = nil
+				first_story()
+			when :ending
+				@group.state = :ending2
+				ending_story1()
+				break
+			when :ending2
+				@group.state = nil
+				ending_story2()
+			when :crafting
+				craft_view()
+			else
+				catch(:break_map_loop) do
+					map()
 				end
 			end
 		end

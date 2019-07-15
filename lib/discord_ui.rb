@@ -40,6 +40,12 @@ class BlockKingUI < DiscordUIBase
 				msg("現在、ログがあります。確認するには(`Bk`)")
 			end
 		end
+		main_loop()
+	end
+	
+	private
+	
+	def main_loop
 		loop do
 			case @group.state
 			when :first_story
@@ -57,8 +63,6 @@ class BlockKingUI < DiscordUIBase
 			end
 		end
 	end
-	
-	private
 	
 	def pos
 		@group.pos

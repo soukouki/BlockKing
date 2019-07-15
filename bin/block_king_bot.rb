@@ -20,6 +20,7 @@ end
 
 # ハッシュの中にハッシュが入ってる
 uis = {}
+mutexes = {}
 bot.command(:k) do |event|
 	if is_maintenance
 		event.respond maintenance_message
@@ -34,22 +35,24 @@ bot.command(:k) do |event|
 		next
 	end
 	old_ui = uis[user.id]
+	mutex = mutexes[user.id] ||= Mutex.new
 	
 	# この部分Mutexつけるべき
 	if old_ui.nil?
-		event.respond <<~EOS
-			`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
-			現在新バージョン開発中！お楽しみに！
-		EOS
-		ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
-		ui.start(game_table)
-	elsif old_ui.channel == event.channel
-		old_ui.stop_waiting()
-		old_ui.start(game_table)
+		mutex.synchronize do
+			event.respond <<~EOS
+				`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
+				現在新バージョン開発中！お楽しみに！
+			EOS
+			ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
+			ui.start(game_table)
+		end
 	else
 		old_ui.stop_waiting()
-		ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
-		ui.start(game_table)
+		mutex.synchronize do
+			ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
+			ui.start(game_table)
+		end
 	end
 end
 bot.command(:rank) do |event|

@@ -105,7 +105,7 @@ class DiscordUIBase
 		@bot = bot
 		@channel = channel
 		@user = user
-		@wait_respons_threads = []
+		@execution_thread = Thread.current
 	end
 	
 	# このプログラム一番の複雑なところ！マルチスレッド注意！
@@ -120,7 +120,6 @@ class DiscordUIBase
 		end
 		
 		begin
-			@wait_respons_threads << Thread.current
 			result = loop do
 				pop = queue.pop
 				is_now_exec_block = true
@@ -132,15 +131,13 @@ class DiscordUIBase
 			result
 		ensure
 			# 後片付け
-			@wait_respons_threads -= [Thread.current]
 			@bot.remove_handler(message_handler)
 			@bot.remove_handler(reaction_handler)
 		end
 	end
 	
 	def stop_waiting()
-		@wait_respons_threads.each{|t|t.kill}
-		@wait_respons_threads = []
+		@execution_thread.kill
 	end
 	
 	def send_reactions(msg, args)

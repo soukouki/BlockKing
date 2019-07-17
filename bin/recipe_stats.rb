@@ -75,7 +75,7 @@ end
 ((item.nil?)? recipes_by_result : recipes_by_result.select{|r,_|r == item})
 	.each do |result,recipes|
 		output.puts result.name
-		recipes
+		recipes.sample(10)
 			.each.with_index(1) do |recipe, idx|
 				output.puts idx
 				output.puts "\t"+(

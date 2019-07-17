@@ -25,7 +25,7 @@ class Hash
 			opt[:objects][hash["*object_id"]] = obj
 			obj
 		when hash["*reference"]
-			opt[:objects][hash["*reference"]]
+			opt[:objects][hash["*reference"]] || raise("参照先のオブジェクトを取得できません")
 		else
 			hash.map{|key,value|[key, value.class.from_convertable_to_json(value, opt)]}.to_h
 		end
@@ -89,6 +89,7 @@ class Object
 	end
 	def self.from_convertable_to_json(hash, opt)
 		obj = self.allocate
+		opt[:objects][hash["*object_id"]] = obj # 自分自身を内部で参照している場合に備えて
 		hash
 			.select{|name,val|name.start_with?("@")}
 			.each{|name,val|obj.instance_variable_set(name.to_sym, val.class.from_convertable_to_json(val, opt))}

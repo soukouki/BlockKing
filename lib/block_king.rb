@@ -150,7 +150,7 @@ RecipeAndCount = Struct.new(:recipe, :count, :group) do
 		recipe.products_hash.transform_values{|c|c*count}
 	end
 	def craft_time
-		recipe.production_time * count / Math.log10(group.soldier)
+		(recipe.production_time * count) / Math.log(group.soldier, 5)
 	end
 	
 	def materials_to_s(**args)

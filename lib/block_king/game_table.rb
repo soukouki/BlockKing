@@ -52,10 +52,22 @@ class GameTable
 					block = block(pos)
 					get_item, count = block.turn_items(ruler)
 					next if get_item.nil?
+					is_few_remaining_item = block.few_remaining_item?
 					block.remaining_items -= count
 					ruler.add_item(false, "#{block}を支配し", get_item, count)
+					if !is_few_remaining_item && block.few_remaining_item?
+						ruler.log.add_text(ruler, "「今支配してるブロックの残りアイテムがだいぶ少なくなってきました。そろそろ移動してもいい頃じゃないですか？」",
+							"支配しているブロックの残りアイテムが少なくなってきました。")
+					end
 				end
 		end
+		
+		@groups
+			.values
+			.select{|group|group.state == :crafting}
+			.each do |group|
+				group.check_crafting_and_finish()
+			end
 	end
 	
 	def war(group)
@@ -165,7 +177,7 @@ class GameTable
 				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
 				@groups.each do |id, group|
 					group.pos = initial_pos(group.force)
-					group.log.add_text(false, <<~EOS)
+					group.log.add_text(group, nil, <<~EOS)
 						`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
 						それによって、ブロック・位置などが初期化され、敵が強くなりました！
 					EOS

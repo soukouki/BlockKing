@@ -18,21 +18,14 @@ Item = Struct.new(:name) do
 	def to_s
 		name
 	end
+	
+	# どこに置くか悩んでる
+	def self.count_by_items_hash_to_s(hash, join_str: "、", inline_code_count: true)
+		cc = (inline_code_count)? "`" : ""
+		hash.map{|item,count|"#{item}を#{cc}#{count}#{cc}"}.join(join_str)
+	end
 end
 class Block
-	Recipe = Struct.new(:buildings, :items, :result) do
-		def can_craft?(adjacent_buildings, owns_items)
-			enough_adjacent_buildings?(adjacent_buildings) && enough_items?(owns_items)
-		end
-		
-		def enough_adjacent_buildings?(adjacent_buildings)
-			buildings.all?{|b|adjacent_buildings.include? b}
-		end
-		def enough_items?(owns_items)
-			items.all?{|item,count|(owns_items[item]||0) >= count}
-		end
-	end
-	
 	attr_reader :level
 	def initialize()
 		ここは来ないはずです・・
@@ -49,11 +42,8 @@ class Block
 	def empty?
 		false
 	end
-	def creation_items
-		GameData::CREATION_ITEMS_HASH
-			.select{|(bs,rs)|bs[0] == self.class}
-			.map{|(bs,rs)|rs.map{|(i,r)|Recipe.new(bs,i,r)}}
-			.flatten || []
+	def creatable_items
+		GameData::RECIPES.select{|r|r.main_building == self.class}
 	end
 	def map_name
 		name
@@ -96,6 +86,9 @@ class Nature < Block
 		end
 	end
 	def get_items_when_turning; nil end
+	def few_remaining_item?
+		1.0 * @remaining_items / @maximum_items <= 0.2
+	end
 end
 class Building < Block
 	attr_reader :builder
@@ -128,6 +121,44 @@ def Block.new_type(type_name, &block)
 	end
 end
 
-Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :products_hash, :production_time)
+Recipe = Struct.new(:main_building, :auxiliary_buildings, :materials_hash, :products_hash, :production_time) do
+	# items, result 移行注意
+	def can_craft?(now_location_building, adjacent_buildings, owns_items)
+		main_building == now_location_building && enough_adjacent_buildings?(adjacent_buildings) && enough_items?(owns_items)
+	end
+	
+	def enough_adjacent_buildings?(adjacent_buildings)
+		auxiliary_buildings.all?{|b|adjacent_buildings.include? b}
+	end
+	def enough_items?(owns_items)
+		materials_hash.all?{|item,count|(owns_items[item]||0) >= count}
+	end
+	
+	def materials_to_s(**args)
+		Item.count_by_items_hash_to_s(materials_hash, **args)
+	end
+	def products_to_s(**args)
+		Item.count_by_items_hash_to_s(products_hash, **args)
+	end
+end
+
+RecipeAndCount = Struct.new(:recipe, :count, :group) do
+	def need_items
+		recipe.materials_hash.transform_values{|c|c*count}
+	end
+	def products_times_count
+		recipe.products_hash.transform_values{|c|c*count}
+	end
+	def craft_time
+		(recipe.production_time * count) / Math.log(group.soldier, 3) / (Math.log(count, 10) + 1)
+	end
+	
+	def materials_to_s(**args)
+		Item.count_by_items_hash_to_s(recipe.materials_hash.transform_values{|c|c*count}, **args)
+	end
+	def products_to_s(**args)
+		Item.count_by_items_hash_to_s(recipe.products_hash.transform_values{|c|c*count}, **args)
+	end
+end
 
 require_relative "game_data"

@@ -1,6 +1,6 @@
 
 class Group
-	attr_reader :id, :log, :soldier, :items
+	attr_reader :id, :log, :soldier, :items, :crafting_recipe_and_count
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def initialize(id, game_table)
 		@id = id
@@ -21,14 +21,16 @@ class Group
 			@callback = ->{}
 		end
 		def add_item(sync, cause, item, count)
+			causes_empty = @causes.empty?
 			@causes[cause] ||= {}
 			@causes[cause][item] ||= 0
 			@causes[cause][item] += count
-			@callback.call(sync)
+			@callback.call("「アイテムが手に入りました！確認してみてください！」") if !sync && causes_empty
 		end
-		def add_text(sync, text)
-			@text_logs << Time.now.strftime("[%d日%H時%M分]")+text
-			@callback.call(sync)
+		# short_text_or_nilがnilのときは通知をしない
+		def add_text(group, short_text_or_nil, text)
+			@text_logs << Time.now.strftime("[%m月%d日%H時%M分]")+text
+			@callback.call("<@#{group.id}>\n#{short_text_or_nil}") if short_text_or_nil
 		end
 		def clear()
 			@causes = {}
@@ -107,24 +109,81 @@ class Group
 		EOS
 	end
 	
-	# チェックはBlockKingUIにて行う
-	def craft_using_building(game_table, recipe)
-		recipe.items.each{|item,count|@items[item] -= count}
-		recipe.result.each{|item,count|add_item(true, "クラフトで", item, count)}
+	# もし変な値が入っていたときに処理する部分、強制終了時など
+	# 正常時trueを返す
+	def check_crafting_value()
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			if @state == :crafting && @time_crafting_started.nil? || @crafting_recipe_and_count.nil?
+				@state = nil
+				@time_crafting_started = nil
+				@crafting_recipe_and_count = nil
+				false
+			else
+				true
+			end
+		end
+	end
+	# チェック(そのブロックで作れるのか、そのアイテムで作れるのか、など)はBlockKingUIにて行う
+	def start_crafting(recipe_and_count)
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			return "「あれ、作業班はもうなにか作っているみたいです」" if @state == :crafting
+			@time_crafting_started = Time.now
+			@crafting_recipe_and_count = recipe_and_count
+			@state = :crafting
+			nil
+		end
+	end
+	def check_crafting_and_finish()
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			unless @state == :crafting && @time_crafting_started && @crafting_recipe_and_count
+				@state = nil
+				@time_crafting_started = nil
+				@crafting_recipe_and_count = nil
+				@log.add_text(self, nil, "エラーが発生したため、クラフトを打ち切りました。")
+				return
+			end
+			
+			# まだできてない
+			return if Time.now - @time_crafting_started < @crafting_recipe_and_count.craft_time
+			
+			recipe_and_count = @crafting_recipe_and_count
+			@state = nil
+			@time_crafting_started = nil
+			@crafting_recipe_and_count = nil
+			
+			recipe_and_count.need_items.each{|item,count|@items[item] -= count}
+			@log.add_text(self, "「アイテムを作り終えました！」", "「アイテムを作り終えました！」")
+			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
+		end
+	end
+	def cancel_crafting()
+		@crafting_mutex ||= Mutex.new
+		@crafting_mutex.synchronize do
+			return unless @state == :crafting
+			@state = nil
+			@time_crafting_started = nil
+			@crafting_recipe_and_count = nil
+		end
+	end
+	def remaining_craft_time
+		@time_crafting_started + @crafting_recipe_and_count.craft_time - Time.now
 	end
 	
 	def weaken_at_win(sync_log)
 		count = rand(0..Math.log(@soldier, 2)).round
 		if count != 0
 			@soldier += count
-			@log.add_text(sync_log, "戦闘に勝利し、`#{count}`人が加わりました！")
+			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
 		end
 	end
 	def weaken_at_lose(sync_log)
 		count = rand(0..1.0*@soldier/4).to_i
 		if count != 0
 			@soldier -= count
-			@log.add_text(sync_log, "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")
+			@log.add_text(self, !sync_log && "「残念ながら、戦闘に敗北してしまいました・・・」", "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")
 		end
 	end
 	

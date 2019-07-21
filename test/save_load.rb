@@ -11,6 +11,14 @@ class C1
 	class C2
 	end
 end
+S3 = Struct.new(:v1, :v2)
+class C3
+	attr_accessor :v1, :v2
+	def initialize(v1, v2)
+		@v1 = v1
+		@v2 = v2
+	end
+end
 
 path = File.expand_path(File.dirname(__FILE__))+"/test_db"
 if File.exist?(path+"/main.json")
@@ -182,6 +190,22 @@ def 値関連()
 	
 	File.delete(path+"/main.json")
 	Dir.delete(path)
+	
+	sl9 = SaveLoad.new(path, lambda do
+		[Time.new(2019,7,11,1,2,3,3600*9), Time.new(2019,7,11,1,2,3.123456789,3600*9)]
+	end)
+	sl9.save
+	
+	sl10 = SaveLoad.new(path, ->{ここは来ないはず})
+	v10 = sl10.value
+	v10[0].test(Time.new(2019,7,11,1,2,3,3600*9))
+	v10_t1 = Time.new(2019,7,11,1,2,3.123456789,3600*9)
+	# 浮動少数あたりの関係でほんのちょっとだけ誤差が出る
+	(v10_t1<v10[1]+0.0000000000000001).test(true)
+	(v10[1]<v10_t1).test(true)
+	
+	File.delete(path+"/main.json")
+	Dir.delete(path)
 end
 値関連()
 
@@ -214,6 +238,20 @@ def 参照について
 	v4[0].test(v4c3)
 	v4[1].keys[0].test(v4c3)
 	v4[1][v4c3].v.test(v4c3)
+	
+	File.delete(path+"/main.json")
+	Dir.delete(path)
+	
+	c5 = C1.new(123)
+	c5.v = S1.new(c5)
+	sl5 = SaveLoad.new(path, lambda do
+		C3.new({a:c5}, S1.new(c5))
+	end)
+	sl5.save
+	
+	sl6 = SaveLoad.new(path, ->{ここは来ないはず})
+	v6 = sl6.value
+	# 読み込めることを確認
 	
 	File.delete(path+"/main.json")
 	Dir.delete(path)

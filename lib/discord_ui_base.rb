@@ -109,6 +109,7 @@ class DiscordUIBase
 	end
 	
 	# このプログラム一番の複雑なところ！マルチスレッド注意！
+	# ブロックの戻り値がfalse(nil)のときはループし続ける
 	def wait_respons(message=nil, &block)
 		queue = Thread::Queue.new
 		is_now_exec_block = false

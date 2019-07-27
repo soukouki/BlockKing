@@ -155,8 +155,8 @@ class Group
 			@crafting_recipe_and_count = nil
 			
 			recipe_and_count.need_items.each{|item,count|@items[item] -= count}
-			@log.add_text(self, "「アイテムを作り終えました！」", "「アイテムを作り終えました！」")
 			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
+			@log.add_text(self, "「アイテムを作り終えました！」", "「アイテムを作り終えました！」")
 		end
 	end
 	def cancel_crafting()

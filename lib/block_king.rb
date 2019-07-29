@@ -64,7 +64,7 @@ class Nature < Block
 			else
 				(level*2.0 * @remaining_items*1.0 / @maximum_items).ceil
 			end
-			[item, [count, ((group.soldier*1.5 + 15) * rand(0.7..1)).to_i].min]
+			[item, [count, (group.soldier*rand(1.0..2.0) + 15).to_i].min]
 		else
 			[]
 		end
@@ -150,7 +150,7 @@ RecipeAndCount = Struct.new(:recipe, :count, :group) do
 		recipe.products_hash.transform_values{|c|c*count}
 	end
 	def craft_time
-		(recipe.production_time * count) / Math.log(group.soldier, 3) / (Math.log(count, 10) + 1)
+		(recipe.production_time * count) / Math.log(group.soldier, 3) / (Math.log(count, 7) + 1)
 	end
 	
 	def materials_to_s(**args)

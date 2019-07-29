@@ -105,6 +105,7 @@ bot.command(:help) do |event|
 		`Bhelp` : このコマンドです。
 		`Bhis` : 過去の王が見れます。
 		`Bexit` : コマンドに反応しないようになります。
+		`Bstats` : このbotに関する情報がﾁｮｯﾄﾀﾞｹ見れます。
 		`Bbots` : 兄弟botを紹介します！ぜひ導入してみてください！
 		
 		**禁止事項**
@@ -134,7 +135,7 @@ bot.command(:end) do |event|
 	uis
 		.values
 		.select{|ui|ui.last_operation_time > Time.now - 3600*12}
-		.each{|ui|ui.msg("再起動を行います。クラフト完了、残りアイテム減少時のメンションによるお知らせが途切れます。`Bk`コマンドで復旧できます。")}
+		.each{|ui|ui.msg(ui.mention+"\n再起動を行います。クラフト完了、残りアイテム減少時のメンションによるお知らせが途切れます。`Bk`コマンドで復旧できます。")}
 	# ensureに入る
 	exit
 end

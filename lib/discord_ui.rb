@@ -40,6 +40,10 @@ class BlockKingUI < DiscordUIBase
 		main_loop()
 	end
 	
+	def mention
+		"<@#{@user.id}>"
+	end
+	
 	private
 	
 	def main_loop()

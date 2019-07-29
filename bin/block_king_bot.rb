@@ -8,7 +8,7 @@ require_relative "../lib/save_load"
 token = ARGV[0]
 is_maintenance = false
 maintenance_message = <<~EOS
-	現在、メンテナンス中です。終了時刻は18時00分頃予定です。しばらくお待ち下さい。
+	現在、メンテナンス中です。終了時刻は1時40分頃予定です。しばらくお待ち下さい。
 EOS
 
 bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
@@ -42,7 +42,6 @@ bot.command(:k) do |event|
 		mutex.synchronize do
 			event.respond <<~EOS
 				`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
-				現在新バージョン開発中！お楽しみに！
 			EOS
 			ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
 			ui.start(game_table)
@@ -134,10 +133,16 @@ bot.command(:end) do |event|
 	next unless event.user==bot.bot_app.owner
 	uis
 		.values
-		.select{|ui|ui.last_operation_time > Time.now-120}
-		.each{|ui|ui.msg("再起動を行います。30秒ほど待った後、`Bk`でスタートしてください。")}
+		.select{|ui|ui.last_operation_time > Time.now - 3600*12}
+		.each{|ui|ui.msg("再起動を行います。クラフト完了、残りアイテム減少時のメンションによるお知らせが途切れます。`Bk`コマンドで復旧できます。")}
 	# ensureに入る
 	exit
+end
+bot.command(:stats) do |event|
+	event.respond <<~EOS
+		導入サーバー数 : #{bot.servers.length}
+		ゲームユーザー数 : #{game_table.groups.length}
+	EOS
 end
 
 bot.ready do

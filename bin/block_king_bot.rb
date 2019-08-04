@@ -134,7 +134,7 @@ bot.command(:end) do |event|
 	next unless event.user==bot.bot_app.owner
 	uis
 		.values
-		.select{|ui|ui.last_operation_time > Time.now - 3600*12}
+		.select{|ui|ui.last_operation_time > Time.now - 3600*24*2}
 		.each{|ui|ui.msg(ui.mention+"\n再起動を行います。クラフト完了、残りアイテム減少時のメンションによるお知らせが途切れます。`Bk`コマンドで復旧できます。")}
 	# ensureに入る
 	exit

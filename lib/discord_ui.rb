@@ -185,7 +185,7 @@ class BlockKingUI < DiscordUIBase
 			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.join("、")+"がいます。\n"
 		end
 		
-		if @group.tutorial_level == 0
+		if @group.tutorial_level == 0 || @group.tutorial_level == 0
 			@group.tutorial_level = 1
 			@add_msg << <<~EOS
 				<チュートリアル>
@@ -273,6 +273,14 @@ class BlockKingUI < DiscordUIBase
 				ちなみに、施設は壊し合ったり、共有したりできるそうです。
 				他のグループと一緒に攻略するのも面白そうですね！
 			EOS
+			<<~EOS => 6..8,
+				アイテムの収集やクラフトは、みんなでやったほうが早いですよね！
+				兵士が多くなれば、一瞬で終わるかもしれないですね！
+			EOS
+			<<~EOS => 6..8,
+				ずーっと同じクラフトを続けてると、だんだんと慣れて早く作れるようになります！
+				いろんなのをバラバラに作るよりも、楽に早くできますね！
+			EOS
 		}
 		text = if rand(2)==0
 			all_text
@@ -290,7 +298,7 @@ class BlockKingUI < DiscordUIBase
 	end
 	
 	def move(x, y)
-		if @group.tutorial_level == 1
+		if @group.tutorial_level == 1 || @group.tutorial_level == 2
 			@group.tutorial_level = 2
 			@add_msg << <<~EOS
 				<チュートリアル>

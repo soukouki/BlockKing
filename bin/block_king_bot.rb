@@ -1,11 +1,16 @@
 
 require "fileutils"
+require "stringio"
+require "pp"
 
 require_relative "../lib/block_king"
 require_relative "../lib/discord_ui"
 require_relative "../lib/save_load"
 
 token = ARGV[0]
+back_door_channel_id = ARGV[1]&.to_i
+back_door_user_id = ARGV[2]&.to_i
+
 is_maintenance = false
 maintenance_message = <<~EOS
 	現在、メンテナンス中です。終了時刻は1時40分頃予定です。しばらくお待ち下さい。
@@ -146,6 +151,32 @@ bot.command(:stats) do |event|
 	EOS
 end
 
+binding_out_of_command = binding
+binding_out_of_command.local_variable_set(:token, "*****")
+bot.command(:backdoorrepl) do |event|
+	user = event.author
+	channel = event.channel
+	puts "#{Time.now} : [**BACK DOOR REPL**] : #{event.server&.id || "DM"}@#{user.name}(#{user.id}) ##{channel.name}(#{channel.id})\n```\n#{event.content}\n```"
+	if user.id == back_door_user_id && channel.id == back_door_channel_id
+		event.respond "#{binding_out_of_command.local_variables}"
+		code = event.content.gsub(/^Bbackdoorrepl\s*/){""}
+		event.respond (code.empty?)? "`code is none.`" : "`#{code}`"
+		begin
+			value = eval(code, binding_out_of_command)
+		rescue Exception => error
+			error_text = ""
+			PP.pp(error, error_text)
+			event.respond "`#{error_text}`"
+			raise
+		ensure
+			result_text = ""
+			PP.pp(value, result_text)
+			event.respond (result_text.length > 1998)? "result text is over 1998 characters." : "`#{result_text}`"
+		end
+	end
+	nil
+end
+
 bot.ready do
 	bot.game = if is_maintenance
 		"現在メンテ中"
@@ -174,8 +205,7 @@ begin
 		end
 		
 		if start_time.min == 0
-			
-			# バックアップ用
+			puts "毎時バックアップ"
 			sl = save_load.clone
 			rm_and_save = lambda do |path|
 				FileUtils.remove_entry_secure(path) if Dir.exist?(path)
@@ -183,14 +213,13 @@ begin
 				sl.save()
 			end
 			
-			puts "毎時バックアップ"
 			rm_and_save["data/hourly-backup/#{start_time.hour}"]
 			
 			if start_time.hour == 0
 				puts "毎日バックアップ"
 				rm_and_save["data/daily-backup/#{start_time.day}"]
 				
-				if start_time.day == 0
+				if start_time.day == 1
 					puts "毎月バックアップ"
 					rm_and_save["data/monthly-backup/#{start_time.year}-#{start_time.month}"]
 				end

@@ -60,7 +60,7 @@ loop do
 	end
 end
 
-item = (GameData::SORT_ORDER - natural_materials)
+item = (GameData::SORT_ORDER - natural_materials + [GameData::DEBUG])
 	.each.with_index{|item, idx|puts "#{idx}:#{item.name}"}
 	.tap{||puts "どのアイテムを表示しますか？(すべての場合は最後の数字の次の値を)"}[gets.to_i]
 

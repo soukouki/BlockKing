@@ -2,8 +2,10 @@
 require "timeout"
 require "discordrb"
 require_relative "../lib/discord_ui_base"
+require_relative "../lib/tutorial"
 
 class BlockKingUI < DiscordUIBase
+	include GameData::StoryMethods
 	attr_reader :last_operation_time, :channel
 	
 	MACRO_CONFIRMATION_THRESHOLD_VALUE = 600
@@ -102,66 +104,6 @@ class BlockKingUI < DiscordUIBase
 		[p[x+1,y],p[x-1,y],p[x,y+1],p[x,y-1]].uniq
 	end
 	
-	def first_story()
-		slow_message(<<~EOS)
-			・・・・・・・・・・
-			
-			戦いばかりが続くこの国。
-			王の力は弱まり、いくつもの兵を持った集団が治めるこの国。
-			その中のある村で・・・・・
-			
-			この青年は夢を持っている。
-			他の集団を倒し、王を倒し、この国の新たな王として君臨する夢を。
-			この小さな村から始まる、壮大な道。
-			
-			「リーダー！そんなのんびりしてたら、おいてっちゃいますよー！？」
-		EOS
-	end
-	
-	def ending_story1()
-		slow_message(<<~EOS)
-			・・・・・・・・・・
-			
-			
-			戦いばかりが続いていたこの国。
-			その後王は倒され、新たな王が誕生したこの国。
-			その中心の城の中・・・・・
-			
-			この青年は夢を叶えた。
-			他の集団を倒し、王を倒し、この国の新たな王として君臨する夢を。
-			この大きな城で終わる、壮大な道。
-			
-			「リーダー...ここまで、長かったですね...
-			また、新しい夢を作って、叶えていきましょう！」
-			
-			<ゲームクリアです！>
-			(`Bk`で続きます。)
-		EOS
-		sleep 5
-	end
-	
-	def ending_story2()
-		slow_message(<<~EOS)
-			・・・・・・・・・・
-			
-			数年がたったある日、突如それは起こった。
-			部下の一人が、兵士を伴って反乱を起こしたのだ。
-			通路で応戦し、
-			反乱に加わらなかった兵士と合流し・・・
-			
-			なんとか隠し通路から逃げ切ることは出来た。
-			だが、
-			王の権力は乗っ取られ、
-			兵士も半分になり、
-			武器は兵士が持っていた分のみ。
-			
-			果たして、この青年は王座を奪還することができるのだろうか・・・？
-			
-			「減ったとしても、貴方を信頼してついてきてくれた仲間がいるんです！
-			諦めずにいかないと！」
-		EOS
-	end
-	
 	def map()
 		constant_text = <<~EOS
 			#{BlockKingUI.make_map(@group, @game_table)}
@@ -199,18 +141,7 @@ class BlockKingUI < DiscordUIBase
 			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.join("、")+"がいます。\n"
 		end
 		
-		if @group.tutorial_level == 0 || @group.tutorial_level == 0
-			@group.tutorial_level = 1
-			@add_msg << <<~EOS
-				<チュートリアル>
-				リーダー！はじめまして！
-				移動の仕方は、この画面から
-					上(北)には`w`
-					左(西)には`a`
-					右(東)には`d`
-					下(南)には`s` です！
-			EOS
-		end
+		application_tutorial(Tutorial.before_displaying_screen(@group))
 		
 		log_text = @add_msg + @group.log.to_s
 		@add_msg = ""
@@ -248,28 +179,25 @@ class BlockKingUI < DiscordUIBase
 	def tips
 		return "" unless @last_operation_elapsed_time.nil? || @last_operation_elapsed_time > 60
 		if rand(2)==0 # 50%
-			"```<TIPS>\n"+
+			"> <TIPS>\n"+
 			GameData::TIPS_LIST
 				.select{|text,level|level.include?(@group.tutorial_level)}
 				.keys
-				.sample+
-			"\n```\n"
+				.sample
+				.lines
+				.map{|l|"> "+l}
+				.join("")+
+			"\n"
 		else
 			""
 		end
 	end
 	
 	def move(x, y)
-		if @group.tutorial_level == 1 || @group.tutorial_level == 2
-			@group.tutorial_level = 2
-			@add_msg << <<~EOS
-				<チュートリアル>
-				無事に移動できました！
-				次は戦闘です！
-				敵は王城から離れるほど弱くなります！自分たちにあった強さの敵を選びましょう！
-			EOS
-		end
 		result = @group.move(@game_table, x, y)
+		
+		application_tutorial(Tutorial.after_moving(@group))
+		true
 	end
 	
 	def items_view()
@@ -279,6 +207,7 @@ class BlockKingUI < DiscordUIBase
 			items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c}"}.join("\n")
 		end
 		msg("```javascript\n兵士 : #{@group.soldier}\n"+text+"\n```")
+		false
 	end
 	
 	def war()
@@ -293,27 +222,11 @@ class BlockKingUI < DiscordUIBase
 		case result
 		when :win
 			@add_msg << "やった！勝ちました！\n"
-			if @group.tutorial_level == 2 || @group.tutorial_level == 3 and block.empty?
-				@group.tutorial_level = 4
-				@add_msg << <<~EOS
-					<チュートリアル>
-					リーダー！ここにはなにか建物を建てられそうですよ！
-					炉を作り、銅の剣を作りましょう！
-					とりあえず、炉を作るには木材が必要ですね！
-				EOS
-			end
-			if @group.tutorial_level == 2 && !block.empty?
-				@group.tutorial_level = 3
-				@add_msg << <<~EOS
-					<チュートリアル>
-					上手く支配できましたね！それにしてもここは資源が採れそうです、ここで1分くらい待ってくださいね！私が資源を採っておきます。
-					あと、あっちの方には更地があって、なにか建てられそうですよ？銅と木材を手に入れたら、支配してみましょうよ！
-				EOS
-			end
-			true
+			application_tutorial(Tutorial.after_winning(@group, block))
 		when :lose
 			@add_msg << "残念ながら負けてしまいました・・・\n"
 		end
+		true
 	end
 	
 	def build_building()
@@ -368,6 +281,7 @@ class BlockKingUI < DiscordUIBase
 	
 	def remove_building()
 		result_tuple(@group.remove(@game_table))
+		true
 	end
 	
 	def craft_using_building()
@@ -460,31 +374,6 @@ class BlockKingUI < DiscordUIBase
 				end
 			end
 		end
-		if @group.tutorial_level == 4 && (items[GameData::COPPER_SWORD] || 0) > 0
-			@group.tutorial_level = 5
-			@add_msg << <<~EOS
-				<チュートリアル>
-				銅の剣ができました！みんな使ってみてます！
-				この調子で鉄の剣も作っていきましょう！
-				ちなみに、敵が強いほどいっぱいアイテムが手に入るそうですよ？
-			EOS
-		end
-		if @group.tutorial_level == 5 && (items[GameData::FIRE_SWORD] || 0) > 0
-			@group.tutorial_level = 6
-			@add_msg << <<~EOS
-				<チュートリアル>
-				おお！ついに火の剣ができました！
-				これから先は魔法との付き合いが重要になりますね！
-			EOS
-		end
-		if @group.tutorial_level == 6 && (items[GameData::MAGIC_CRYSTAL] || 0) > 0
-			@group.tutorial_level = 7
-			@add_msg << <<~EOS
-				<チュートリアル>
-				つ、ついに劣化してない魔法結晶が作れました！
-				これを使って更に先の世界を目指しましょう！
-			EOS
-		end
 		true
 	end
 	
@@ -552,6 +441,14 @@ class BlockKingUI < DiscordUIBase
 		end
 		
 		@group.check_crafting_and_finish()
+	end
+	
+	def application_tutorial(tutorial_levels_and_texts)
+		return if tutorial_levels_and_texts.empty?
+		tutorial_levels_and_texts.each do |item|
+			@group.tutorial_level = item.level
+			@add_msg << item.text.lines.map{|l|"> "+l}.join("")
+		end
 	end
 	
 	class << self

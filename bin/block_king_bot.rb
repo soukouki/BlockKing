@@ -60,20 +60,33 @@ bot.command(:k) do |event|
 		end
 	end
 end
-bot.command(:rank) do |event|
-	sorted_groups = game_table
-		.groups
-		.sort_by{|id, g|g.force}
-		.reverse
-	rank = sorted_groups.find_index{|id,g|id == event.user.id}&.+(1)
-	event.respond(
-		"ランキング(#{(rank.nil?)? "あなたはまだ参加していません！Bkで参加できますよ！" : "あなたの順位は#{rank}位です！"})\n"+
-		sorted_groups
-			.take(10)
-			.map
-			.with_index(1){|(id, g), i|"第#{i}位 : `#{g.name}`"}
-			.join("\n")
-	)
+# 引数はHash.to_aされた形
+def ranking(value_by_groups, id_which_open_event)
+	sorted_groups = value_by_groups
+		.sort_by{|(g,value)|-value}
+	rank = sorted_groups.find_index{|(g,value)|g.id == id_which_open_event} &.+(1) # nil対策
+	"ランキング(#{(rank.nil?)? "あなたはまだ参加していません！Bkで参加できますよ！" : "あなたの順位は#{rank}位です！"})\n"+
+	sorted_groups
+		.take(10)
+		.map
+		.with_index(1){|(g, _value), i|"第#{i}位 : `#{g.name}`"}
+		.join("\n")
+end
+bot.command(:rank) do |event, type|
+	case type
+	when "force"
+		ranking(game_table.groups.map{|id,g|[g,g.force]}, event.author.id)
+	when "soldier"
+		ranking(game_table.groups.map{|id,g|[g,g.soldier]}, event.author.id)
+	else
+		event.respond(<<~EOS)
+			ランキング一覧
+			> Brank force
+			強さのランキングです！
+			> Brank soldier
+			兵数のランキングです！
+		EOS
+	end
 end
 bot.command(:his) do |event|
 	event.respond(

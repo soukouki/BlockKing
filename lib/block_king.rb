@@ -160,5 +160,3 @@ RecipeAndCount = Struct.new(:recipe, :count, :group) do
 		Item.count_by_items_hash_to_s(recipe.products_hash.transform_values{|c|c*count}, **args)
 	end
 end
-
-require_relative "game_data"

@@ -202,7 +202,7 @@ class BlockKingUI < DiscordUIBase
 		@add_msg = ""
 		@group.log.clear()
 		
-		msg(constant_text+block_text+tips+"\n"+log_text)
+		msg(constant_text+block_text+tips+log_text)
 		wait_respons do |res|
 			# falseを返せばいい話ではあるけど、可読性の面でthrow-catchを使う
 			catch(:return_no_map) do
@@ -233,67 +233,15 @@ class BlockKingUI < DiscordUIBase
 	
 	def tips
 		return "" unless @last_operation_elapsed_time.nil? || @last_operation_elapsed_time > 60
-		all_text = {
-			<<~EOS => 1..4,
-				王都に近づくと、敵が強くなります。敵が強くなると、アイテムがいっぱい手に入ります。
-				つまり、王都に近づくと、アイテムがいっぱい・・？
-			EOS
-			<<~EOS => 1..4,
-				アイテムは、ブロックを支配した状態で1分くらい待つと手に入ります。
-				私達は仕事が速いんです……！
-			EOS
-			<<~EOS => 2..4,
-				剣を作るには、素材を集め、更地を支配し、施設を建てないといけません！
-				面倒ですね！
-			EOS
-			<<~EOS => 3..5,
-				リストの下の方にある建物では、もっと強い剣を作れるらしいです。
-				兵士にはできるだけ強い武器をもたせてあげたいですね！
-			EOS
-			<<~EOS => 3..5,
-				剣は作って持っていれば勝手に使ってくれるそうです！
-				でも、兵士の数を超えたら扱い切れなさそうですね……
-			EOS
-			<<~EOS => 3..6,
-				強い武器はどれか・・？
-				いつもアイテム一覧では下の方に強い武器を並べてるので、それを見ればわかります！
-			EOS
-			<<~EOS => 5..6,
-				建物を隣接させることによって、新たに使えるようになるレシピがあるみたいです。
-				いい空き地を見つけてみましょう！
-			EOS
-			<<~EOS => 5..6,
-				建物を隣接させるときは、東西南北の4マスだけです！斜めには使えません！
-			EOS
-			<<~EOS => 5..7,
-				兵士がいっぱいいると、作業のスピードも上がってアイテムが集めやすくなります！
-				いっぱいアイテムを集めるときは、いっぱい戦闘をして兵士を集めましょう！
-			EOS
-			<<~EOS => 5..7,
-				ちなみに、施設は壊し合ったり、共有したりできるそうです。
-				他のグループと一緒に攻略するのも面白そうですね！
-			EOS
-			<<~EOS => 6..8,
-				アイテムの収集やクラフトは、みんなでやったほうが早いですよね！
-				兵士が多くなれば、一瞬で終わるかもしれないですね！
-			EOS
-			<<~EOS => 6..8,
-				ずーっと同じクラフトを続けてると、だんだんと慣れて早く作れるようになります！
-				いろんなのをバラバラに作るよりも、楽に早くできますね！
-			EOS
-		}
-		text = if rand(2)==0
-			all_text
+		if rand(2)==0 # 50%
+			"```<TIPS>\n"+
+			GameData::TIPS_LIST
 				.select{|text,level|level.include?(@group.tutorial_level)}
 				.keys
-				.sample
+				.sample+
+			"\n```\n"
 		else
-			nil
-		end
-		if text.nil?
 			""
-		else
-			"<TIPS>\n#{text}\n"
 		end
 	end
 	

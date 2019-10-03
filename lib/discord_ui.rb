@@ -6,11 +6,24 @@ require_relative "../lib/discord_ui_base"
 class BlockKingUI < DiscordUIBase
 	attr_reader :last_operation_time, :channel
 	
+	MACRO_CONFIRMATION_THRESHOLD_VALUE = 600
+	
 	# モンキーパッチしてます
 	# 自動化ツール対策用！
 	def wait_respons(message=nil, &block)
 		res = super
+		# last_operation_timeは更新されてしまうので、必要
 		@last_operation_elapsed_time = Time.now - @last_operation_time
+		if @last_operation_time.hour != Time.now.hour || @last_operation_time.day != Time.now.day # 時が変わったら
+			if @last_one_hour_act_number >= MACRO_CONFIRMATION_THRESHOLD_VALUE
+				report(<<~EOS)
+					__マクロ確認__
+					#{@last_operation_time.month}月#{@last_operation_time.day}日#{@last_operation_time.hour}時台に`#{@group.name}`(#{@group.id})が#{@last_one_hour_act_number}回の操作を行いました。
+				EOS
+			end
+			@last_one_hour_act_number = 0
+		end
+		@last_one_hour_act_number += 1
 		@last_operation_time = Time.now
 		server = @channel.server
 		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{@last_operation_elapsed_time}"
@@ -27,6 +40,7 @@ class BlockKingUI < DiscordUIBase
 	def start(game_table)
 		@game_table = game_table
 		@last_operation_time = Time.now
+		@last_one_hour_act_number = 0
 		@group = game_table.group(@user.id) || (
 			l = Group.new(@user.id, game_table)
 			game_table.add_group(l)

@@ -5,12 +5,13 @@ require "pp"
 
 require_relative "../lib/block_king"
 require_relative "../lib/game_data"
-require_relative "../lib/discord_ui"
 require_relative "../lib/save_load"
+require_relative "../lib/discord_ui" # reportメソッドに依存がある
 
 token = ARGV[0]
-back_door_channel_id = ARGV[1]&.to_i
-back_door_user_id = ARGV[2]&.to_i
+back_door_channel_id = ARGV[1].to_i
+back_door_user_id = ARGV[2].to_i
+reported_user_id = ARGV[3].to_i
 
 is_maintenance = false
 maintenance_message = <<~EOS
@@ -23,6 +24,11 @@ unless is_maintenance
 	save_load = SaveLoad.new("data", ->{GameTable.new})
 	game_table = save_load.value
 end
+
+Kernel.define_method(:report) do |text|
+	bot.user(reported_user_id).pm(text)
+end
+
 
 # ハッシュの中にハッシュが入ってる
 uis = {}

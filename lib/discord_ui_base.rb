@@ -126,6 +126,9 @@ class DiscordUIBase
 				is_now_exec_block = true
 				ret = yield(pop)
 				is_now_exec_block = false
+				# retがfalseになるときはコマンド以外が入っているので表示してはいけない
+				server = @channel.server
+				puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : command : `#{pop.to_str}`" if ret
 				break ret if ret
 			end
 			

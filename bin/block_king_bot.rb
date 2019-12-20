@@ -3,10 +3,11 @@ require "fileutils"
 require "stringio"
 require "pp"
 
-require_relative "../lib/block_king"
-require_relative "../lib/game_data"
 require_relative "../lib/save_load"
+
 require_relative "../lib/block_king_ui" # reportメソッドに依存がある
+require_relative "../lib/game_data"
+require_relative "../lib/tutorial"
 
 token = ARGV[0]
 back_door_channel_id = ARGV[1].to_i
@@ -19,6 +20,7 @@ maintenance_message = <<~EOS
 EOS
 
 bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
+BlockKingUI::DISCORD_BOT_TO_NOTIFY = bot
 
 unless is_maintenance
 	save_load = SaveLoad.new("data", ->{GameTable.new})
@@ -159,9 +161,9 @@ bot.command(:end) do |event|
 	next unless event.user==bot.bot_app.owner
 	uis
 		.values
-		.select{|ui|ui.last_operation_time > Time.now - 3600*24*2}
-		.each{|ui|ui.msg(ui.mention+"\n再起動を行います。クラフト完了、残りアイテム減少時のメンションによるお知らせが途切れます。`Bk`コマンドで復旧できます。")}
-	# ensureに入る
+		.select{|ui|ui.last_operation_time > Time.now - 60}
+		.each{|ui|ui.msg(ui.mention+"\n再起動を行います。数十秒の間、操作ができなくなります。その後、`Bk`コマンドで復旧できます。")}
+	# ensureに入るので正常にセーブされる。
 	exit
 end
 bot.command(:stats) do |event|

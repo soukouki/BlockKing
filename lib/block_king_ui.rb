@@ -1,9 +1,10 @@
 
 require "timeout"
 require "discordrb"
-require_relative "../lib/discord_ui_base"
-require_relative "../lib/tutorial"
+require_relative "block_king"
+require_relative "discord_ui_base"
 
+module GameData module StoryMethods end end # できる限り疎結合に
 class BlockKingUI < DiscordUIBase
 	include GameData::StoryMethods
 	attr_reader :last_operation_time, :channel
@@ -49,10 +50,8 @@ class BlockKingUI < DiscordUIBase
 			l
 		)
 		@group.name = @user.name
+		@group.ui_related_data.channel_id_to_notify = @channel.id
 		@add_msg = ""
-		@group.log.callback = lambda do |text|
-			msg(text)
-		end
 		main_loop()
 	end
 	
@@ -538,6 +537,24 @@ class BlockKingUI < DiscordUIBase
 			piece = 360.0/(8*2)
 			str = ["西", "南西", "南", "南東", "東", "北東", "北", "北西"][((ang/piece)/2).round % 8]
 			"王城は"+str+"の方向。"
+		end
+	end
+end
+ 
+class << BlockKingUI
+	def notify(group, text)
+		ui_related_data = group.ui_related_data
+		channel_id = ui_related_data.channel_id_to_notify
+		return if channel_id == nil
+		begin
+			bot = self::DISCORD_BOT_TO_NOTIFY
+			bot.send_message(channel_id, text)
+		rescue
+			ui_related_data.channel_id_to_notify = nil
+			bot.send_message(
+				bot.private_channel(group.id),
+				text+"\n(前回操作されたチャンネルに送信できなかったため、DMに送信しています。DMにはこれ以上のメッセージは送信されません。)"
+			)
 		end
 	end
 end

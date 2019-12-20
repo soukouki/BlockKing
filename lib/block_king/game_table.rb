@@ -169,7 +169,8 @@ class GameTable
 					.select{|pos,block|block.is_a?(Building)}
 					.each do |pos, block|
 						block.need_items.each do |item, count|
-							block.builder.add_item(false, "#{block}を建てていたため", item, count)
+							builder = block.builder
+							builder.add_item(false, "#{block}を建てていたため", item, count)
 						end
 					end
 				@ruler_table = {} # ルーラー初期化！

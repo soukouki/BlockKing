@@ -2,6 +2,10 @@
 class Group
 	attr_reader :id, :log, :soldier, :items, :crafting_recipe_and_count
 	attr_accessor :name, :state, :pos, :tutorial_level
+	def ui_related_data
+		@ui_related_data ||= UIRelatedData.new
+	end
+	
 	def initialize(id, game_table)
 		@id = id
 		@name = ""
@@ -14,23 +18,21 @@ class Group
 	end
 	
 	class LogBasket
-		attr_writer :callback
 		def initialize
 			@causes = {}
 			@text_logs = []
-			@callback = ->{}
 		end
-		def add_item(sync, cause, item, count)
+		def add_item(group, sync, cause, item, count)
 			causes_empty = @causes.empty?
 			@causes[cause] ||= {}
 			@causes[cause][item] ||= 0
 			@causes[cause][item] += count
-			@callback.call("「アイテムが手に入りました！確認してみてください！」") if !sync && causes_empty
+			notify(group, "「アイテムが手に入りました！確認してみてください！」") if !sync && causes_empty
 		end
-		# short_text_or_nilがnilのときは通知をしない
-		def add_text(group, short_text_or_nil, text)
+		# text_to_notifyがnilのときは通知をしない
+		def add_text(group, text_to_notify, text)
 			@text_logs << Time.now.strftime("[%m月%d日%H時%M分]")+text
-			@callback.call("<@#{group.id}>\n#{short_text_or_nil}") if short_text_or_nil
+			notify(group, "<@#{group.id}>\n#{text_to_notify}") if text_to_notify
 		end
 		def clear()
 			@causes = {}
@@ -45,6 +47,15 @@ class Group
 					.join("\n")
 				(text == "")? "" : text+"、手に入れました！"
 			)
+		end
+		private
+		def notify(group, text)
+			begin
+				BlockKingUI.notify(group, text)
+			rescue => err
+				$stderr.puts err.full_message
+				$stderr.puts "エラーは無視します。"
+			end
 		end
 	end
 	
@@ -197,7 +208,7 @@ class Group
 	def add_item(sync, cause, item, count)
 		@items[item] ||= 0
 		@items[item] += count
-		@log.add_item(sync, cause, item, count)
+		@log.add_item(self, sync, cause, item, count)
 	end
 end
 

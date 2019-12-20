@@ -1,4 +1,5 @@
 require_relative "../lib/block_king"
+require_relative "../lib/game_data"
 
 puts "前提として、複数の生産物が出ない状態を扱う"
 

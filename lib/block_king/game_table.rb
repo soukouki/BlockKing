@@ -73,14 +73,16 @@ class GameTable
 	def war(group)
 		pos = group.pos
 		enemy = ruler(pos)
-		case (enemy.force * rand(0.95..1.05)) <=> (group.force * rand(0.95..1.05))
+		enemy_rate = rand(0.8..1.2)*rand(0.9..1.1)*rand(0.9..1.1)
+		group_rate = rand(0.8..1.2)*rand(0.9..1.1)*rand(0.9..1.1)
+		case (enemy.force * enemy_rate) <=> (group.force * group_rate)
 		when 1, 0 # enemyの勝利
-			enemy.weaken_at_win(false)
-			group.weaken_at_lose(true)
+			enemy.weaken_at_win(false, group)
+			group.weaken_at_lose(true, enemy)
 			:lose
 		when -1   # groupの勝利
-			enemy.weaken_at_lose(false)
-			group.weaken_at_win(true)
+			enemy.weaken_at_lose(false, group)
+			group.weaken_at_win(true, enemy)
 			set_ruler(pos, group)
 			if pos==AbPos::CENTER
 				group.state = :ending

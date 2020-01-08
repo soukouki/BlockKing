@@ -1,5 +1,11 @@
 
-class Group
+class GroupBase
+	def ambiguous_force
+		force * rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)
+	end
+end
+
+class Group < GroupBase
 	attr_reader :id, :log, :soldier, :items, :crafting_recipe_and_count
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def ui_related_data
@@ -186,14 +192,16 @@ class Group
 		@time_crafting_started + @crafting_recipe_and_count.craft_time - Time.now
 	end
 	
-	def weaken_at_win(sync_log)
-		count = rand(0..Math.log(@soldier, 2)).round
+	def weaken_at_win(sync_log, enemy)
+		rand = rand(0.8..1.2)*rand(0.8..1.2)*rand(0.8..1.2)
+		rate = 1.0 * enemy.force / force
+		count = ([0.5**(1.0/rate-1)*0.01 ,0.01].min * rand * @soldier).ceil
 		if count != 0
 			@soldier += count
 			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
 		end
 	end
-	def weaken_at_lose(sync_log)
+	def weaken_at_lose(sync_log, enemy)
 		count = rand(0..1.0*@soldier/4).to_i
 		if count != 0
 			@soldier -= count
@@ -212,17 +220,17 @@ class Group
 	end
 end
 
-class NPCEnemy
+class NPCEnemy < GroupBase
 	attr_reader :force
 	def initialize(soldier)
 		@force = soldier
 	end
 	
-	def weaken_at_win(sync_log)
+	def weaken_at_win(sync_log, enemy)
 		@force -= 1
 	end
 	# 次にこれが試合をすることはないから
-	def weaken_at_lose(sync_log)
+	def weaken_at_lose(sync_log, enemy)
 	end
 	
 	def add_item(sync, cause, item, count)

@@ -34,7 +34,6 @@ class BlockKingUI < DiscordUIBase
 	
 	def msg(text)
 		server = @channel.server
-		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : `#{text.chomp[-10..-1]}`"
 		characters_count_or_less_text(2000, text).each do |p_text|
 			@channel.send_message(p_text)
 		end

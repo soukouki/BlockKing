@@ -199,10 +199,7 @@ class Group
 	end
 	
 	def rebellion_occurred()
-		@items = weapon_allocation
-			.map{|sword, count|[sword, count/5*4]} # 半分(切り捨て)
-			.to_h
-		@soldier = [@soldier/5*4, 6].max # 最小6
+		# アイテムや兵士をへらす処理があったけど、モチベの低下が激しい為取り外した。
 	end
 	
 	def add_item(sync, cause, item, count)

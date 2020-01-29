@@ -53,8 +53,11 @@ class Group
 			begin
 				BlockKingUI.notify(group, text)
 			rescue => err
-				$stderr.puts err.full_message
-				$stderr.puts "エラーは無視します。"
+				# loggerに疎結合にするため
+				$logger && (
+					$logger.error err.full_message
+					$logger.info "エラーは無視します。"
+				)
 			end
 		end
 	end

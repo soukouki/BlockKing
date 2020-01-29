@@ -29,7 +29,8 @@ class BlockKingUI < DiscordUIBase
 		@last_one_hour_act_number += 1
 		@last_operation_time = Time.now
 		server = @channel.server
-		puts "#{Time.now} : #{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{@last_operation_elapsed_time}s"
+		# loggerに疎結合にするため
+		$logger and $logger.info "#{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{@last_operation_elapsed_time}s"
 	end
 	
 	def msg(text)

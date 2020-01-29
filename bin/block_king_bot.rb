@@ -2,6 +2,7 @@
 require "fileutils"
 require "stringio"
 require "pp"
+require "logger"
 
 require_relative "../lib/save_load"
 
@@ -18,6 +19,25 @@ is_maintenance = false
 maintenance_message = <<~EOS
 	現在、メンテナンス中です。終了時刻は1時40分頃予定です。しばらくお待ち下さい。
 EOS
+
+# ログは1MBファイル10個分
+$logger = Logger.new("blockking.log", 10, 1*1000*1000, level: Logger::Severity::INFO)
+# Discordrbでは独自のロガーとログレベルを使っているので、それを移すための処理
+Discordrb::LOGGER.instance_eval do
+	logger_levels = {debug: Logger::Severity::DEBUG, info:  Logger::Severity::INFO, warn:  Logger::Severity::WARN, error: Logger::Severity::ERROR}
+	{debug: :debug, good: :debug, info: :info, warn: :warn, error: :error, out: :debug, in: :debug, ratelimit: :info}
+		.each do |from_log_type, to_log_type|
+			define_singleton_method(from_log_type) do |str|
+				$logger.add(logger_levels[to_log_type], str, "discordrb(#{@thread_name||Thread.current.object_id})")
+			end
+		end
+	def log_exception(err)
+		error("Exception: #{err.inspect}\n\t"+err.backtrace.join("\n\t"))
+	end
+	# 何もしない
+	%i[mode= token= fancy= debug= streams streams=]
+		.each{|fname|define_singleton_method(fname){|*args|}}
+end
 
 bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
 BlockKingUI::DISCORD_BOT_TO_NOTIFY = bot
@@ -178,7 +198,7 @@ binding_out_of_command.local_variable_set(:token, "*****")
 bot.command(:backdoorrepl) do |event|
 	user = event.author
 	channel = event.channel
-	puts "#{Time.now} : [**BACK DOOR REPL**] : #{event.server&.id || "DM"}@#{user.name}(#{user.id}) ##{channel.name}(#{channel.id})\n```\n#{event.content}\n```"
+	$logger.warn "[**BACK DOOR REPL**] : #{event.server&.id || "DM"}@#{user.name}(#{user.id}) ##{channel.name}(#{channel.id})\n```\n#{event.content}\n```"
 	if user.id == back_door_user_id && channel.id == back_door_channel_id
 		event.respond "#{binding_out_of_command.local_variables}"
 		code = event.content.gsub(/^Bbackdoorrepl\s*/){""}
@@ -215,19 +235,19 @@ begin
 		
 		next if game_table.nil?
 		
-		puts "定期処理 #{Time.now}"
+		$logger.info "定期処理 #{Time.now}"
 		game_table.turn()
 		
 		start_time = Time.now
 		
 		if start_time.min%5 == 0
-			puts "定時保存"
+			$logger.info "定時保存開始"
 			save_load.save
-			puts "定時保存完了 #{Time.now-start_time}"
+			$logger.info "定時保存完了 #{Time.now-start_time}"
 		end
 		
 		if start_time.min == 0
-			puts "毎時バックアップ"
+			$logger.info "毎時バックアップ"
 			sl = save_load.clone
 			rm_and_save = lambda do |path|
 				FileUtils.remove_entry_secure(path) if Dir.exist?(path)
@@ -238,21 +258,22 @@ begin
 			rm_and_save["data/hourly-backup/#{start_time.hour}"]
 			
 			if start_time.hour == 0
-				puts "毎日バックアップ"
+				$logger.info "毎日バックアップ"
 				rm_and_save["data/daily-backup/#{start_time.day}"]
 				
 				if start_time.day == 1
-					puts "毎月バックアップ"
+					$logger.info "毎月バックアップ"
 					rm_and_save["data/monthly-backup/#{start_time.year}-#{start_time.month}"]
 				end
 			end
 		end
 		
-		puts "定期処理終了"
+		$logger.info "定期処理終了"
 	end
 ensure # Bend時はこの部分を実行する
-	puts "例外保存"
+	$logger.error $!.full_message
+	$logger.info "例外保存開始"
 	save_load&.save
-	puts "例外保存終了"
-	puts "例外終了"
+	$logger.info "例外保存終了"
+	$logger.info "例外終了"
 end

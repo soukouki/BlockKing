@@ -1,7 +1,9 @@
 
 class GroupBase
 	def ambiguous_force
-		force * rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)
+		force * rand(0.9..1.1)*rand(0.9..1.1)
+	end
+	def turn()
 	end
 end
 
@@ -88,7 +90,8 @@ class Group < GroupBase
 	end
 	
 	def move(game_table, m_x, m_y)
-		game_table.set_ruler(@pos, nil) if game_table.ruler(@pos) == self
+		# ルーラーが空いたときは必ずblock_enemyを設定する
+		game_table.set_ruler(@pos, game_table.block(@pos).block_enemy) if game_table.ruler(@pos) == self
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
@@ -193,9 +196,9 @@ class Group < GroupBase
 	end
 	
 	def weaken_at_win(sync_log, enemy)
-		rand = rand(0.8..1.2)*rand(0.8..1.2)*rand(0.8..1.2)
-		rate = 1.0 * enemy.force / force
-		count = ([0.5**(1.0/rate-1)*0.01 ,0.01].min * rand * @soldier).ceil
+		rate = 1.0 * force / enemy.force
+		# rateの範囲は、敵が強いほど1に、弱いほど大きくなる
+		count = (3**Math.log(@soldier,10) * 1/rate).ceil
 		if count != 0
 			@soldier += count
 			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
@@ -220,17 +223,32 @@ class Group < GroupBase
 	end
 end
 
+=begin
+2020年1月9日ごろのバージョンとの互換性
+@force
+=> soldierを受け取って、そのまま格納していた
+=end
 class NPCEnemy < GroupBase
-	attr_reader :force
+	def force
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier
+	end
 	def initialize(soldier)
-		@force = soldier
+		#@force = soldier
+		@soldier = @max_soldier = soldier
 	end
 	
 	def weaken_at_win(sync_log, enemy)
-		@force -= 1
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier -= 1
 	end
-	# 次にこれが試合をすることはないから
 	def weaken_at_lose(sync_log, enemy)
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier = (@soldier * 0.6).round
+	end
+	def turn()
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier += ((@max_soldier - @soldier) * 0.1).ceil unless @soldier == @max_soldier
 	end
 	
 	def add_item(sync, cause, item, count)

@@ -20,12 +20,24 @@ maintenance_message = <<~EOS
 	現在、メンテナンス中です。終了時刻は1時40分頃予定です。しばらくお待ち下さい。
 EOS
 
-# ログは1MBファイル10個分
-$logger = Logger.new("blockking.log", 10, 1*1000*1000, level: Logger::Severity::INFO)
+loggers = [
+	Logger.new("block_king_bot.log", 10, 1*1000*1000, level: Logger::Severity::DEBUG), # ログは1MBファイル10個分
+	Logger.new($stdout, level: Logger::Severity::INFO),
+]
+
+$logger = Object.new
+$logger.instance_eval do
+	(Logger.instance_methods - $logger.methods).each do |method_name|
+		define_singleton_method(method_name) do |*args|
+			loggers.each{|logger|logger.send(method_name, *args)}
+		end
+	end
+end
+
 # Discordrbでは独自のロガーとログレベルを使っているので、それを移すための処理
 Discordrb::LOGGER.instance_eval do
 	logger_levels = {debug: Logger::Severity::DEBUG, info:  Logger::Severity::INFO, warn:  Logger::Severity::WARN, error: Logger::Severity::ERROR}
-	{debug: :debug, good: :debug, info: :info, warn: :warn, error: :error, out: :debug, in: :debug, ratelimit: :info}
+	{debug: :debug, good: :debug, info: :info, warn: :warn, error: :error, ratelimit: :info}
 		.each do |from_log_type, to_log_type|
 			define_singleton_method(from_log_type) do |str|
 				$logger.add(logger_levels[to_log_type], str, "discordrb(#{@thread_name||Thread.current.object_id})")
@@ -35,7 +47,7 @@ Discordrb::LOGGER.instance_eval do
 		error("Exception: #{err.inspect}\n\t"+err.backtrace.join("\n\t"))
 	end
 	# 何もしない
-	%i[mode= token= fancy= debug= streams streams=]
+	%i[mode= token= fancy= debug= streams streams= out in]
 		.each{|fname|define_singleton_method(fname){|*args|}}
 end
 

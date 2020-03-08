@@ -17,7 +17,7 @@ EOS
 
 $logger = CombinedLogger.new([
 	Logger.new("block_king_bot.log", 10, 1*1000*1000, level: Logger::Severity::DEBUG), # ログは1MBファイル10個分
-	Logger.new($stdout, level: Logger::Severity::INFO),
+	Logger.new($stderr, level: Logger::Severity::INFO),
 ])
 
 # Discordrbでは独自のロガーとログレベルを使っているので、それを移すための処理

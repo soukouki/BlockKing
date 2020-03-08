@@ -3,6 +3,7 @@ require "fileutils"
 require "stringio"
 require "pp"
 require "logger"
+require "yaml"
 
 require_relative "../lib/save_load"
 
@@ -10,10 +11,7 @@ require_relative "../lib/block_king_ui" # reportメソッドに依存がある
 require_relative "../lib/game_data"
 require_relative "../lib/tutorial"
 
-token = ARGV[0]
-back_door_channel_id = ARGV[1].to_i
-back_door_user_id = ARGV[2].to_i
-reported_user_id = ARGV[3].to_i
+setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
 is_maintenance = false
 maintenance_message = <<~EOS
@@ -51,7 +49,7 @@ Discordrb::LOGGER.instance_eval do
 		.each{|fname|define_singleton_method(fname){|*args|}}
 end
 
-bot = Discordrb::Commands::CommandBot.new(token: token, prefix: "B")
+bot = Discordrb::Commands::CommandBot.new(token: setting[:discord_bot_token], prefix: "B")
 BlockKingUI::DISCORD_BOT_TO_NOTIFY = bot
 
 unless is_maintenance
@@ -60,7 +58,7 @@ unless is_maintenance
 end
 
 Kernel.define_method(:report) do |text|
-	bot.user(reported_user_id).pm(text)
+	bot.user(setting[:reported_user_id]).pm(text)
 end
 
 
@@ -211,7 +209,7 @@ bot.command(:backdoorrepl) do |event|
 	user = event.author
 	channel = event.channel
 	$logger.warn "[**BACK DOOR REPL**] : #{event.server&.id || "DM"}@#{user.name}(#{user.id}) ##{channel.name}(#{channel.id})\n```\n#{event.content}\n```"
-	if user.id == back_door_user_id && channel.id == back_door_channel_id
+	if user.id == setting[:back_door_user_id] && channel.id == setting[:back_door_channel_id]
 		event.respond "#{binding_out_of_command.local_variables}"
 		code = event.content.gsub(/^Bbackdoorrepl\s*/){""}
 		event.respond (code.empty?)? "`code is none.`" : "`#{code}`"

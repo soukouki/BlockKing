@@ -1,10 +1,5 @@
 
-
-IO.popen(%!ruby -e '$stderr.puts "e1"; $stdout.puts $stdin.gets.to_i*2; $stderr.puts "e2"'!, "r+") do |io|
-	io.puts 3
-	p io.gets
-end
-
+require "yaml"
 require "fileutils"
 
 require_relative "../lib/save_load"
@@ -15,6 +10,17 @@ require_relative "../lib/game_data"
 require_relative "../lib/tutorial"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
+
+threads = setting[:shards_count].times.map do |shard_id|
+	Thread.new do
+		IO.popen("ruby bin/block_king_bot.rb #{shard_id}") do |io|
+			io.each_line.each{|s|puts s}
+		end
+	end
+end
+
+threads.each{|t|t.join}
+exit
 
 begin
 	loop do

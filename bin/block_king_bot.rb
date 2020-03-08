@@ -2,14 +2,13 @@
 require "pp"
 require "yaml"
 require "discordrb"
-
 require_relative "../lib/combined_logger"
 
-require_relative "../lib/block_king_ui" # reportメソッドに依存がある
 require_relative "../lib/game_data"
 require_relative "../lib/tutorial"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
+shard_id = ARGV[0]
 
 is_maintenance = false
 maintenance_message = <<~EOS
@@ -38,7 +37,12 @@ Discordrb::LOGGER.instance_eval do
 		.each{|fname|define_singleton_method(fname){|*args|}}
 end
 
-bot = Discordrb::Commands::CommandBot.new(token: setting[:discord_bot_token], prefix: "B")
+bot = Discordrb::Commands::CommandBot.new(
+	token: setting[:discord_bot_token],
+	shard_id: shard_id,
+	num_shards: setting[:shards_count],
+	prefix: "B",
+)
 BlockKingUI::DISCORD_BOT_TO_NOTIFY = bot
 
 unless is_maintenance

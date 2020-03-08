@@ -1,11 +1,9 @@
 
-require "fileutils"
-require "stringio"
 require "pp"
-require "logger"
 require "yaml"
+require "discordrb"
 
-require_relative "../lib/save_load"
+require_relative "../lib/combined_logger"
 
 require_relative "../lib/block_king_ui" # reportメソッドに依存がある
 require_relative "../lib/game_data"
@@ -18,19 +16,10 @@ maintenance_message = <<~EOS
 	現在、メンテナンス中です。終了時刻は1時40分頃予定です。しばらくお待ち下さい。
 EOS
 
-loggers = [
+$logger = CombinedLogger.new([
 	Logger.new("block_king_bot.log", 10, 1*1000*1000, level: Logger::Severity::DEBUG), # ログは1MBファイル10個分
 	Logger.new($stdout, level: Logger::Severity::INFO),
-]
-
-$logger = Object.new
-$logger.instance_eval do
-	(Logger.instance_methods - $logger.methods).each do |method_name|
-		define_singleton_method(method_name) do |*args|
-			loggers.each{|logger|logger.send(method_name, *args)}
-		end
-	end
-end
+])
 
 # Discordrbでは独自のロガーとログレベルを使っているので、それを移すための処理
 Discordrb::LOGGER.instance_eval do
@@ -204,7 +193,6 @@ bot.command(:stats) do |event|
 end
 
 binding_out_of_command = binding
-binding_out_of_command.local_variable_set(:token, "*****")
 bot.command(:backdoorrepl) do |event|
 	user = event.author
 	channel = event.channel
@@ -237,53 +225,4 @@ bot.ready do
 	end
 end
 
-bot.run :async
-
-begin
-	loop do
-		sleep(60 - Time.now.sec)
-		
-		next if game_table.nil?
-		
-		$logger.info "定期処理 #{Time.now}"
-		game_table.turn()
-		
-		start_time = Time.now
-		
-		if start_time.min%5 == 0
-			$logger.info "定時保存開始"
-			save_load.save
-			$logger.info "定時保存完了 #{Time.now-start_time}"
-		end
-		
-		if start_time.min == 0
-			$logger.info "毎時バックアップ"
-			sl = save_load.clone
-			rm_and_save = lambda do |path|
-				FileUtils.remove_entry_secure(path) if Dir.exist?(path)
-				sl.path = path
-				sl.save()
-			end
-			
-			rm_and_save["data/hourly-backup/#{start_time.hour}"]
-			
-			if start_time.hour == 0
-				$logger.info "毎日バックアップ"
-				rm_and_save["data/daily-backup/#{start_time.day}"]
-				
-				if start_time.day == 1
-					$logger.info "毎月バックアップ"
-					rm_and_save["data/monthly-backup/#{start_time.year}-#{start_time.month}"]
-				end
-			end
-		end
-		
-		$logger.info "定期処理終了"
-	end
-ensure # Bend時はこの部分を実行する
-	$logger.error $!.full_message
-	$logger.info "例外保存開始"
-	save_load&.save
-	$logger.info "例外保存終了"
-	$logger.info "例外終了"
-end
+bot.run

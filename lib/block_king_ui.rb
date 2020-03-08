@@ -1,6 +1,5 @@
 
 require "timeout"
-require "discordrb"
 require_relative "block_king"
 require_relative "discord_ui_base"
 

@@ -1,6 +1,7 @@
 
 require "yaml"
 require "fileutils"
+require "pp"
 
 require_relative "../lib/save_load"
 require_relative "../lib/combined_logger"
@@ -27,6 +28,12 @@ waiting_for_message = WaitingForMessage.new(
 sending_message = SendingMessage.new(
 	token: setting[:discord_bot_token]
 )
+
+Kernel.define_method(:report) do |text|
+	setting[:reported_user_ids].each do |id|
+		sending_message.send_dm(id, text)
+	end
+end
 
 #BlockKingUI::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
 #end
@@ -128,6 +135,35 @@ waiting_for_message.collect_messages(regex_text:'^Bstats(\s|$)') do |rm|
 		ゲームユーザー数 : #{game_table.groups.length}
 		メッセージ受け取り部シェード数 : #{setting[:shards_count]}
 	EOS
+end
+
+binding_out_of_command = binding
+# ユーザー、チャンネルは複数だから、後で処理する
+waiting_for_message.collect_messages(regex_text:'^Bbackdoorrepl(\s|$)') do |rm|
+	user_id = rm.user_id
+	user_name = rm.user_name
+	channel_id = rm.channel_id
+	message = rm.message
+	$logger.warn "[**BACK DOOR REPL**] : @#{user_name}(#{user_id}) #(#{channel_id})\n```\n#{message}\n```"
+	if setting[:back_door_user_ids].include?(user_id) && setting[:back_door_channel_ids].include?(channel_id)
+		code = message.gsub(/^Bbackdoorrepl\s*/){""}
+		sending_message.send_message(channel_id, <<~EOS)
+			#{binding_out_of_command.local_variables}
+			#{(code.empty?)? "Code was empty." : "```ruby\n#{code}\n```"}
+		EOS
+		begin
+			value = eval(code, binding_out_of_command)
+		rescue Exception => error
+			error_text = ""
+			PP.pp(error, error_text)
+			sending_message.send_message(channel_id, "`#{error_text}`")
+			raise
+		ensure
+			result_text = ""
+			PP.pp(value, result_text)
+			sending_message.send_message(channel_id, (result_text.length > 1998)? "result text is over 1998 characters." : "`#{result_text}`")
+		end
+	end
 end
 
 begin

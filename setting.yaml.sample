@@ -1,6 +1,7 @@
 
 discord_bot_token: "*****"
-back_door_channel_id: 12345
-back_door_user_id: 12345
-reported_user_id: 12345
+owner_user_ids: [12345, 67890]
+reported_user_ids: [12345, 67890]
+back_door_user_ids: [12345, 67890]
+back_door_channel_ids: [12345, 67890]
 shards_count: 2

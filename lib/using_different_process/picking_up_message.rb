@@ -2,16 +2,17 @@
 require "json"
 
 class PickingUpMessage
+	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :channel_id, :message, keyword_init: true)
 	INNORING_TEXT = [
 		"libsodium not available! You can continue to use discordrb as normal but voice support won't work.\n",
 		"        Read https://github.com/meew0/discordrb/wiki/Installing-libsodium for more details.\n",
 	]
-	attr_accessor :callback
 	
-	def initialize(token:, shards_count:)
+	# callbackの引数は(id:, user_id:, user_name:, channel_id:, message:)
+	def initialize(token:, shards_count:, callback:)
 		@token = token
 		@shards_count = shards_count
-		@callback = ->(id:, user_id:, user_name:, channel_id:, message:){}
+		@callback = callback
 		start_bot()
 		start_receiving_message()
 	end
@@ -50,10 +51,12 @@ class PickingUpMessage
 							text = stream.readline
 							redo if INNORING_TEXT.include?(text)
 							obj = JSON.parse(text, symbolize_names: true)
-							@callback.call(*obj)
+							@callback.call(ReceivedMessage.new(obj))
 						end
+					rescue EOFError => e
+						warn e # redoしても意味ない
 					rescue => e
-						# 本当はきっちりログを出すべきだけど、loggerへの依存もできないから、sstderrに出力してredoするだけにした
+						# 本当はきっちりログを出すべきだけど、loggerへの依存もできないから、stderrに出力してredoするだけにした
 						warn e
 						redo
 					end
@@ -61,15 +64,11 @@ class PickingUpMessage
 			end
 	end
 	
+	# そのまま起動させると、bot側に登録したデータが消えてしまうので、いっそのことエラーを出して落とす
 	def send_signal(object)
 		@streams.each do |stream|
-			begin
-				stream.puts JSON.generate(object)
-				stream.flush
-			rescue Errno::EPIPE # エラーが発生してbotが落ちたときの復帰処理
-				start_bot()
-				retry
-			end
+			stream.puts JSON.generate(object)
+			stream.flush
 		end
 	end
 	

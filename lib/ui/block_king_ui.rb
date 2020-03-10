@@ -1,12 +1,14 @@
 
 require "timeout"
+require "forwardable"
 require_relative "block_king"
-require_relative "discord_ui_base"
 
 module GameData module StoryMethods end end # できる限り疎結合に
-class BlockKingUI < DiscordUIBase
+class BlockKingUI
+	extend Forwardable
 	include GameData::StoryMethods
 	attr_reader :last_operation_time, :channel
+	def_delegators :@ui, :kill_waiting_respons
 	
 	MACRO_CONFIRMATION_THRESHOLD_VALUE = 600
 	

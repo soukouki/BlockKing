@@ -48,6 +48,56 @@ command = lambda do |command_name, &block|
 	waiting_for_message.collect_messages(regex_text: "^B#{command_name}(\\s|$)", &block)
 end
 
+# -----UIにふれる処理-----
+
+ui_by_user_id = Hash.new
+mutex_for_creating_ui = Mutex.new
+command["k"] do |rm|
+	user_id = rm.user_id
+	user_name = rm.user_name
+	is_user_bot = rm.is_user_bot
+	channel_id = rm.channel_id
+	
+	if is_user_bot
+		sending_message.send_message(channel_id, <<~EOS)
+			現在、BOTはプレイできません。
+			いつか開発するBOT対戦機能にご期待下さい！
+		EOS
+		next
+	end
+	
+	ui = mutex_for_creating_ui.synchronize do
+		old_ui = ui_by_user_id[user_id]
+		if old_ui.nil?
+			sending_message.send_message(channel_id, "`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！")
+		else
+			old_ui.kill_waiting_respons()
+		end
+		uis[user_id] = BlockKingUI.new(
+			ui: DiscordUI.new(
+				sending_message: sending_message,
+				waiting_for_message: waiting_for_message,
+				user_id: user_id,
+				channel_id: channel_id,
+				logger: $logger,
+			),
+			game_table: game_table,
+			group_id: user_id,
+			group_name: user_name,
+			channel_id: channel_id,
+		)
+	end
+	ui.start()
+end
+command["exit"] do |rm|
+	user_id = rm.user_id
+	uis[user_id]&.kill_waiting_respons()
+	uis.delete(user_id)
+	sending_message.send_message(rm.channel_id, "反応しないようになりました。")
+end
+
+# -----UIに触れない処理-----
+
 # 引数はHash.to_aされた形
 def ranking(value_by_groups, id_which_open_event)
 	sorted_groups = value_by_groups

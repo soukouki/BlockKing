@@ -21,11 +21,8 @@ class WaitingForMessage
 		id = create_id()
 		@mutex_for_waiting_processes_by_id.synchronize do
 			@waiting_processes_by_id[id] = lambda do |received_message|
-				begin
-					block.call(received_message)
-				rescue => e
-					@logger && @logger.error(e)
-					next
+				Thread.new do
+					block.call(received_message) rescue @logger && @logger.error($!)
 				end
 			end
 		end

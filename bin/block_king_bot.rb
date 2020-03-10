@@ -91,90 +91,7 @@ bot.command(:k) do |event|
 		end
 	end
 end
-# 引数はHash.to_aされた形
-def ranking(value_by_groups, id_which_open_event)
-	sorted_groups = value_by_groups
-		.sort_by{|(g,value)|-value}
-	rank = sorted_groups.find_index{|(g,value)|g.id == id_which_open_event} &.+(1) # nil対策
-	"ランキング(#{(rank.nil?)? "あなたはまだ参加していません！Bkで参加できますよ！" : "あなたの順位は#{rank}位です！"})\n"+
-	sorted_groups
-		.take(10)
-		.map
-		.with_index(1){|(g, _value), i|"第#{i}位 : `#{g.name}`"}
-		.join("\n")
-end
-bot.command(:rank) do |event, type|
-	case type
-	when "force"
-		ranking(game_table.groups.map{|id,g|[g,g.force]}, event.author.id)
-	when "soldier"
-		ranking(game_table.groups.map{|id,g|[g,g.soldier]}, event.author.id)
-	else
-		event.respond(<<~EOS)
-			ランキング一覧
-			> Brank force
-			強さのランキングです！
-			> Brank soldier
-			兵数のランキングです！
-		EOS
-	end
-end
-bot.command(:his) do |event|
-	event.respond(
-		"歴代王の記録\n"+
-		game_table
-			.kings_history
-			.map
-			.with_index(1){|k,i|"第#{i}代 : `#{k.name}`"}
-			.join("\n")
-	)
-end
-bot.command(:bots) do |event|
-	event.respond(<<~EOS)
-		兄弟bot一覧！
-		__Greetingbot__
-			挨拶botです！挨拶に関してはかなりのものだと思ってます！
-				導入url : <https://discordapp.com/oauth2/authorize?client_id=394876010438328321&scope=bot&permissions=2048>
-				prefix : `n.`
-		__M-putit__
-			気象・地震・津波情報関連のbotです！気象庁が発表する色んな情報をチャンネルに流せます！(設定に時間がかかります。ご了承ください)
-				導入url <https://discordapp.com/oauth2/authorize?scope=bot&client_id=505357370306592788&permissions=2048>
-				prefix : `m.`
-		__BlockKing__
-			:crossed_swords: **アイテムを集めてクラフトし、強力な剣で王座を狙うゲームです！** :fire:
-				導入url : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
-				公式サーバー(プレイもできる) : <https://discord.gg/nJ5QVJu>
-				prefix : `B`
-	EOS
-end
-bot.command(:help) do |event|
-	event.respond <<~EOS
-		コマンドの一覧です。
-		`Bk` : **ゲームをスタートします。**
-		`Brank` : ランキングが見れます。
-		`Bhelp` : このコマンドです。
-		`Bhis` : 過去の王が見れます。
-		`Bexit` : コマンドに反応しないようになります。
-		`Bstats` : このbotに関する情報がﾁｮｯﾄﾀﾞｹ見れます。
-		`Bbots` : 兄弟botを紹介します！ぜひ導入してみてください！
-		
-		**禁止事項**
-		- bot、外部ツール等を使ってのプレイ。
-		- 1人が複数アカウントを使用し、ゲーム内で協力して他プレイヤーより有利にゲームを進める行為。
-		- その他過度に他プレイヤーを妨害する行為。
-		
-		**留意事項**
-		- このbotでは、ユーザーネームが公開されます。
-		- 公衆良俗に反するようなユーザーネームの場合、削除することがあります。
-		- プログラムの更新等により、セーブデータに影響が出ないよう努力しますが、場合によっては影響が出る場合があります。
-		
-		
-		招待URL : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
-		(BlockKingが入っていないサーバーでもこのゲームを遊びたいときは、上のURLをサーバーの管理者権限を持っている人に開かせてください！きっといいことが起こります！)
-		公式サーバー : https://discord.gg/nJ5QVJu
-		製作者 : @sou7#0094 その他テストプレイに参加してくださった方々
-	EOS
-end
+
 bot.command(:exit) do |event|
 	ui = uis[event.user.id]
 	ui&.stop_waiting()
@@ -188,12 +105,6 @@ bot.command(:end) do |event|
 		.each{|ui|ui.msg(ui.mention+"\n再起動を行います。数十秒の間、操作ができなくなります。その後、`Bk`コマンドで復旧できます。")}
 	# ensureに入るので正常にセーブされる。
 	exit
-end
-bot.command(:stats) do |event|
-	event.respond <<~EOS
-		導入サーバー数 : #{bot.servers.length}
-		ゲームユーザー数 : #{game_table.groups.length}
-	EOS
 end
 
 binding_out_of_command = binding

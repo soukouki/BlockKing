@@ -544,16 +544,6 @@ class << BlockKingUI
 	def notify(group, text)
 		ui_related_data = group.ui_related_data
 		channel_id = ui_related_data.channel_id_to_notify
-		return if channel_id == nil
-		begin
-			bot = self::DISCORD_BOT_TO_NOTIFY
-			bot.send_message(channel_id, text)
-		rescue
-			ui_related_data.channel_id_to_notify = nil
-			bot.send_message(
-				bot.private_channel(group.id),
-				text+"\n(前回操作されたチャンネルに送信できなかったため、DMに送信しています。DMにはこれ以上のメッセージは送信されません。)"
-			)
-		end
+		self::FUNCTION_TO_NOTIFY(channel_id, text)
 	end
 end

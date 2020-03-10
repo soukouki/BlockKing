@@ -2,7 +2,7 @@
 require "json"
 require "discordrb"
 
-require_relative "../../lib/logger_of_bots"
+require_relative "../../lib/using_different_process/logger_of_bots"
 
 token = ARGV[0]
 num_shards = ARGV[1].to_i

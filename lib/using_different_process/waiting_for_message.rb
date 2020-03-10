@@ -1,11 +1,12 @@
 
-require_relative "using_different_process/picking_up_message"
+require_relative "picking_up_message"
 
 class WaitingForMessage
-	def initialize(token:, shards_count:, logger:)
+	def initialize(token:, shards_count: 1, game: "", logger: nil)
 		@picking_up_message = PickingUpMessage.new(
 			token: token,
 			shards_count: shards_count,
+			game: game,
 			callback: ->(rm){receive_message(rm)},
 		)
 		@logger = logger
@@ -23,7 +24,7 @@ class WaitingForMessage
 				begin
 					block.call(received_message)
 				rescue => e
-					@logger.error(e)
+					@logger && @logger.error(e)
 					next
 				end
 			end

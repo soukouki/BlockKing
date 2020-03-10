@@ -25,24 +25,23 @@ bot.message do |event|
 	user_id = user.id
 	channel_id = event.channel.id
 	content = event.message.content
-	cleared_bar = mutex_for_registered_bars_by_user_id.synchronize do
-		cleared_bar = registered_bars_by_user_id[nil].find{|bar|check(bar[:channel_id], bar[:regex], channel_id, content)}
-		break cleared_bar if cleared_bar
-		break nil unless registered_bars_by_user_id.has_key?(user_id)
-		registered_bars_by_user_id[user_id].find{|bar|check(bar[:channel_id], bar[:regex], channel_id, content)}
+	checking_bars = mutex_for_registered_bars_by_user_id.synchronize do
+		registered_bars_by_user_id[nil] + registered_bars_by_user_id[user_id]
 	end
-	next if cleared_bar.nil?
-	obj = {
-		id: cleared_bar[:id],
-		user_id: user_id,
-		user_name: user.name,
-		is_user_bot: user.bot_account?,
-		channel_id: channel_id,
-		message: content,
-	}
-	$stdout.puts JSON.generate(obj)
-	$stdout.flush
-	$logger.debug("Bot picking up message sended #{obj}")
+	cleared_bars = checking_bars.select{|bar|check(bar[:channel_id], bar[:regex], channel_id, content)}
+	cleared_bars.each do |bar|
+		obj = {
+			id: bar[:id],
+			user_id: user_id,
+			user_name: user.name,
+			is_user_bot: user.bot_account?,
+			channel_id: channel_id,
+			message: content,
+		}
+		$stdout.puts JSON.generate(obj)
+		$stdout.flush
+		$logger.debug("Bot picking up message sended #{obj}")
+	end
 end
 
 bot.ready do

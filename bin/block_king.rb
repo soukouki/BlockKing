@@ -41,6 +41,9 @@ end
 save_load = SaveLoad.new("data", ->{GameTable.new})
 game_table = save_load.value
 
+command = lambda do |command_name, &block|
+	waiting_for_message.collect_messages(regex_text: "^B#{command_name}(\\s|$)", &block)
+end
 
 # 引数はHash.to_aされた形
 def ranking(value_by_groups, id_which_open_event)
@@ -54,7 +57,7 @@ def ranking(value_by_groups, id_which_open_event)
 		.with_index(1){|(g, _value), i|"第#{i}位 : `#{g.name}`"}
 		.join("\n")
 end
-waiting_for_message.collect_messages(regex_text:'^Brank(\s|$)') do |rm|
+command["rank"] do |rm|
 	type = rm.message.split(/\s+/)[1]
 	text = case type
 	when "force"
@@ -73,7 +76,7 @@ waiting_for_message.collect_messages(regex_text:'^Brank(\s|$)') do |rm|
 	sending_message.send_message(rm.channel_id, text)
 end
 
-waiting_for_message.collect_messages(regex_text:'^Bhis(\s|$)') do |rm|
+command["his"] do |rm|
 	text = "歴代王の記録\n"+
 		game_table
 			.kings_history
@@ -83,7 +86,7 @@ waiting_for_message.collect_messages(regex_text:'^Bhis(\s|$)') do |rm|
 	sending_message.send_message(rm.channel_id, text)
 end
 
-waiting_for_message.collect_messages(regex_text:'^Bbots(\s|$)') do |rm|
+command["bots"] do |rm|
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		兄弟bot一覧！
 		__Greetingbot__
@@ -101,7 +104,7 @@ waiting_for_message.collect_messages(regex_text:'^Bbots(\s|$)') do |rm|
 				prefix : `B`
 	EOS
 end
-waiting_for_message.collect_messages(regex_text:'^Bhelp(\s|$)') do |rm|
+command["help"] do |rm|
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		コマンドの一覧です。
 		`Bk` : **ゲームをスタートします。**
@@ -130,7 +133,7 @@ waiting_for_message.collect_messages(regex_text:'^Bhelp(\s|$)') do |rm|
 	EOS
 end
 # TODO: サーバー数は諦めきれない
-waiting_for_message.collect_messages(regex_text:'^Bstats(\s|$)') do |rm|
+command["stats"] do |rm|
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		ゲームユーザー数 : #{game_table.groups.length}
 		メッセージ受け取り部シェード数 : #{setting[:shards_count]}
@@ -139,7 +142,7 @@ end
 
 binding_out_of_command = binding
 # ユーザー、チャンネルは複数だから、後で処理する
-waiting_for_message.collect_messages(regex_text:'^Bbackdoorrepl(\s|$)') do |rm|
+command["backdoorrepl"] do |rm|
 	user_id = rm.user_id
 	user_name = rm.user_name
 	channel_id = rm.channel_id

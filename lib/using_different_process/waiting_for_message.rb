@@ -32,8 +32,9 @@ class WaitingForMessage
 		@picking_up_message.register(id: id, regex_text: regex_text, user_id: user_id, channel_id: channel_id)
 	end
 	# 1回のみ
-	def wait_for_message(regex_text: nil, user_id: nil, channel_id: nil)
+	def wait_for_message(regex_text: nil, user_id: nil, channel_id: nil, callback_giving_id: nil)
 		id = create_id()
+		callback_giving_id&.call(id)
 		waiting_thread = Thread.current
 		received_message = nil
 		@mutex_for_waiting_processes_by_id.synchronize do
@@ -49,6 +50,12 @@ class WaitingForMessage
 			@waiting_processes_by_id.delete(id)
 		end
 		return received_message
+	end
+	def cancel_waiting(id:)
+		@picking_up_message.cancel(id: id)
+		@mutex_for_waiting_processes_by_id.synchronize do
+			@waiting_processes_by_id.delete(id)
+		end
 	end
 	
 	private

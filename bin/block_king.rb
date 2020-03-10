@@ -8,8 +8,8 @@ require_relative "../lib/combined_logger"
 require_relative "../lib/using_different_process/waiting_for_message"
 require_relative "../lib/using_different_process/sending_message"
 
-#require_relative "../lib/ui/block_king_ui"
-#require_relative "../lib/ui/discord_ui"
+require_relative "../lib/ui/block_king_ui"
+require_relative "../lib/ui/discord_ui"
 # 将来的にデータの管理をするクラスに仕事を任せるべきな気がする
 require_relative "../lib/block_king"
 require_relative "../lib/game_data"
@@ -37,8 +37,9 @@ Kernel.define_method(:report) do |text|
 	end
 end
 
-#BlockKingUI::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
-#end
+BlockKingUI::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
+	sending_message.send_message(channel_id, text)
+end
 
 save_load = SaveLoad.new("data", ->{GameTable.new})
 game_table = save_load.value

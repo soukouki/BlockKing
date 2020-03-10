@@ -38,7 +38,6 @@ bot.command(:k) do |event|
 		end
 	end
 end
-
 bot.command(:exit) do |event|
 	ui = uis[event.user.id]
 	ui&.stop_waiting()

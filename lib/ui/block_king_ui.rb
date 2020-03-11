@@ -1,21 +1,37 @@
 
 require "timeout"
 require "forwardable"
-require_relative "block_king"
 
 module GameData module StoryMethods end end # できる限り疎結合に
 class BlockKingUI
 	extend Forwardable
 	include GameData::StoryMethods
-	attr_reader :last_operation_time, :channel
-	def_delegators :@ui, :kill_waiting_respons
+	def_delegators :@ui, :kill_waiting_respons, :mention
+	def_delegators :@group, :ui_related_data
 	
 	MACRO_CONFIRMATION_THRESHOLD_VALUE = 600
 	
-	# モンキーパッチしてます
-	# 自動化ツール対策用！
-	def wait_respons(message=nil, &block)
-		res = super
+	def initialize(ui:, game_table:, group_id:, group_name:)
+		@ui = ui
+		@game_table = game_table
+		@last_operation_time = Time.now
+		@last_one_hour_act_number = 0
+		# initializeで登録とかを済ませるのは少し気持ち悪い
+		@group = game_table.group(group_id) || (
+			g = Group.new(group_id, game_table)
+			game_table.add_group(g)
+			g
+		)
+		@group.name = group_name
+		@add_msg = ""
+	end
+	
+	def start()
+		main_loop()
+	end
+	
+	def wait_respons(&block)
+		res = @ui.wait_respons(&block)
 		# last_operation_timeは更新されてしまうので、必要
 		@last_operation_elapsed_time = Time.now - @last_operation_time
 		if @last_operation_time.hour != Time.now.hour || @last_operation_time.day != Time.now.day # 時が変わったら
@@ -29,35 +45,15 @@ class BlockKingUI
 		end
 		@last_one_hour_act_number += 1
 		@last_operation_time = Time.now
-		server = @channel.server
-		# loggerに疎結合にするため
-		$logger and $logger.info "#{server&.name}(#{server&.id})##{@channel.name}(#{@channel.id})@#{@user.name}(#{@user.id}) : #{@last_operation_elapsed_time}s"
+		$logger.info "@#{@group.name}(#{@group.id}) : #{@last_operation_elapsed_time}s"
 	end
 	
 	def msg(text)
-		server = @channel.server
-		characters_count_or_less_text(2000, text).each do |p_text|
-			@channel.send_message(p_text)
-		end
+		@ui.send_message(text)
 	end
 	
-	def start(game_table)
-		@game_table = game_table
-		@last_operation_time = Time.now
-		@last_one_hour_act_number = 0
-		@group = game_table.group(@user.id) || (
-			l = Group.new(@user.id, game_table)
-			game_table.add_group(l)
-			l
-		)
-		@group.name = @user.name
-		@group.ui_related_data.channel_id_to_notify = @channel.id
-		@add_msg = ""
-		main_loop()
-	end
-	
-	def mention
-		"<@#{@user.id}>"
+	def recently_operating?
+		@last_operation_time > Time.now - 60
 	end
 	
 	private
@@ -546,6 +542,6 @@ class << BlockKingUI
 	def notify(group, text)
 		ui_related_data = group.ui_related_data
 		channel_id = ui_related_data.channel_id_to_notify
-		self::FUNCTION_TO_NOTIFY(channel_id, text)
+		self::FUNCTION_TO_NOTIFY.call(channel_id, text)
 	end
 end

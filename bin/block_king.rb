@@ -8,11 +8,13 @@ require_relative "../lib/combined_logger"
 require_relative "../lib/using_different_process/waiting_for_message"
 require_relative "../lib/using_different_process/sending_message"
 
-require_relative "../lib/ui/block_king_ui"
-require_relative "../lib/ui/discord_ui"
 # 将来的にデータの管理をするクラスに仕事を任せるべきな気がする
 require_relative "../lib/block_king"
 require_relative "../lib/game_data"
+require_relative "../lib/tutorial"
+
+require_relative "../lib/ui/discord_ui"
+require_relative "../lib/ui/block_king_ui"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
@@ -45,13 +47,13 @@ save_load = SaveLoad.new("data", ->{GameTable.new})
 game_table = save_load.value
 
 command = lambda do |command_name, &block|
-	waiting_for_message.collect_messages(regex_text: "^B#{command_name}(\\s|$)", &block)
+	waiting_for_message.register(regex_text: "^B#{command_name}(\\s|$)", &block)
 end
 
 # -----UIにふれる処理-----
 
 ui_by_user_id = Hash.new
-mutex_for_creating_ui = Mutex.new
+mutex_for_ui_by_user_id = Mutex.new
 command["k"] do |rm|
 	user_id = rm.user_id
 	user_name = rm.user_name
@@ -66,14 +68,14 @@ command["k"] do |rm|
 		next
 	end
 	
-	ui = mutex_for_creating_ui.synchronize do
+	ui = mutex_for_ui_by_user_id.synchronize do
 		old_ui = ui_by_user_id[user_id]
 		if old_ui.nil?
 			sending_message.send_message(channel_id, "`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！")
 		else
 			old_ui.kill_waiting_respons()
 		end
-		uis[user_id] = BlockKingUI.new(
+		ui_by_user_id[user_id] = BlockKingUI.new(
 			ui: DiscordUI.new(
 				sending_message: sending_message,
 				waiting_for_message: waiting_for_message,
@@ -84,16 +86,31 @@ command["k"] do |rm|
 			game_table: game_table,
 			group_id: user_id,
 			group_name: user_name,
-			channel_id: channel_id,
 		)
 	end
+	ui.ui_related_data.channel_id_to_notify = channel_id
 	ui.start()
 end
 command["exit"] do |rm|
 	user_id = rm.user_id
-	uis[user_id]&.kill_waiting_respons()
-	uis.delete(user_id)
+	mutex_for_ui_by_user_id.synchronize do
+		ui_by_user_id[user_id]&.kill_waiting_respons()
+		ui_by_user_id.delete(user_id)
+	end
 	sending_message.send_message(rm.channel_id, "反応しないようになりました。")
+end
+command["end"] do |rm|
+	user_id = rm.user_id
+	next unless setting[:owner_user_ids].include?(user_id)
+	mutex_for_ui_by_user_id.synchronize do
+		ui_by_user_id
+			.values
+			.select(&:recently_operating?)
+			.each(&:mention)
+			.each{|ui|ui.msg("再起動を行います。しばらくの間、操作ができなくなります。その後、`Bk`コマンドで復旧できます。")}
+	end
+	# ensureに入るので正常にセーブされる。
+	exit
 end
 
 # -----UIに触れない処理-----

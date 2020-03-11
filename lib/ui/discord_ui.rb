@@ -4,11 +4,12 @@ require_relative "ui_base"
 class DiscordUI
 	def initialize(sending_message:, waiting_for_message:, user_id:, channel_id:, logger:)
 		@sending_message = sending_message
-		@picking_up_message = picking_up_message
+		@waiting_for_message = waiting_for_message
+		@channel_id = channel_id
+		@user_id = user_id
 		@logger = logger
 		@bar_ids = []
 		@mutex_for_bar_ids = Thread::Mutex.new
-		super(user_id: user_id, channel_id: channel_id)
 	end
 	
 	def send_message(text)
@@ -16,35 +17,42 @@ class DiscordUI
 			@sending_message.send_message(@channel_id, p_text)
 		end
 	end
+	def mention
+		send_message("<@#{@user_id}>")
+	end
 	def send_slow_message(text)
 		text
 			.lines
 			.map(&:chomp)
-			.each{|line|sleep 1; line.empty? || msg(line)}
+			.each{|line|sleep 1; line.empty? || send_message(line)}
 	end
 	# ブロックの戻り値がfalse(nil)のときはループし続ける
 	def wait_respons(regex_text: nil, &block)
+		bar_id = nil
+		queue = Thread::Queue.new
+		@waiting_for_message.register(
+			regex_text: regex_text,
+			user_id: @user_id,
+			channel_id: @channel_id,
+			callback_giving_id: lambda do |id|
+				bar_id = id
+				@mutex_for_bar_ids.synchronize do
+					@bar_ids << id
+				end
+			end,
+		) do |rm|
+			queue.push rm
+		end
 		loop do
-			bar_id = nil
-			rm = waiting_for_message.wait_for_message(
-				regex_text: regex_text,
-				user_id: @user_id,
-				channel_id: @channel_id,
-				callback_giving_id: lambda do |id|
-					bar_id = id
-					@mutex_for_bar_ids.synchronize do
-						@bar_ids << id
-					end
-				end,
-			)
-			result = block.call(rm)
-			if result
-				@logger.info "#<#{rm.channel_id}>@#{rm.user_name}(#{rm.user_id}) : command : `#{rm.message}`"
-				break
-			end
+			rm = queue.pop
+			result = block.call(rm.message)
+			next unless result
+			@logger.info "#<#{rm.channel_id}>@#{rm.user_name}(#{rm.user_id}) : command : `#{rm.message}`"
+			@waiting_for_message.cancel_waiting(id: bar_id)
 			@mutex_for_bar_ids.synchronize do
 				@bar_ids.delete(bar_id)
 			end
+			break
 		end
 	end
 	# 正確にはsynchronizeしたあとに新たなwaitingを追加する処理があった場合、うまく殺せない
@@ -52,7 +60,7 @@ class DiscordUI
 	def kill_waiting_respons()
 		@mutex_for_bar_ids.synchronize do
 			@bar_ids.each do |id|
-				@sending_message.cancel_waiting(id: id)
+				@waiting_for_message.cancel_waiting(id: id)
 			end
 			@bar_ids = []
 		end

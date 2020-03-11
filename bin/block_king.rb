@@ -1,103 +1,120 @@
 
-require "fileutils"
-require "stringio"
-require "pp"
-require "logger"
 require "yaml"
+require "fileutils"
+require "pp"
 
 require_relative "../lib/save_load"
+require_relative "../lib/combined_logger"
+require_relative "../lib/using_different_process/waiting_for_message"
+require_relative "../lib/using_different_process/sending_message"
 
-require_relative "../lib/block_king_ui" # reportメソッドに依存がある
+# 将来的にデータの管理をするクラスに仕事を任せるべきな気がする
+require_relative "../lib/block_king"
 require_relative "../lib/game_data"
 require_relative "../lib/tutorial"
 
+require_relative "../lib/ui/discord_ui"
+require_relative "../lib/ui/block_king_ui"
+
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
-is_maintenance = false
-maintenance_message = <<~EOS
-	現在、メンテナンス中です。終了時刻は1時40分頃予定です。しばらくお待ち下さい。
-EOS
-
-loggers = [
+$logger = CombinedLogger.new([
 	Logger.new("block_king_bot.log", 10, 1*1000*1000, level: Logger::Severity::DEBUG), # ログは1MBファイル10個分
-	Logger.new($stdout, level: Logger::Severity::INFO),
-]
+	Logger.new($stderr, level: Logger::Severity::INFO),
+])
 
-$logger = Object.new
-$logger.instance_eval do
-	(Logger.instance_methods - $logger.methods).each do |method_name|
-		define_singleton_method(method_name) do |*args|
-			loggers.each{|logger|logger.send(method_name, *args)}
-		end
-	end
-end
-
-# Discordrbでは独自のロガーとログレベルを使っているので、それを移すための処理
-Discordrb::LOGGER.instance_eval do
-	logger_levels = {debug: Logger::Severity::DEBUG, info:  Logger::Severity::INFO, warn:  Logger::Severity::WARN, error: Logger::Severity::ERROR}
-	{debug: :debug, good: :debug, info: :info, warn: :warn, error: :error, ratelimit: :info}
-		.each do |from_log_type, to_log_type|
-			define_singleton_method(from_log_type) do |str|
-				$logger.add(logger_levels[to_log_type], str, "discordrb(#{@thread_name||Thread.current.object_id})")
-			end
-		end
-	def log_exception(err)
-		error("Exception: #{err.inspect}\n\t"+err.backtrace.join("\n\t"))
-	end
-	# 何もしない
-	%i[mode= token= fancy= debug= streams streams= out in]
-		.each{|fname|define_singleton_method(fname){|*args|}}
-end
-
-bot = Discordrb::Commands::CommandBot.new(token: setting[:discord_bot_token], prefix: "B")
-BlockKingUI::DISCORD_BOT_TO_NOTIFY = bot
-
-unless is_maintenance
-	save_load = SaveLoad.new("data", ->{GameTable.new})
-	game_table = save_load.value
-end
+waiting_for_message = WaitingForMessage.new(
+	token: setting[:discord_bot_token],
+	shards_count: setting[:shards_count],
+	game: "ゲームスタートはBk(Bは大文字)",
+	logger: $logger,
+)
+sending_message = SendingMessage.new(
+	token: setting[:discord_bot_token]
+)
 
 Kernel.define_method(:report) do |text|
-	bot.user(setting[:reported_user_id]).pm(text)
+	setting[:reported_user_ids].each do |id|
+		sending_message.send_dm(id, text)
+	end
 end
 
+BlockKingUI::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
+	sending_message.send_message(channel_id, text)
+end
 
-# ハッシュの中にハッシュが入ってる
-uis = {}
-mutexes = {}
-bot.command(:k) do |event|
-	if is_maintenance
-		event.respond maintenance_message
-		next
-	end
-	user = event.user
-	if user.bot_account?
-		<<~EOS
+save_load = SaveLoad.new("data", ->{GameTable.new})
+game_table = save_load.value
+
+command = lambda do |command_name, &block|
+	waiting_for_message.register(regex_text: "^B#{command_name}(\\s|$)", &block)
+end
+
+# -----UIにふれる処理-----
+
+ui_by_user_id = Hash.new
+mutex_for_ui_by_user_id = Mutex.new
+command["k"] do |rm|
+	user_id = rm.user_id
+	user_name = rm.user_name
+	is_user_bot = rm.is_user_bot
+	channel_id = rm.channel_id
+	
+	if is_user_bot
+		sending_message.send_message(channel_id, <<~EOS)
 			現在、BOTはプレイできません。
-			いつか開発するBOT対戦機能をご期待下さい！
+			いつか開発するBOT対戦機能にご期待下さい！
 		EOS
 		next
 	end
-	old_ui = uis[user.id]
-	mutex = mutexes[user.id] ||= Mutex.new
 	
-	# この部分Mutexつけるべき
-	if old_ui.nil?
-		mutex.synchronize do
-			event.respond <<~EOS
-				`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！
-			EOS
-			ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
-			ui.start(game_table)
+	ui = mutex_for_ui_by_user_id.synchronize do
+		old_ui = ui_by_user_id[user_id]
+		if old_ui.nil?
+			sending_message.send_message(channel_id, "`Bhelp`にてコマンド一覧・禁止事項・招待URLが見れます！")
+		else
+			old_ui.kill_waiting_respons()
 		end
-	else
-		old_ui.stop_waiting()
-		mutex.synchronize do
-			ui = uis[user.id] = BlockKingUI.new(bot: bot, channel: event.channel, user: user)
-			ui.start(game_table)
-		end
+		ui_by_user_id[user_id] = BlockKingUI.new(
+			ui: DiscordUI.new(
+				sending_message: sending_message,
+				waiting_for_message: waiting_for_message,
+				user_id: user_id,
+				channel_id: channel_id,
+				logger: $logger,
+			),
+			game_table: game_table,
+			group_id: user_id,
+			group_name: user_name,
+		)
 	end
+	ui.ui_related_data.channel_id_to_notify = channel_id
+	ui.start()
 end
+command["exit"] do |rm|
+	user_id = rm.user_id
+	mutex_for_ui_by_user_id.synchronize do
+		ui_by_user_id[user_id]&.kill_waiting_respons()
+		ui_by_user_id.delete(user_id)
+	end
+	sending_message.send_message(rm.channel_id, "反応しないようになりました。")
+end
+command["end"] do |rm|
+	user_id = rm.user_id
+	next unless setting[:owner_user_ids].include?(user_id)
+	mutex_for_ui_by_user_id.synchronize do
+		ui_by_user_id
+			.values
+			.select(&:recently_operating?)
+			.each(&:mention)
+			.each{|ui|ui.msg("再起動を行います。しばらくの間、操作ができなくなります。その後、`Bk`コマンドで復旧できます。")}
+	end
+	# ensureに入るので正常にセーブされる。
+	exit
+end
+
+# -----UIに触れない処理-----
+
 # 引数はHash.to_aされた形
 def ranking(value_by_groups, id_which_open_event)
 	sorted_groups = value_by_groups
@@ -110,14 +127,15 @@ def ranking(value_by_groups, id_which_open_event)
 		.with_index(1){|(g, _value), i|"第#{i}位 : `#{g.name}`"}
 		.join("\n")
 end
-bot.command(:rank) do |event, type|
-	case type
+command["rank"] do |rm|
+	type = rm.message.split(/\s+/)[1]
+	text = case type
 	when "force"
-		ranking(game_table.groups.map{|id,g|[g,g.force]}, event.author.id)
+		ranking(game_table.groups.map{|id,g|[g,g.force]}, rm.user_id)
 	when "soldier"
-		ranking(game_table.groups.map{|id,g|[g,g.soldier]}, event.author.id)
+		ranking(game_table.groups.map{|id,g|[g,g.soldier]}, rm.user_id)
 	else
-		event.respond(<<~EOS)
+		<<~EOS
 			ランキング一覧
 			> Brank force
 			強さのランキングです！
@@ -125,19 +143,21 @@ bot.command(:rank) do |event, type|
 			兵数のランキングです！
 		EOS
 	end
+	sending_message.send_message(rm.channel_id, text)
 end
-bot.command(:his) do |event|
-	event.respond(
-		"歴代王の記録\n"+
+
+command["his"] do |rm|
+	text = "歴代王の記録\n"+
 		game_table
 			.kings_history
 			.map
 			.with_index(1){|k,i|"第#{i}代 : `#{k.name}`"}
 			.join("\n")
-	)
+	sending_message.send_message(rm.channel_id, text)
 end
-bot.command(:bots) do |event|
-	event.respond(<<~EOS)
+
+command["bots"] do |rm|
+	sending_message.send_message(rm.channel_id, <<~EOS)
 		兄弟bot一覧！
 		__Greetingbot__
 			挨拶botです！挨拶に関してはかなりのものだと思ってます！
@@ -154,8 +174,8 @@ bot.command(:bots) do |event|
 				prefix : `B`
 	EOS
 end
-bot.command(:help) do |event|
-	event.respond <<~EOS
+command["help"] do |rm|
+	sending_message.send_message(rm.channel_id, <<~EOS)
 		コマンドの一覧です。
 		`Bk` : **ゲームをスタートします。**
 		`Brank` : ランキングが見れます。
@@ -182,62 +202,42 @@ bot.command(:help) do |event|
 		製作者 : @sou7#0094 その他テストプレイに参加してくださった方々
 	EOS
 end
-bot.command(:exit) do |event|
-	ui = uis[event.user.id]
-	ui&.stop_waiting()
-	"反応しないようになりました。"
-end
-bot.command(:end) do |event|
-	next unless event.user==bot.bot_app.owner
-	uis
-		.values
-		.select{|ui|ui.last_operation_time > Time.now - 60}
-		.each{|ui|ui.msg(ui.mention+"\n再起動を行います。数十秒の間、操作ができなくなります。その後、`Bk`コマンドで復旧できます。")}
-	# ensureに入るので正常にセーブされる。
-	exit
-end
-bot.command(:stats) do |event|
-	event.respond <<~EOS
-		導入サーバー数 : #{bot.servers.length}
+# TODO: サーバー数は諦めきれない
+command["stats"] do |rm|
+	sending_message.send_message(rm.channel_id, <<~EOS)
 		ゲームユーザー数 : #{game_table.groups.length}
+		メッセージ受け取り部シェード数 : #{setting[:shards_count]}
 	EOS
 end
 
 binding_out_of_command = binding
-binding_out_of_command.local_variable_set(:token, "*****")
-bot.command(:backdoorrepl) do |event|
-	user = event.author
-	channel = event.channel
-	$logger.warn "[**BACK DOOR REPL**] : #{event.server&.id || "DM"}@#{user.name}(#{user.id}) ##{channel.name}(#{channel.id})\n```\n#{event.content}\n```"
-	if user.id == setting[:back_door_user_id] && channel.id == setting[:back_door_channel_id]
-		event.respond "#{binding_out_of_command.local_variables}"
-		code = event.content.gsub(/^Bbackdoorrepl\s*/){""}
-		event.respond (code.empty?)? "`code is none.`" : "`#{code}`"
+# ユーザー、チャンネルは複数だから、後で処理する
+command["backdoorrepl"] do |rm|
+	user_id = rm.user_id
+	user_name = rm.user_name
+	channel_id = rm.channel_id
+	message = rm.message
+	$logger.warn "[**BACK DOOR REPL**] : @#{user_name}(#{user_id}) #(#{channel_id})\n```\n#{message}\n```"
+	if setting[:back_door_user_ids].include?(user_id) && setting[:back_door_channel_ids].include?(channel_id)
+		code = message.gsub(/^Bbackdoorrepl\s*/){""}
+		sending_message.send_message(channel_id, <<~EOS)
+			#{binding_out_of_command.local_variables}
+			#{(code.empty?)? "Code was empty." : "```ruby\n#{code}\n```"}
+		EOS
 		begin
 			value = eval(code, binding_out_of_command)
 		rescue Exception => error
 			error_text = ""
 			PP.pp(error, error_text)
-			event.respond "`#{error_text}`"
+			sending_message.send_message(channel_id, "`#{error_text}`")
 			raise
 		ensure
 			result_text = ""
 			PP.pp(value, result_text)
-			event.respond (result_text.length > 1998)? "result text is over 1998 characters." : "`#{result_text}`"
+			sending_message.send_message(channel_id, (result_text.length > 1998)? "result text is over 1998 characters." : "`#{result_text}`")
 		end
 	end
-	nil
 end
-
-bot.ready do
-	bot.game = if is_maintenance
-		"現在メンテ中"
-	else
-		"ゲームスタートはBk(Bは大文字)"
-	end
-end
-
-bot.run :async
 
 begin
 	loop do

@@ -279,6 +279,7 @@ module GameData
 		
 		def first_story()
 			@ui.send_slow_message(<<~EOS)
+				・・・・・・・・・・
 				
 				戦いばかりが続くこの国。
 				王の力は弱まり、いくつもの兵を持った集団が治めるこの国。
@@ -294,7 +295,7 @@ module GameData
 		
 		def ending_story1()
 			@ui.send_slow_message(<<~EOS)
-				
+				・・・・・・・・・・
 				
 				戦いばかりが続いていたこの国。
 				その後王は倒され、新たな王が誕生したこの国。
@@ -315,6 +316,7 @@ module GameData
 		
 		def ending_story2()
 			@ui.send_slow_message(<<~EOS)
+				・・・・・・・・・・
 				
 				数年がたったある日、突如それは起こった。
 				部下の一人が、兵士を伴って反乱を起こしたのだ。

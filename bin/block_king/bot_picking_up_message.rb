@@ -53,7 +53,7 @@ bot.run true
 
 begin
 	loop do
-		obj = JSON.parse($stdin.readline, symbolize_names: true)
+		obj = JSON.parse($stdin.readline.force_encoding("UTF-8"), symbolize_names: true)
 		$logger.info("Bot picking up message received")
 		$logger.info(obj) # 実行頻度が少ないからinfoで
 		case obj[:type]

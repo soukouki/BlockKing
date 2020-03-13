@@ -49,7 +49,7 @@ class PickingUpMessage
 				Thread.new do
 					begin
 						loop do
-							text = stream.readline
+							text = stream.readline.force_encoding("UTF-8")
 							redo if INNORING_TEXT.include?(text)
 							obj = JSON.parse(text, symbolize_names: true)
 							@callback.call(ReceivedMessage.new(obj))

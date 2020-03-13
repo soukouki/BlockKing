@@ -2,7 +2,7 @@
 require_relative "../combined_logger"
 
 $logger = CombinedLogger.new([
-	Logger.new("block_king_bot.log", 10, 1*1000*1000, level: Logger::Severity::DEBUG), # ログは1MBファイル10個分
+	Logger.new("block_king.log", level: Logger::Severity::DEBUG),
 	Logger.new($stderr, level: Logger::Severity::INFO),
 ])
 

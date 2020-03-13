@@ -27,3 +27,5 @@ end
 
 require_relative "test/block_king"
 require_relative "test/save_load"
+
+print("\n")

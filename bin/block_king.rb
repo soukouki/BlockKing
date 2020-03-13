@@ -19,7 +19,7 @@ require_relative "../lib/ui/block_king_ui"
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
 $logger = CombinedLogger.new([
-	Logger.new("block_king.log", level: Logger::Severity::DEBUG),
+	Logger.new("block_king.log", level: Logger::Severity::INFO),
 	Logger.new($stderr, level: Logger::Severity::INFO),
 ])
 

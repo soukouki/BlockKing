@@ -123,8 +123,8 @@ class GameTable
 		when AbPos::CENTER
 			GameData::CASTLE
 		else
-			case rand(9)
-			when 0, 1
+			case rand(10)
+			when 0, 1, 2
 				case rand(14)
 				when 0, 1, 2
 					GameData::IRON_MINE
@@ -145,9 +145,9 @@ class GameTable
 						GameData::SILVER_MINE
 					end
 				end
-			when 2, 3, 4
+			when 3, 4, 5
 				GameData::FOREST
-			else # 5, 6, 7, 8
+			else # 6, 7, 8, 9
 				GameData::EMPTY
 			end
 		end.new(calc_level(pos))

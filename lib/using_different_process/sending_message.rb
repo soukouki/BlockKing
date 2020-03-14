@@ -3,6 +3,7 @@ require "json"
 
 # 送信エラー等は拾わない。
 class SendingMessage
+	COMMAND_BOOTING_BOT = "ruby bin/block_king/sending_bot.rb"
 	# 大きい数にして、botにイベントが送られてこないようにする
 	NUM_SHARDS = 10000
 	
@@ -42,6 +43,6 @@ class SendingMessage
 	end
 		
 	def start_bot()
-		@stream = IO.popen("ruby bin/block_king/sending_bot.rb #{@token} #{NUM_SHARDS}", "r+")
+		@stream = IO.popen("#{COMMAND_BOOTING_BOT} #{@token} #{NUM_SHARDS}", "r+")
 	end
 end

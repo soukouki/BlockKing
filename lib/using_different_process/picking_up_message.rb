@@ -2,11 +2,13 @@
 require "json"
 
 class PickingUpMessage
-	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :is_user_bot, :channel_id, :message, keyword_init: true)
+	COMMAND_BOOTING_BOT = "ruby bin/block_king/bot_picking_up_message.rb"
 	INNORING_TEXT = [
 		"libsodium not available! You can continue to use discordrb as normal but voice support won't work.\n",
 		"        Read https://github.com/meew0/discordrb/wiki/Installing-libsodium for more details.\n",
 	]
+
+	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :is_user_bot, :channel_id, :message, keyword_init: true)
 	
 	# callbackの引数は(id:, user_id:, user_name:, channel_id:, message:)
 	def initialize(token:, shards_count: 1, game: "", callback:)
@@ -75,7 +77,7 @@ class PickingUpMessage
 	
 	def start_bot()
 		@streams = @shards_count.times.map do |shard_id|
-			IO.popen("ruby bin/block_king/bot_picking_up_message.rb #{@token} #{@shards_count} #{shard_id} \"#{@game}\"", "r+")
+			IO.popen("#{COMMAND_BOOTING_BOT} #{@token} #{@shards_count} #{shard_id} \"#{@game}\"", "r+")
 		end
 	end
 end

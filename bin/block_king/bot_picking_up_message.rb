@@ -33,7 +33,7 @@ bot.message do |event|
 		obj = {
 			id: bar[:id],
 			user_id: user_id,
-			user_name: user.name,
+			user_name: (user.is_a? Discordrb::Member)? user.display_name : user.name,
 			is_user_bot: user.bot_account?,
 			channel_id: channel_id,
 			message: content,

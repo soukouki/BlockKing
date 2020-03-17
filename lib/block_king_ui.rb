@@ -2,10 +2,12 @@
 require "timeout"
 require "forwardable"
 
-module GameData module StoryMethods end end # できる限り疎結合に
+require_relative "game_data/items_and_blocks"
+require_relative "game_data/texts"
+
+
 class BlockKingUI
 	extend Forwardable
-	include GameData::StoryMethods
 	def_delegators :@ui, :kill_waiting_respons, :mention
 	def_delegators :@group, :ui_related_data
 	
@@ -63,14 +65,14 @@ class BlockKingUI
 			case @group.state
 			when :first_story
 				@group.state = nil
-				first_story()
+				GameData::StoryMethods.first_story(@ui)
 			when :ending
 				@group.state = :ending2
-				ending_story1()
+				GameData::StoryMethods.ending_story1(@ui)
 				break
 			when :ending2
 				@group.state = nil
-				ending_story2()
+				GameData::StoryMethods.ending_story2(@ui)
 			when :crafting
 				craft_view()
 			else
@@ -137,7 +139,7 @@ class BlockKingUI
 			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.join("、")+"がいます。\n"
 		end
 		
-		application_tutorial(Tutorial.before_displaying_screen(@group))
+		application_tutorial(GameData::Tutorial.before_displaying_screen(@group))
 		
 		log_text = @add_msg + @group.log.to_s
 		@add_msg = ""
@@ -192,7 +194,7 @@ class BlockKingUI
 	def move(x, y)
 		result = @group.move(@game_table, x, y)
 		
-		application_tutorial(Tutorial.after_moving(@group))
+		application_tutorial(GameData::Tutorial.after_moving(@group))
 		true
 	end
 	
@@ -218,7 +220,7 @@ class BlockKingUI
 		case result
 		when :win
 			@add_msg << "やった！勝ちました！\n"
-			application_tutorial(Tutorial.after_winning(@group, block))
+			application_tutorial(GameData::Tutorial.after_winning(@group, block))
 		when :lose
 			@add_msg << "残念ながら負けてしまいました・・・\n"
 		end

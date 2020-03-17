@@ -10,8 +10,6 @@ require_relative "../lib/using_different_process/sending_message"
 
 # 将来的にデータの管理をするクラスに仕事を任せるべきな気がする
 require_relative "../lib/block_king"
-require_relative "../lib/game_data"
-require_relative "../lib/tutorial"
 
 require_relative "../lib/ui/discord_ui"
 require_relative "../lib/block_king_ui"

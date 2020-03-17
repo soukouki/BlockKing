@@ -14,7 +14,7 @@ require_relative "../lib/game_data"
 require_relative "../lib/tutorial"
 
 require_relative "../lib/ui/discord_ui"
-require_relative "../lib/ui/block_king_ui"
+require_relative "../lib/block_king_ui"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 

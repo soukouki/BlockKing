@@ -65,14 +65,14 @@ class BlockKingUI
 			case @group.state
 			when :first_story
 				@group.state = nil
-				GameData::StoryMethods.first_story(@ui)
+				GameData::StoryMethods.first_story(@ui, @group)
 			when :ending
 				@group.state = :ending2
-				GameData::StoryMethods.ending_story1(@ui)
+				GameData::StoryMethods.ending_story1(@ui, @group)
 				break
 			when :ending2
 				@group.state = nil
-				GameData::StoryMethods.ending_story2(@ui)
+				GameData::StoryMethods.ending_story2(@ui, @group)
 			when :crafting
 				craft_view()
 			else

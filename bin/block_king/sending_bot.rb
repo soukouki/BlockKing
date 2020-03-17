@@ -13,8 +13,7 @@ bot.run true
 begin
 	loop do
 		obj = JSON.parse($stdin.readline.force_encoding("UTF-8"), symbolize_names: true)
-		$logger.info("Sending bot received")
-		$logger.debug(obj) # 実行頻度はそれほどでもないけどメッセージが長いからdebug
+		$logger.info("Sending bot received message") # 受け取ったものを表示するととても長くなるからやらない
 		if obj[:channel_id]
 			bot.send_message(obj[:channel_id], obj[:message])
 		elsif obj[:user_id]

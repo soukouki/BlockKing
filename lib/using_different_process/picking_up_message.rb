@@ -10,12 +10,12 @@ class PickingUpMessage
 
 	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :is_user_bot, :channel_id, :message, keyword_init: true)
 	
-	# callbackの引数は(id:, user_id:, user_name:, channel_id:, message:)
-	def initialize(token:, shards_count: 1, game: "", callback:)
+	def initialize(token:, shards_count: 1, game: "", callback:, logger: nil)
 		@token = token
 		@game = game
 		@shards_count = shards_count
 		@callback = callback
+		@logger = logger
 		start_bot()
 		start_receiving_message()
 	end
@@ -57,10 +57,9 @@ class PickingUpMessage
 							@callback.call(ReceivedMessage.new(obj))
 						end
 					rescue EOFError => e
-						warn e # redoしても意味ない
+						@logger && @logger.info(e) # redoしても意味ない
 					rescue => e
-						# 本当はきっちりログを出すべきだけど、loggerへの依存もできないから、stderrに出力してredoするだけにした
-						warn e
+						@logger && @logger.warn(e)
 						redo
 					end
 				end
@@ -73,6 +72,8 @@ class PickingUpMessage
 			stream.puts JSON.generate(object)
 			stream.flush
 		end
+		@logger && @logger.info("class picking up message send command")
+		@logger && @logger.debug(object)
 	end
 	
 	def start_bot()

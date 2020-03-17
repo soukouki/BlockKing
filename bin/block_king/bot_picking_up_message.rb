@@ -40,8 +40,8 @@ bot.message do |event|
 		}
 		$stdout.puts JSON.generate(obj)
 		$stdout.flush
-		$logger.info("Bot picking up message sended")
-		$logger.debug(obj) # 一応プライバシーも考えて通常時は見ないdebugで
+		$logger.info("Bot picking up message send received message")
+		$logger.debug(obj)
 	end
 end
 
@@ -54,8 +54,8 @@ bot.run true
 begin
 	loop do
 		obj = JSON.parse($stdin.readline.force_encoding("UTF-8"), symbolize_names: true)
-		$logger.info("Bot picking up message received")
-		$logger.info(obj) # 実行頻度が少ないからinfoで
+		$logger.info("Bot picking up message receive command")
+		$logger.debug(obj)
 		case obj[:type]
 		when "register"
 			user_id = obj[:user_id]

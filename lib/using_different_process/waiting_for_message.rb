@@ -8,6 +8,7 @@ class WaitingForMessage
 			shards_count: shards_count,
 			game: game,
 			callback: ->(rm){receive_message(rm)},
+			logger: logger
 		)
 		@logger = logger
 		@id_count = 0

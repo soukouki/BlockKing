@@ -204,9 +204,26 @@ command["help"] do |rm|
 end
 # TODO: サーバー数は諦めきれない
 command["stats"] do |rm|
+	program_details = (
+		(Dir.glob("bin/**/*.rb") + Dir.glob("lib/**/*.rb"))
+			.map do |f|
+				File.open(f, "r") do |io|
+					s=io.read.force_encoding("UTF-8")
+					{
+						lines:s.count("\n"),
+						words: s.gsub(/\w+/).to_a.length,
+						chars:s.length,
+					}
+				end
+			end
+	)
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		ゲームユーザー数 : #{game_table.groups.length}
 		メッセージ受け取り部シェード数 : #{setting[:shards_count]}
+		プログラムファイル数 : #{program_details.count}
+		プログラム行数 : #{program_details.map{|h|h[:lines]}.sum}
+		プログラム単語数 : #{program_details.map{|h|h[:words]}.sum}
+		プログラム文字数 : #{program_details.map{|h|h[:chars]}.sum}
 	EOS
 end
 

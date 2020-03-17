@@ -1,6 +1,10 @@
 
 module Tutorial
-	TutorialLevelAndText = Struct.new(:level, :text)
+	TutorialLevelAndText = Struct.new(:level, :text) do
+		def text
+			"<チュートリアル>\n"+self[:text]
+		end
+	end
 end
 
 class << Tutorial
@@ -9,7 +13,6 @@ class << Tutorial
 		arr = []
 		if group.tutorial_level == 0 || group.tutorial_level == 0
 			arr << Tutorial::TutorialLevelAndText.new(1, <<~EOS)
-				<チュートリアル>
 				リーダー！はじめまして！
 				移動の仕方は、この画面から
 					上(北)には`w`
@@ -23,7 +26,6 @@ class << Tutorial
 		items = group.items
 		if group.tutorial_level == 4 && (items[GameData::COPPER_SWORD] || 0) > 0
 			arr << Tutorial::TutorialLevelAndText.new(5, <<~EOS)
-				<チュートリアル>
 				銅の剣ができました！みんな使ってみてます！
 				この調子で鉄の剣も作っていきましょう！
 				ちなみに、敵が強いほどいっぱいアイテムが手に入るそうですよ？
@@ -31,14 +33,12 @@ class << Tutorial
 		end
 		if group.tutorial_level == 5 && (items[GameData::FIRE_SWORD] || 0) > 0
 			arr << Tutorial::TutorialLevelAndText.new(6, <<~EOS)
-				<チュートリアル>
 				おお！ついに火の剣ができました！
 				これから先は魔法との付き合いが重要になりますね！
 			EOS
 		end
 		if group.tutorial_level == 6 && (items[GameData::MAGIC_CRYSTAL] || 0) > 0
 			arr << Tutorial::TutorialLevelAndText.new(7, <<~EOS)
-				<チュートリアル>
 				つ、ついに劣化してない魔法結晶が作れました！
 				これを使って更に先の世界を目指しましょう！
 			EOS
@@ -50,7 +50,6 @@ class << Tutorial
 		arr = []
 		if group.tutorial_level == 1
 			arr << Tutorial::TutorialLevelAndText.new(2, <<~EOS)
-				<チュートリアル>
 				無事に移動できました！
 				次は戦闘です！
 				敵は王城から離れるほど弱くなります！自分たちにあった強さの敵を選びましょう！
@@ -63,7 +62,6 @@ class << Tutorial
 		arr = []
 		if group.tutorial_level == 2 || group.tutorial_level == 3 and block.empty?
 			arr << Tutorial::TutorialLevelAndText.new(4, <<~EOS)
-				<チュートリアル>
 				リーダー！ここにはなにか建物を建てられそうですよ！
 				炉を作り、銅の剣を作りましょう！
 				とりあえず、炉を作るには木材が必要ですね！
@@ -71,7 +69,6 @@ class << Tutorial
 		end
 		if group.tutorial_level == 2 && !block.empty?
 			arr << Tutorial::TutorialLevelAndText.new(3, <<~EOS)
-				<チュートリアル>
 				上手く支配できましたね！それにしてもここは資源が採れそうです、ここで1分くらい待ってくださいね！私が資源を採っておきます。
 				あと、あっちの方には更地があって、なにか建てられそうですよ？銅と木材を手に入れたら、支配してみましょうよ！
 			EOS

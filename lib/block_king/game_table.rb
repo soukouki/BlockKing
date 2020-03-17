@@ -107,7 +107,7 @@ class GameTable
 		not @groups.values.reject{|l|l == group}.select{|l|l.pos == pos}.empty?
 	end
 	
-	# 10進むごとに5倍の戦力、マンハッタン距離を使用
+	# 10進むごとに3倍の戦力、マンハッタン距離を使用
 	GO_DISTANCE = 10
 	UP_MAGNIFICATION = 3
 	def initial_pos(force)

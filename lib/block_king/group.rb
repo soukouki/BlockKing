@@ -198,7 +198,7 @@ class Group < GroupBase
 	def weaken_at_win(sync_log, enemy)
 		rate = 1.0 * force / enemy.force
 		# rateの範囲は、敵が強いほど0に、弱いほど大きくなる
-		count = ((1/3.0)**@soldier / rate).ceil
+		count = rand(0..((1/3.0)**@soldier / rate * 2).ceil)
 		if count != 0
 			@soldier += count
 			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")

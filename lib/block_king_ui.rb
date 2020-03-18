@@ -216,7 +216,7 @@ class BlockKingUI
 			EOS
 			throw :return_no_map
 		end
-		result = @game_table.war(@group)
+		result = @game_table.battle(@group)
 		case result
 		when :win
 			@add_msg << "やった！勝ちました！\n"

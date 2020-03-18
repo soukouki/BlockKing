@@ -70,24 +70,14 @@ class GameTable
 			end
 	end
 	
-	def war(group)
-		pos = group.pos
-		enemy = ruler(pos)
-		case (enemy.force * rand(0.95..1.05)) <=> (group.force * rand(0.95..1.05))
-		when 1, 0 # enemyの勝利
-			enemy.weaken_at_win(false)
-			group.weaken_at_lose(true)
-			:lose
-		when -1   # groupの勝利
-			enemy.weaken_at_lose(false)
-			group.weaken_at_win(true)
-			set_ruler(pos, group)
-			if pos==AbPos::CENTER
-				group.state = :ending
-				game_clear(group)
-			end
-			:win
+	def battle(group)
+		battling_class = if group.pos == AbPos::CENTER
+			BattleForTheKing
+		else
+			Battle
 		end
+		battling = battling_class.new(game_table: self, ruler: ruler(group.pos), challenger: group)
+		battling.battle
 	end
 	
 	def is_there_a_group_other_than_myself?(group, pos)
@@ -114,6 +104,33 @@ class GameTable
 			UP_MAGNIFICATION**(1.0*len/GO_DISTANCE) *
 			rand(0.7..(1/0.7))
 		).ceil # 取れるアイテム数の関係
+	end
+	
+	def game_clear(cleared_group)
+		@block_table_mutex.synchronize do
+			@ruler_table_mutex.synchronize do
+				@block_table
+					.select{|pos,block|block.is_a?(Building)}
+					.each do |pos, block|
+						block.need_items.each do |item, count|
+							builder = block.builder
+							builder.add_item(false, "#{block}を建てていたため", item, count)
+						end
+					end
+				@ruler_table = {} # ルーラー初期化！
+				@block_table = {} # ブロック初期化！
+				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
+				@groups.each do |id, group|
+					group.pos = initial_pos(group.force)
+					group.log.add_text(group, nil, <<~EOS)
+						`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
+						それによって、ブロック・位置などが初期化され、敵が強くなりました！
+					EOS
+				end
+				@kings_history << cleared_group
+				cleared_group.rebellion_occurred()
+			end
+		end
 	end
 	
 	private
@@ -162,30 +179,4 @@ class GameTable
 		end
 	end
 	
-	def game_clear(cleared_group)
-		@block_table_mutex.synchronize do
-			@ruler_table_mutex.synchronize do
-				@block_table
-					.select{|pos,block|block.is_a?(Building)}
-					.each do |pos, block|
-						block.need_items.each do |item, count|
-							builder = block.builder
-							builder.add_item(false, "#{block}を建てていたため", item, count)
-						end
-					end
-				@ruler_table = {} # ルーラー初期化！
-				@block_table = {} # ブロック初期化！
-				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
-				@groups.each do |id, group|
-					group.pos = initial_pos(group.force)
-					group.log.add_text(group, nil, <<~EOS)
-						`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
-						それによって、ブロック・位置などが初期化され、敵が強くなりました！
-					EOS
-				end
-				@kings_history << cleared_group
-				cleared_group.rebellion_occurred()
-			end
-		end
-	end
 end

@@ -34,7 +34,7 @@ class GameTable
 	
 	def ruler(pos)
 		@ruler_table_mutex.synchronize do
-			@ruler_table[pos] ||= initial_ruler(pos)
+			@ruler_table[pos] ||= @block_table[pos].block_enemy ||= initial_ruler(pos)
 		end
 	end
 	def set_ruler(pos, new_ruler)
@@ -48,7 +48,10 @@ class GameTable
 		@ruler_table_mutex.synchronize do
 			@ruler_table
 				.each do |pos, ruler|
-					next if ruler.nil? || !ruler.is_a?(Group)
+					# 2020年1月9日ごろのバージョンとの互換性
+					# rulerはnilの可能性がある
+					next if ruler.nil? || !ruler.is_a?(Group) # 一時的な措置
+					# これから先の処理はGameTableでやるべきではないかもしれない
 					block = block(pos)
 					get_item, count = block.turn_items(ruler)
 					next if get_item.nil?
@@ -59,6 +62,14 @@ class GameTable
 						ruler.log.add_text(ruler, "「今支配してるブロックの残りアイテムがだいぶ少なくなってきました。そろそろ移動してもいい頃じゃないですか？」",
 							"支配しているブロックの残りアイテムが少なくなってきました。")
 					end
+				end
+				.each do |pos, ruler|
+					# ユーザーグループが移動するときにはblock_enemyを設定してあるので、ruler_tableを見るだけで良い
+					# ruler_tableにいないblock_enemyは、敵がいて回復できない設定
+					# 2020年1月9日ごろのバージョンとの互換性
+					# rulerはnilの可能性がある
+					next if ruler.nil?# 一時的な措置
+					ruler.turn()
 				end
 		end
 		
@@ -73,14 +84,16 @@ class GameTable
 	def war(group)
 		pos = group.pos
 		enemy = ruler(pos)
-		case (enemy.force * rand(0.95..1.05)) <=> (group.force * rand(0.95..1.05))
+		enemy_rate = rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)
+		group_rate = rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)
+		case (enemy.force * enemy_rate) <=> (group.force * group_rate)
 		when 1, 0 # enemyの勝利
-			enemy.weaken_at_win(false)
-			group.weaken_at_lose(true)
+			enemy.weaken_at_win(false, group)
+			group.weaken_at_lose(true, enemy)
 			:lose
 		when -1   # groupの勝利
-			enemy.weaken_at_lose(false)
-			group.weaken_at_win(true)
+			enemy.weaken_at_lose(false, group)
+			group.weaken_at_win(true, enemy)
 			set_ruler(pos, group)
 			if pos==AbPos::CENTER
 				group.state = :ending
@@ -94,7 +107,7 @@ class GameTable
 		not @groups.values.reject{|l|l == group}.select{|l|l.pos == pos}.empty?
 	end
 	
-	# 10進むごとに5倍の戦力、マンハッタン距離を使用
+	# 10進むごとに3倍の戦力、マンハッタン距離を使用
 	GO_DISTANCE = 10
 	UP_MAGNIFICATION = 3
 	def initial_pos(force)

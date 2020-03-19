@@ -1,5 +1,13 @@
 
-class Group
+class GroupBase
+	def ambiguous_force
+		force * rand(0.9..1.1)*rand(0.9..1.1)
+	end
+	def turn()
+	end
+end
+
+class Group < GroupBase
 	attr_reader :id, :log, :soldier, :items, :crafting_recipe_and_count
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def ui_related_data
@@ -82,7 +90,8 @@ class Group
 	end
 	
 	def move(game_table, m_x, m_y)
-		game_table.set_ruler(@pos, nil) if game_table.ruler(@pos) == self
+		# ルーラーが空いたときは必ずblock_enemyを設定する
+		game_table.set_ruler(@pos, game_table.block(@pos).block_enemy) if game_table.ruler(@pos) == self
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
@@ -186,14 +195,17 @@ class Group
 		@time_crafting_started + @crafting_recipe_and_count.craft_time - Time.now
 	end
 	
-	def weaken_at_win(sync_log)
-		count = rand(0..Math.log(@soldier, 2)).round
+	def weaken_at_win(sync_log, enemy)
+		# rateの範囲は、敵が強いほど0に、弱いほど大きくなる
+		rate = 1.0 * force / enemy.force
+		max = ((@soldier ** (1/4.0)) / (rate ** 1.5) * 6).ceil
+		count = rand(0..max)
 		if count != 0
 			@soldier += count
 			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
 		end
 	end
-	def weaken_at_lose(sync_log)
+	def weaken_at_lose(sync_log, enemy)
 		count = rand(0..1.0*@soldier/4).to_i
 		if count != 0
 			@soldier -= count
@@ -212,17 +224,32 @@ class Group
 	end
 end
 
-class NPCEnemy
-	attr_reader :force
+=begin
+2020年1月9日ごろのバージョンとの互換性
+@force
+=> soldierを受け取って、そのまま格納していた
+=end
+class NPCEnemy < GroupBase
+	def force
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier
+	end
 	def initialize(soldier)
-		@force = soldier
+		#@force = soldier
+		@soldier = @max_soldier = soldier
 	end
 	
-	def weaken_at_win(sync_log)
-		@force -= 1
+	def weaken_at_win(sync_log, enemy)
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier -= 1
 	end
-	# 次にこれが試合をすることはないから
-	def weaken_at_lose(sync_log)
+	def weaken_at_lose(sync_log, enemy)
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier = (@soldier * 0.6).round
+	end
+	def turn()
+		@soldier ||= @max_soldier ||= @force # 一時的な措置
+		@soldier += ((@max_soldier - @soldier) * 0.1).ceil unless @soldier == @max_soldier
 	end
 	
 	def add_item(sync, cause, item, count)

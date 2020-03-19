@@ -125,7 +125,7 @@ class BlockKingUI
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				#{BlockKingUI.compare_force(@group.force, ruler.force)}相手でしょう。
+				#{BlockKingUI.compare_force(@group.force, ruler.ambiguous_force)}相手でしょう。
 			EOS
 		end + if block.get_items_when_turning.nil?
 			""
@@ -496,29 +496,33 @@ class BlockKingUI
 		def compare_force(group_force, enemy_force)
 			# インフレしたらいろいろ入れてみたい
 			case 1.0 * enemy_force / group_force
-			when 0..0.01
+			when 0..0.001
 				"敵は噂を聞いただけで逃げていく"
-			when 0..0.1
+			when 0..0.01
 				"敵が裸足で逃げていく"
-			when 0..0.3
+			when 0..0.1
 				"敵が逃げていく"
-			when 0..0.5
+			when 0..0.3
 				"敵は余裕で勝てる"
-			when 0..0.7
+			when 0..0.5
 				"敵はほぼ確実に勝てる"
-			when 0..0.9
+			when 0..0.7
 				"敵はおそらく勝てる"
+			when 0..0.9
+				"敵はもしかしたら勝てる"
 			when 0..(1/0.9)
 				"敵は勝つか負けるかわからない"
 			when 0..(1/0.7)
+				"敵はもしかしたら負ける"
+			when 0..(1/0.5)
 				"敵はおそらく負ける"
-			when 0..2
-				"敵はほぼ確実に負ける"
 			when 0..(1/0.3)
-				"敵は余裕で負ける"
+				"敵はほぼ確実に負ける"
 			when 0..(1/0.1)
-				"敵は逃げたくなるような"
+				"敵は余裕で負ける"
 			when 0..(1/0.01)
+				"敵は逃げたくなるような"
+			when 0..(1/0.001)
 				"敵は裸足で逃げたくなるような"
 			else
 				"敵は噂だけで逃げたくなるような"

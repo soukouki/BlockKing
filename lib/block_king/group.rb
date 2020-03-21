@@ -12,7 +12,7 @@ class Group
 		@soldier = 6
 		@items = {}
 		@pos = game_table.initial_pos(@soldier)
-		@state = :first_story
+		@state = :starting_game
 		@log = LogBasket.new
 		@tutorial_level = 0
 	end
@@ -201,10 +201,6 @@ class Group
 		end
 	end
 	
-	def rebellion_occurred()
-		# アイテムや兵士をへらす処理があったけど、モチベの低下が激しい為取り外した。
-	end
-	
 	def add_item(sync, cause, item, count)
 		@items[item] ||= 0
 		@items[item] += count
@@ -221,10 +217,16 @@ class NPCEnemy
 	def weaken_at_win(sync_log)
 		@force -= 1
 	end
-	# 次にこれが試合をすることはないから
 	def weaken_at_lose(sync_log)
 	end
-	
 	def add_item(sync, cause, item, count)
+	end
+	def state=(args)
+	end
+	def log
+		o = Object.new
+		def o.add_text(group, text_to_notify, text)
+		end
+		o
 	end
 end

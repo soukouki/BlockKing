@@ -63,16 +63,15 @@ class BlockKingUI
 	def main_loop()
 		loop do
 			case @group.state
-			when :first_story
+			when :starting_game
 				@group.state = nil
-				GameData::StoryMethods.first_story(@ui, @group)
-			when :ending
-				@group.state = :ending2
-				GameData::StoryMethods.ending_story1(@ui, @group)
-				break
-			when :ending2
+				GameData::Story::STARTING_GAME.pass_text_to(@ui, @group)
+			when :winning_the_king
 				@group.state = nil
-				GameData::StoryMethods.ending_story2(@ui, @group)
+				GameData::Story::WINNING_THE_KING.pass_text_to(@ui, @group)
+			when :being_deprived_of_king
+				@group.state = nil
+				GameData::Story::BEING_DEPRIVED_OF_KING.pass_text_to(@ui, @group)
 			when :crafting
 				craft_view()
 			else
@@ -216,6 +215,7 @@ class BlockKingUI
 			EOS
 			throw :return_no_map
 		end
+		
 		result = @game_table.battle(@group)
 		case result
 		when :win

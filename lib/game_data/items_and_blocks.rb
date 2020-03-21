@@ -40,6 +40,11 @@ module GameData
 	LIGHT_SWORD = Item.new("光の剣")
 	DARK_SWORD = Item.new("闇の剣")
 	
+	KINGS_MEMORIAL_ITEMS = [
+		ROYAL_RING = Item.new("王家の指輪"),
+		ROYAL_NECKLACE = Item.new("王家のネックレス"),
+		ROYAL_PENDANT = Item.new("王家のペンダント"),
+	]
 	
 	# 攻撃力順に並べる！
 	SWORD_ATTACK_POWER_HASH = {
@@ -55,6 +60,8 @@ module GameData
 	}
 	
 	SORT_ORDER = [
+		DEBUG,
+		*KINGS_MEMORIAL_ITEMS,
 		WOOD, LIME, CLAY, COAL,
 		GOLD_ORE, SILVER_ORE, COPPER_ORE, IRON_ORE,
 		GOLD, SILVER, COPPER, IRON,

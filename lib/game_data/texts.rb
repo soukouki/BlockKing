@@ -63,32 +63,6 @@ module GameData
 	}
 	
 	
-	module StoryMethods; end
-	class << StoryMethods
-		def first_story(ui, group)
-			ui.send_slow_message(<<~EOS)
-				<ゲーム開始時のメッセージ>
-			EOS
-		end
-		
-		def ending_story1(ui, group)
-			ui.send_slow_message(<<~EOS)
-				<王城攻略時のメッセージ1>
-				
-				<ゲームクリアです！>
-				(`Bk`で続きます。)
-			EOS
-			sleep 5
-		end
-		
-		def ending_story2(ui, group)
-			ui.send_slow_message(<<~EOS)
-				<王城攻略時のメッセージ2>
-			EOS
-		end
-	end
-	
-	
 	module Tutorial
 		TutorialLevelAndText = Struct.new(:level, :text) do
 			def text
@@ -164,6 +138,39 @@ module GameData
 			end
 			arr
 		end
+	end
+	
+	
+	class Story
+		def initialize(text)
+			@text = text
+		end
+		def pass_text_to(ui, group)
+			ui.send_slow_message(@text)
+		end
+		
+		STARTING_GAME = Story.new(<<~EOS)
+			戦火が平穏を焼き払い、力のみが意味を成すこの王国。その果ての村では───
+			青年は、剣を握る。
+			偉大なる父の、遺志を果たす為に。
+			遥か過去にて奪われた玉座を、取り戻す為に。
+			王の血を継ぐ青年が、果ての村から先の見えない道を進む。
+			「大丈夫だ。この道は、玉座へと続いている」
+		EOS
+		WINNING_THE_KING = Story.new(<<~EOS)
+			戦火は鎮まり、力など意味を成さなくなったこの王国。その中心の王城にて───
+			青年は、血に塗れた冠を被る。
+			亡き父の遺志通り、玉座を奪還し、新たなる王が誕生したことを民に示す為に。
+			空席となった玉座へ、踏みしめて来た道の終着点へ青年は腰を下ろす。
+			｢父さん。これが、貴方の見たかった景色か？｣
+		EOS
+		BEING_DEPRIVED_OF_KING = Story.new(<<~EOS)
+			青年が窮屈なばかりの生活から抜け出し、各地を転々とし始めてから、数年。
+			久しく戻った王国では、青年の玉座は奪われ、またも力が全てを飲み込む時代へと変わり果てようとしていた。
+			そんな中、反逆者として命を狙われた青年はかつての戦友達に協力を仰ぎ、命からがら逃亡した。
+			振り出しに戻った果てなき道。しかし青年には、自分と志を共にする戦友がいる。青年が折れることはない。
+			「その冠を、返してもらおうか」
+		EOS
 	end
 	
 end

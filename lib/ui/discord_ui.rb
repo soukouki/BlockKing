@@ -24,7 +24,11 @@ class DiscordUI
 		text
 			.lines
 			.map(&:chomp)
-			.each{|line|sleep 1; line.empty? || send_message(line)}
+			.each do |line|
+				sleep 3
+				line.empty? || send_message(line)
+			end
+		sleep 4
 	end
 	# ブロックの戻り値がfalse(nil)のときはループし続ける
 	def wait_respons(regex_text: nil, &block)

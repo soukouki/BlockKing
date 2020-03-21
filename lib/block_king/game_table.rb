@@ -1,6 +1,6 @@
 
 class GameTable
-	attr_reader :groups, :kings_history
+	attr_reader :groups, :kings_history, :game_level
 	def initialize()
 		@block_table = {}
 		@block_table_mutex = Mutex.new
@@ -33,6 +33,9 @@ class GameTable
 	end
 	
 	def ruler(pos)
+		if pos == AbPos::CENTER && !@kings_history.empty?
+			return @kings_history.last
+		end
 		@ruler_table_mutex.synchronize do
 			@ruler_table[pos] ||= initial_ruler(pos)
 		end
@@ -127,8 +130,8 @@ class GameTable
 						それによって、ブロック・位置などが初期化され、敵が強くなりました！
 					EOS
 				end
+				@kings_history.last&.add_item(false, "王城からアイテムを持ち出せ", GameData::KINGS_MEMORIAL_ITEMS.sample, 1)
 				@kings_history << cleared_group
-				cleared_group.rebellion_occurred()
 			end
 		end
 	end

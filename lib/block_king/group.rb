@@ -20,7 +20,7 @@ class Group < GroupBase
 		@soldier = 6
 		@items = {}
 		@pos = game_table.initial_pos(@soldier)
-		@state = :first_story
+		@state = :starting_game
 		@log = LogBasket.new
 		@tutorial_level = 0
 	end
@@ -213,10 +213,6 @@ class Group < GroupBase
 		end
 	end
 	
-	def rebellion_occurred()
-		# アイテムや兵士をへらす処理があったけど、モチベの低下が激しい為取り外した。
-	end
-	
 	def add_item(sync, cause, item, count)
 		@items[item] ||= 0
 		@items[item] += count
@@ -251,7 +247,14 @@ class NPCEnemy < GroupBase
 		@soldier ||= @max_soldier ||= @force # 一時的な措置
 		@soldier += ((@max_soldier - @soldier) * 0.1).ceil unless @soldier == @max_soldier
 	end
-	
 	def add_item(sync, cause, item, count)
+	end
+	def state=(args)
+	end
+	def log
+		o = Object.new
+		def o.add_text(group, text_to_notify, text)
+		end
+		o
 	end
 end

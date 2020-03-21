@@ -1,6 +1,6 @@
 
 class GameTable
-	attr_reader :groups, :kings_history
+	attr_reader :groups, :kings_history, :game_level
 	def initialize()
 		@block_table = {}
 		@block_table_mutex = Mutex.new
@@ -33,6 +33,9 @@ class GameTable
 	end
 	
 	def ruler(pos)
+		if pos == AbPos::CENTER && !@kings_history.empty?
+			return @kings_history.last
+		end
 		@ruler_table_mutex.synchronize do
 			@ruler_table[pos] ||= @block_table[pos].block_enemy ||= initial_ruler(pos)
 		end
@@ -81,26 +84,14 @@ class GameTable
 			end
 	end
 	
-	def war(group)
-		pos = group.pos
-		enemy = ruler(pos)
-		enemy_rate = rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)
-		group_rate = rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)
-		case (enemy.force * enemy_rate) <=> (group.force * group_rate)
-		when 1, 0 # enemyの勝利
-			enemy.weaken_at_win(false, group)
-			group.weaken_at_lose(true, enemy)
-			:lose
-		when -1   # groupの勝利
-			enemy.weaken_at_lose(false, group)
-			group.weaken_at_win(true, enemy)
-			set_ruler(pos, group)
-			if pos==AbPos::CENTER
-				group.state = :ending
-				game_clear(group)
-			end
-			:win
+	def battle(group)
+		battling_class = if group.pos == AbPos::CENTER
+			BattleForTheKing
+		else
+			Battle
 		end
+		battling = battling_class.new(game_table: self, ruler: ruler(group.pos), challenger: group)
+		battling.battle
 	end
 	
 	def is_there_a_group_other_than_myself?(group, pos)
@@ -127,6 +118,33 @@ class GameTable
 			UP_MAGNIFICATION**(1.0*len/GO_DISTANCE) *
 			rand(0.7..(1/0.7))
 		).ceil # 取れるアイテム数の関係
+	end
+	
+	def game_clear(cleared_group)
+		@block_table_mutex.synchronize do
+			@ruler_table_mutex.synchronize do
+				@block_table
+					.select{|pos,block|block.is_a?(Building)}
+					.each do |pos, block|
+						block.need_items.each do |item, count|
+							builder = block.builder
+							builder.add_item(false, "#{block}を建てていたため", item, count)
+						end
+					end
+				@ruler_table = {} # ルーラー初期化！
+				@block_table = {} # ブロック初期化！
+				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
+				@groups.each do |id, group|
+					group.pos = initial_pos(group.force)
+					group.log.add_text(group, nil, <<~EOS)
+						`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
+						それによって、ブロック・位置などが初期化され、敵が強くなりました！
+					EOS
+				end
+				@kings_history.last&.add_item(false, "王城からアイテムを持ち出せ", GameData::KINGS_MEMORIAL_ITEMS.sample, 1)
+				@kings_history << cleared_group
+			end
+		end
 	end
 	
 	private
@@ -175,30 +193,4 @@ class GameTable
 		end
 	end
 	
-	def game_clear(cleared_group)
-		@block_table_mutex.synchronize do
-			@ruler_table_mutex.synchronize do
-				@block_table
-					.select{|pos,block|block.is_a?(Building)}
-					.each do |pos, block|
-						block.need_items.each do |item, count|
-							builder = block.builder
-							builder.add_item(false, "#{block}を建てていたため", item, count)
-						end
-					end
-				@ruler_table = {} # ルーラー初期化！
-				@block_table = {} # ブロック初期化！
-				@game_level = [[@game_level*2, cleared_group.force].max, @game_level*10].min # 最低x2, 最高x10
-				@groups.each do |id, group|
-					group.pos = initial_pos(group.force)
-					group.log.add_text(group, nil, <<~EOS)
-						`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
-						それによって、ブロック・位置などが初期化され、敵が強くなりました！
-					EOS
-				end
-				@kings_history << cleared_group
-				cleared_group.rebellion_occurred()
-			end
-		end
-	end
 end

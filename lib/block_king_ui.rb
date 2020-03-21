@@ -65,13 +65,13 @@ class BlockKingUI
 			case @group.state
 			when :starting_game
 				@group.state = nil
-				GameData::Story::STARTING_GAME.pass_text_to(@ui, @group)
+				GameData::Story::STARTING_GAME.pass_text_to(@ui)
 			when :winning_the_king
 				@group.state = nil
-				GameData::Story::WINNING_THE_KING.pass_text_to(@ui, @group)
+				GameData::Story::WINNING_THE_KING.pass_text_to(@ui)
 			when :being_deprived_of_king
 				@group.state = nil
-				GameData::Story::BEING_DEPRIVED_OF_KING.pass_text_to(@ui, @group)
+				GameData::Story::BEING_DEPRIVED_OF_KING.pass_text_to(@ui)
 			when :crafting
 				craft_view()
 			else

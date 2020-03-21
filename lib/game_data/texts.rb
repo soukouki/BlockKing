@@ -142,14 +142,16 @@ module GameData
 	
 	
 	class Story
-		def initialize(text)
+		attr_reader :brief
+		def initialize(text, brief)
 			@text = text
+			@brief = brief
 		end
-		def pass_text_to(ui, group)
+		def pass_text_to(ui)
 			ui.send_slow_message(@text)
 		end
 		
-		STARTING_GAME = Story.new(<<~EOS)
+		STARTING_GAME = Story.new(<<~EOS, "ゲームを開始した")
 			戦火が平穏を焼き払い、力のみが意味を成すこの王国。その果ての村では───
 			青年は、剣を握る。
 			偉大なる父の、遺志を果たす為に。
@@ -157,14 +159,14 @@ module GameData
 			王の血を継ぐ青年が、果ての村から先の見えない道を進む。
 			「大丈夫だ。この道は、玉座へと続いている」
 		EOS
-		WINNING_THE_KING = Story.new(<<~EOS)
+		WINNING_THE_KING = Story.new(<<~EOS, "王城を支配した")
 			戦火は鎮まり、力など意味を成さなくなったこの王国。その中心の王城にて───
 			青年は、血に塗れた冠を被る。
 			亡き父の遺志通り、玉座を奪還し、新たなる王が誕生したことを民に示す為に。
 			空席となった玉座へ、踏みしめて来た道の終着点へ青年は腰を下ろす。
 			｢父さん。これが、貴方の見たかった景色か？｣
 		EOS
-		BEING_DEPRIVED_OF_KING = Story.new(<<~EOS)
+		BEING_DEPRIVED_OF_KING = Story.new(<<~EOS, "王城を奪われた")
 			青年が窮屈なばかりの生活から抜け出し、各地を転々とし始めてから、数年。
 			久しく戻った王国では、青年の玉座は奪われ、またも力が全てを飲み込む時代へと変わり果てようとしていた。
 			そんな中、反逆者として命を狙われた青年はかつての戦友達に協力を仰ぎ、命からがら逃亡した。

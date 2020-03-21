@@ -13,6 +13,7 @@ require_relative "../lib/block_king"
 
 require_relative "../lib/ui/discord_ui"
 require_relative "../lib/block_king_ui"
+require_relative "../lib/watching_story_ui"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
@@ -97,6 +98,21 @@ command["exit"] do |rm|
 	end
 	sending_message.send_message(rm.channel_id, "反応しないようになりました。")
 end
+command["story"] do |rm|
+	user_id = rm.user_id
+	channel_id = rm.channel_id
+	WatchingStoryUI.new(
+		ui: DiscordUI.new(
+			sending_message: sending_message,
+			waiting_for_message: waiting_for_message,
+			user_id: user_id,
+			channel_id: channel_id,
+			logger: $logger,
+		),
+		game_table: game_table,
+		group_id: user_id,
+	).start
+end
 command["end"] do |rm|
 	user_id = rm.user_id
 	next unless setting[:owner_user_ids].include?(user_id)
@@ -175,11 +191,12 @@ end
 command["help"] do |rm|
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		コマンドの一覧です。
-		`Bk` : **ゲームをスタートします。**
-		`Brank` : ランキングが見れます。
 		`Bhelp` : このコマンドです。
-		`Bhis` : 過去の王が見れます。
+		`Bk` : **ゲームをスタートします。**
 		`Bexit` : コマンドに反応しないようになります。
+		`Bstory` : 過去に見たストーリーが見れます。
+		`Brank` : ランキングが見れます。
+		`Bhis` : 過去の王が見れます。
 		`Bstats` : このbotに関する情報がﾁｮｯﾄﾀﾞｹ見れます。
 		`Bbots` : 兄弟botを紹介します！ぜひ導入してみてください！
 		
@@ -197,7 +214,7 @@ command["help"] do |rm|
 		招待URL : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
 		(BlockKingが入っていないサーバーでもこのゲームを遊びたいときは、上のURLをサーバーの管理者権限を持っている人に開かせてください！きっといいことが起こります！)
 		公式サーバー : https://discord.gg/nJ5QVJu
-		製作者 : @sou7#0094 その他テストプレイに参加してくださった方々
+		製作者 : @sou7#0094 ストーリーを手伝ってくれたわょわぉさん その他テストプレイに参加してくださった方々
 	EOS
 end
 # TODO: サーバー数は諦めきれない

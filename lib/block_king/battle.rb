@@ -8,12 +8,12 @@ class Battle
 	def battle
 		case settle
 		when :lose
-			@ruler.weaken_at_win(false)
-			@challenger.weaken_at_lose(true)
+			@ruler.weaken_at_win(false, @challenger)
+			@challenger.weaken_at_lose(true, @ruler)
 			:lose
 		when :win
-			@ruler.weaken_at_lose(false)
-			@challenger.weaken_at_win(true)
+			@ruler.weaken_at_lose(false, @challenger)
+			@challenger.weaken_at_win(true, @ruler)
 			@game_table.set_ruler(@challenger.pos, @challenger)
 			:win
 		end

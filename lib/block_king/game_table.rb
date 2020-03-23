@@ -37,7 +37,7 @@ class GameTable
 			return @kings_history.last
 		end
 		@ruler_table_mutex.synchronize do
-			@ruler_table[pos] ||= @block_table[pos].block_enemy ||= initial_ruler(pos)
+			@ruler_table[pos] ||= block(pos).block_enemy ||= initial_ruler(pos)
 		end
 	end
 	def set_ruler(pos, new_ruler)

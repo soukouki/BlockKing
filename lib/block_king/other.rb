@@ -24,6 +24,8 @@ Item = Struct.new(:name) do
 end
 class Block
 	attr_reader :level
+	attr_accessor :block_enemy
+	
 	def initialize()
 		ここは来ないはずです・・
 	end
@@ -39,11 +41,12 @@ class Block
 	def empty?
 		false
 	end
-	def creatable_items
-		GameData::RECIPES.select{|r|r.main_building == self.class}
-	end
+	
 	def map_name
 		name
+	end
+	def creatable_items
+		GameData::RECIPES.select{|r|r.main_building == self.class}
 	end
 end
 class Nature < Block

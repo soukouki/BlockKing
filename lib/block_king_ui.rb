@@ -2,10 +2,12 @@
 require "timeout"
 require "forwardable"
 
-module GameData module StoryMethods end end # できる限り疎結合に
+require_relative "game_data/items_and_blocks"
+require_relative "game_data/texts"
+
+
 class BlockKingUI
 	extend Forwardable
-	include GameData::StoryMethods
 	def_delegators :@ui, :kill_waiting_respons, :mention
 	def_delegators :@group, :ui_related_data
 	
@@ -61,16 +63,15 @@ class BlockKingUI
 	def main_loop()
 		loop do
 			case @group.state
-			when :first_story
+			when :starting_game
 				@group.state = nil
-				first_story()
-			when :ending
-				@group.state = :ending2
-				ending_story1()
-				break
-			when :ending2
+				GameData::Story::STARTING_GAME.pass_text_to(@ui)
+			when :winning_the_king
 				@group.state = nil
-				ending_story2()
+				GameData::Story::WINNING_THE_KING.pass_text_to(@ui)
+			when :being_deprived_of_king
+				@group.state = nil
+				GameData::Story::BEING_DEPRIVED_OF_KING.pass_text_to(@ui)
 			when :crafting
 				craft_view()
 			else
@@ -125,7 +126,7 @@ class BlockKingUI
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				#{BlockKingUI.compare_force(@group.force, ruler.force)}相手でしょう。
+				#{BlockKingUI.compare_force(@group.force, ruler.ambiguous_force)}相手でしょう。
 			EOS
 		end + if block.get_items_when_turning.nil?
 			""
@@ -137,7 +138,7 @@ class BlockKingUI
 			"ここには"+(@game_table.groups_by_pos(pos)-[@group]).map{|g|"`#{g.name}`"}.join("、")+"がいます。\n"
 		end
 		
-		application_tutorial(Tutorial.before_displaying_screen(@group))
+		application_tutorial(GameData::Tutorial.before_displaying_screen(@group))
 		
 		log_text = @add_msg + @group.log.to_s
 		@add_msg = ""
@@ -192,7 +193,7 @@ class BlockKingUI
 	def move(x, y)
 		result = @group.move(@game_table, x, y)
 		
-		application_tutorial(Tutorial.after_moving(@group))
+		application_tutorial(GameData::Tutorial.after_moving(@group))
 		true
 	end
 	
@@ -214,11 +215,12 @@ class BlockKingUI
 			EOS
 			throw :return_no_map
 		end
-		result = @game_table.war(@group)
+		
+		result = @game_table.battle(@group)
 		case result
 		when :win
 			@add_msg << "やった！勝ちました！\n"
-			application_tutorial(Tutorial.after_winning(@group, block))
+			application_tutorial(GameData::Tutorial.after_winning(@group, block))
 		when :lose
 			@add_msg << "残念ながら負けてしまいました・・・\n"
 		end
@@ -496,29 +498,33 @@ class BlockKingUI
 		def compare_force(group_force, enemy_force)
 			# インフレしたらいろいろ入れてみたい
 			case 1.0 * enemy_force / group_force
-			when 0..0.01
+			when 0..0.001
 				"敵は噂を聞いただけで逃げていく"
-			when 0..0.1
+			when 0..0.01
 				"敵が裸足で逃げていく"
-			when 0..0.3
+			when 0..0.1
 				"敵が逃げていく"
-			when 0..0.5
+			when 0..0.3
 				"敵は余裕で勝てる"
-			when 0..0.7
+			when 0..0.5
 				"敵はほぼ確実に勝てる"
-			when 0..0.9
+			when 0..0.7
 				"敵はおそらく勝てる"
+			when 0..0.9
+				"敵はもしかしたら勝てる"
 			when 0..(1/0.9)
 				"敵は勝つか負けるかわからない"
 			when 0..(1/0.7)
+				"敵はもしかしたら負ける"
+			when 0..(1/0.5)
 				"敵はおそらく負ける"
-			when 0..2
-				"敵はほぼ確実に負ける"
 			when 0..(1/0.3)
-				"敵は余裕で負ける"
+				"敵はほぼ確実に負ける"
 			when 0..(1/0.1)
-				"敵は逃げたくなるような"
+				"敵は余裕で負ける"
 			when 0..(1/0.01)
+				"敵は逃げたくなるような"
+			when 0..(1/0.001)
 				"敵は裸足で逃げたくなるような"
 			else
 				"敵は噂だけで逃げたくなるような"

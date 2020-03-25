@@ -1,9 +1,16 @@
 
 class GroupBase
+	def force; raise NotImplementedError; end
+	def weaken_at_win(sync_log, enemy); raise NotImplementedError; end
+	def weaken_at_lose(sync_log, enemy); raise NotImplementedError; end
 	def ambiguous_force
 		force * rand(0.9..1.1)*rand(0.9..1.1)
 	end
-	def turn()
+	def turn() # 何もしない
+	end
+	def add_item(sync, cause, item, count) # 何もしない
+	end
+	def state=(args) # 何もしない
 	end
 end
 
@@ -246,10 +253,6 @@ class NPCEnemy < GroupBase
 	def turn()
 		@soldier ||= @max_soldier ||= @force # 一時的な措置
 		@soldier += ((@max_soldier - @soldier) * 0.1).ceil unless @soldier == @max_soldier
-	end
-	def add_item(sync, cause, item, count)
-	end
-	def state=(args)
 	end
 	def log
 		o = Object.new

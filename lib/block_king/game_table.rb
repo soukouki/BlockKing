@@ -90,7 +90,7 @@ class GameTable
 	
 	def game_clear(cleared_group)
 		@ruler_table_mutex.synchronize do
-			group.log.add_text(group, nil, <<~EOS)
+			cleared_group.log.add_text(cleared_group, nil, <<~EOS)
 				`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
 			EOS
 		end

@@ -120,7 +120,7 @@ command["end"] do |rm|
 		ui_by_user_id
 			.values
 			.select(&:recently_operating?)
-			.each(&:mention)
+			.each(&:send_mention)
 			.each{|ui|ui.msg("再起動を行います。しばらくの間、操作ができなくなります。その後、`Bk`コマンドで復旧できます。")}
 	end
 	# ensureに入るので正常にセーブされる。

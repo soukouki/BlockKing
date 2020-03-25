@@ -17,7 +17,7 @@ class DiscordUI
 			@sending_message.send_message(@channel_id, p_text)
 		end
 	end
-	def mention
+	def send_mention
 		send_message("<@#{@user_id}>")
 	end
 	def send_slow_message(text)

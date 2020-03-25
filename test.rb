@@ -1,9 +1,6 @@
 
 require "pp"
 
-require_relative "lib/block_king"
-require_relative "lib/block_king_ui"
-
 public def test(x)
 	if (x==self || x===self)
 		print("o")
@@ -11,9 +8,10 @@ public def test(x)
 		puts "\n"+
 			"not ok (#{self.class})\n"+
 			"#{(self.kind_of? String)? self : to_readable_string(self)} !== (#{x.class})\n"+
-			"#{to_readable_string(x)}"+
+			"#{(x.kind_of? String)? self : to_readable_string(x)}"+
 			"#{caller().join("\n")}"
 	end
+	self
 end
 def to_readable_string o
 	case o

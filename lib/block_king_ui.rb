@@ -8,7 +8,7 @@ require_relative "game_data/texts"
 
 class BlockKingUI
 	extend Forwardable
-	def_delegators :@ui, :kill_waiting_respons, :mention
+	def_delegators :@ui, :kill_waiting_respons, :send_mention
 	def_delegators :@group, :ui_related_data
 	
 	MACRO_CONFIRMATION_THRESHOLD_VALUE = 600

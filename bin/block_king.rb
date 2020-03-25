@@ -265,7 +265,11 @@ command["backdoorrepl"] do |rm|
 			raise
 		ensure
 			result_text = ""
-			PP.pp(value, result_text)
+			if value.is_a?(String)
+				result_text << value
+			else
+				PP.pp(value, result_text)
+			end
 			sending_message.send_message(channel_id, (result_text.length > 1998)? "result text is over 1998 characters." : "`#{result_text}`")
 		end
 	end

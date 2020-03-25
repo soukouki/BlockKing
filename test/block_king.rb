@@ -1,6 +1,6 @@
 
 require_relative "../lib/block_king"
-require_relative "../lib/ui/ui_base"
+require_relative "../lib/ui/ui"
 require_relative "../lib/handler"
 
 Handler.direction_of_castle(AbPos.new(0,0)).test("")
@@ -18,7 +18,7 @@ $logger = Object.new
 def $logger.info(text) end
 def $logger.error(text) end
 
-class TestUI < UIBase
+class TestUI < UI::UIBase
 	attr_accessor :smq, :ssmq, :wrq
 	
 	def initialize() # なぜかこう書かないと動かなかった。なぜ？

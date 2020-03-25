@@ -75,7 +75,7 @@ command["k"] do |rm|
 			old_ui.kill_waiting_respons()
 		end
 		ui_by_user_id[user_id] = Handler.new(
-			ui: DiscordUI.new(
+			ui: UI::DiscordUI.new(
 				sending_message: sending_message,
 				waiting_for_message: waiting_for_message,
 				user_id: user_id,
@@ -102,7 +102,7 @@ command["story"] do |rm|
 	user_id = rm.user_id
 	channel_id = rm.channel_id
 	WatchingStoryHandler.new(
-		ui: DiscordUI.new(
+		ui: UI::DiscordUI.new(
 			sending_message: sending_message,
 			waiting_for_message: waiting_for_message,
 			user_id: user_id,

@@ -12,8 +12,8 @@ require_relative "../lib/using_different_process/sending_message"
 require_relative "../lib/block_king"
 
 require_relative "../lib/ui/discord_ui"
-require_relative "../lib/block_king_ui"
-require_relative "../lib/watching_story_ui"
+require_relative "../lib/handler"
+require_relative "../lib/watching_story_handler"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
@@ -38,7 +38,7 @@ Kernel.define_method(:report) do |text|
 	end
 end
 
-BlockKingUI::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
+Handler::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
 	sending_message.send_message(channel_id, text)
 end
 
@@ -49,7 +49,7 @@ command = lambda do |command_name, &block|
 	waiting_for_message.register(regex_text: "^B#{command_name}(\\s|$)", &block)
 end
 
-# -----UIにふれる処理-----
+# -----Handlerにふれる処理-----
 
 ui_by_user_id = Hash.new
 mutex_for_ui_by_user_id = Mutex.new
@@ -74,7 +74,7 @@ command["k"] do |rm|
 		else
 			old_ui.kill_waiting_respons()
 		end
-		ui_by_user_id[user_id] = BlockKingUI.new(
+		ui_by_user_id[user_id] = Handler.new(
 			ui: DiscordUI.new(
 				sending_message: sending_message,
 				waiting_for_message: waiting_for_message,
@@ -101,7 +101,7 @@ end
 command["story"] do |rm|
 	user_id = rm.user_id
 	channel_id = rm.channel_id
-	WatchingStoryUI.new(
+	WatchingStoryHandler.new(
 		ui: DiscordUI.new(
 			sending_message: sending_message,
 			waiting_for_message: waiting_for_message,
@@ -127,7 +127,7 @@ command["end"] do |rm|
 	exit
 end
 
-# -----UIに触れない処理-----
+# -----Handlerに触れない処理-----
 
 # 引数はHash.to_aされた形
 def ranking(value_by_groups, id_which_open_event)

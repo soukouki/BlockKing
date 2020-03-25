@@ -66,7 +66,7 @@ class Group < GroupBase
 		private
 		def notify(group, text)
 			begin
-				BlockKingUI.notify(group, text)
+				Handler.notify(group, text)
 			rescue => err
 				# loggerに疎結合にするため
 				$logger && (
@@ -102,7 +102,7 @@ class Group < GroupBase
 		@pos = @pos.diff_to_ab_pos(m_x, m_y)
 	end
 	
-	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはBlockKingUI側で行っているので、省略する
+	# 既に建物が建っている・支配できていない・建設できないブロック、のチェックはHandler側で行っているので、省略する
 	def build(game_table, block)
 		need_items = block.need_items
 		need_items
@@ -154,7 +154,7 @@ class Group < GroupBase
 			end
 		end
 	end
-	# チェック(そのブロックで作れるのか、そのアイテムで作れるのか、など)はBlockKingUIにて行う
+	# チェック(そのブロックで作れるのか、そのアイテムで作れるのか、など)はHandlerにて行う
 	def start_crafting(recipe_and_count)
 		@crafting_mutex ||= Mutex.new
 		@crafting_mutex.synchronize do

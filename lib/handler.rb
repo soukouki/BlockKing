@@ -6,7 +6,7 @@ require_relative "game_data/items_and_blocks"
 require_relative "game_data/texts"
 
 
-class BlockKingUI
+class Handler
 	extend Forwardable
 	def_delegators :@ui, :kill_waiting_respons, :send_mention
 	def_delegators :@group, :ui_related_data
@@ -103,8 +103,8 @@ class BlockKingUI
 	
 	def map()
 		constant_text = <<~EOS
-			#{BlockKingUI.make_map(@group, @game_table)}
-			現在の位置は(#{pos})、#{BlockKingUI.direction_of_castle(pos)}
+			#{Handler.make_map(@group, @game_table)}
+			現在の位置は(#{pos})、#{Handler.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテム・その他情報は(`i`)
 		EOS
@@ -126,7 +126,7 @@ class BlockKingUI
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				#{BlockKingUI.compare_force(@group.force, ruler.ambiguous_force)}相手でしょう。
+				#{Handler.compare_force(@group.force, ruler.ambiguous_force)}相手でしょう。
 			EOS
 		end + if block.get_items_when_turning.nil?
 			""
@@ -544,7 +544,7 @@ class BlockKingUI
 	end
 end
  
-class << BlockKingUI
+class << Handler
 	def notify(group, text)
 		ui_related_data = group.ui_related_data
 		channel_id = ui_related_data.channel_id_to_notify

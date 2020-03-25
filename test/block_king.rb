@@ -1,18 +1,18 @@
 
 require_relative "../lib/block_king"
 require_relative "../lib/ui/ui_base"
-require_relative "../lib/block_king_ui"
+require_relative "../lib/handler"
 
-BlockKingUI.direction_of_castle(AbPos.new(0,0)).test("")
-BlockKingUI.direction_of_castle(AbPos.new(0,1)).test(/南(?![東西])/)
-BlockKingUI.direction_of_castle(AbPos.new(1,1)).test(/南西/)
-BlockKingUI.direction_of_castle(AbPos.new(1,0)).test(/(?<!南北)西/)
-BlockKingUI.direction_of_castle(AbPos.new(1,-1)).test(/北西/)
-BlockKingUI.direction_of_castle(AbPos.new(0,-1)).test(/北(?![東西])/)
-BlockKingUI.direction_of_castle(AbPos.new(-1,-1)).test(/北東/)
-BlockKingUI.direction_of_castle(AbPos.new(-1,0)).test(/(?<!南北)東/)
-BlockKingUI.direction_of_castle(AbPos.new(-1,1)).test(/南東/)
-BlockKingUI.direction_of_castle(AbPos.new(30,10)).test("王城は西の方向。")
+Handler.direction_of_castle(AbPos.new(0,0)).test("")
+Handler.direction_of_castle(AbPos.new(0,1)).test(/南(?![東西])/)
+Handler.direction_of_castle(AbPos.new(1,1)).test(/南西/)
+Handler.direction_of_castle(AbPos.new(1,0)).test(/(?<!南北)西/)
+Handler.direction_of_castle(AbPos.new(1,-1)).test(/北西/)
+Handler.direction_of_castle(AbPos.new(0,-1)).test(/北(?![東西])/)
+Handler.direction_of_castle(AbPos.new(-1,-1)).test(/北東/)
+Handler.direction_of_castle(AbPos.new(-1,0)).test(/(?<!南北)東/)
+Handler.direction_of_castle(AbPos.new(-1,1)).test(/南東/)
+Handler.direction_of_castle(AbPos.new(30,10)).test("王城は西の方向。")
 
 $logger = Object.new
 def $logger.info(text) end
@@ -41,13 +41,13 @@ end
 srand(0)
 gt = GameTable.new
 tui = TestUI.new
-bui = BlockKingUI.new(
+handler = Handler.new(
 	ui: tui,
 	game_table: gt,
 	group_id: 123,
 	group_name: "TestUser"
 )
-Thread.new{bui.start()}
+Thread.new{handler.start()}
 tui.ssmq.pop.test(String) # ストーリー
 tui.smq.pop.test(/チュートリアル/).test(/TestUser/)
 tui.wrq << "i"
@@ -114,7 +114,7 @@ tui.wrq << "x"
 tui.ssmq.pop.test(String) # ストーリー
 tui.smq.pop.test(/ゲームがクリアされました！/).test(/現在このブロックを支配しています。/)
 oui = TestUI.new
-BlockKingUI.new(
+Handler.new(
 	ui: oui,
 	game_table: gt,
 	group_id: 456,

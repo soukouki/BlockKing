@@ -2,7 +2,7 @@
 require_relative "game_data/texts"
 
 
-class WatchingStoryUI
+class WatchingStoryHandler
 	def initialize(ui:, game_table:, group_id:)
 		@ui = ui
 		@game_table = game_table

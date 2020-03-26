@@ -45,6 +45,7 @@ module UI
 				channel_id: @channel_id,
 				callback_giving_id: lambda do |id|
 					@mutex_for_bar_ids.synchronize do
+						bar_id = id
 						@bar_ids << id
 					end
 				end

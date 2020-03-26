@@ -32,37 +32,41 @@ module UI
 				end
 			sleep 4
 		end
-		# ブロックの戻り値がfalse(nil)のときはループし続ける
-		def wait_respons(regex_text: nil, &block)
+		
+		def choosing_items_class
+			DiscordChoosingItems
+		end
+		def choose(choosing_items, callback: nil)
 			bar_id = nil
 			queue = Thread::Queue.new
 			@waiting_for_message.register(
-				regex_text: regex_text,
+				regex_text: choosing_items.regex_text,
 				user_id: @user_id,
 				channel_id: @channel_id,
 				callback_giving_id: lambda do |id|
-					bar_id = id
 					@mutex_for_bar_ids.synchronize do
+						bar_id = id
 						@bar_ids << id
 					end
-				end,
+				end
 			) do |rm|
 				queue.push rm
 			end
-			loop do
+			# やっぱりこの部分は1スレッドのほうが処理しやすい
+			result = loop do
 				rm = queue.pop
-				result = block.call(rm.message)
-				next unless result
-				@logger.info "#<#{rm.channel_id}>@#{rm.user_name}(#{rm.user_id}) : command : `#{rm.message}`"
+				callback&.call(rm.message)
+				result = choosing_items.pick(rm.message)
+				next if result.nil?
 				@waiting_for_message.cancel_waiting(id: bar_id)
 				@mutex_for_bar_ids.synchronize do
 					@bar_ids.delete(bar_id)
 				end
-				break
+				break result
 			end
+			result.call()
 		end
-		# 正確にはsynchronizeしたあとに新たなwaitingを追加する処理があった場合、うまく殺せない
-		# だけどその可能性は実行されるタイミングを考えるとかなり低いので、今回は考えない
+		
 		def kill_waiting_respons()
 			@mutex_for_bar_ids.synchronize do
 				@bar_ids.each do |id|
@@ -99,4 +103,21 @@ module UI
 		
 	end
 
+	class DiscordChoosingItems < ChoosingItemsBase
+
+		# コマンドもindexもない場合はうまく動かないけれど、そのケースはないと考える
+		def regex_text
+			commands_regex = @processes_by_commands.keys.map{|k|Regexp.escape(k)}.join("|")
+			indexes_regex = (@process_checking_index.nil?)? "" : '\d+'
+			"^("+[*commands_regex, *indexes_regex].join("|")+")$"
+		end
+
+		def pick(message)
+			if @process_checking_index && message.match?(/^\d+$/) && @process_checking_index.call(message.to_i)
+				return ->{@process_of_index.call(message.to_i)}
+			end
+			@processes_by_commands[message.downcase]
+		end
+
+	end
 end

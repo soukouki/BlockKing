@@ -17,6 +17,7 @@ class WaitingForMessage
 		@mutex_for_waiting_processes_by_id = Thread::Mutex.new
 	end
 	
+	# callback_giving_idは必ずblockよりも前に呼ばれる
 	def register(regex_text: nil, user_id: nil, channel_id: nil, callback_giving_id: nil, &block)
 		id = create_id()
 		callback_giving_id && callback_giving_id.call(id)

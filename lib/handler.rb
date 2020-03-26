@@ -546,8 +546,6 @@ end
  
 class << Handler
 	def notify(group, text)
-		ui_related_data = group.ui_related_data
-		channel_id = ui_related_data.channel_id_to_notify
-		self::FUNCTION_TO_NOTIFY.call(channel_id, text)
+		self::FUNCTION_TO_NOTIFY.call(group.ui_related_data, text)
 	end
 end

@@ -38,8 +38,8 @@ Kernel.define_method(:report) do |text|
 	end
 end
 
-Handler::FUNCTION_TO_NOTIFY = lambda do |channel_id, text|
-	sending_message.send_message(channel_id, text)
+Handler::FUNCTION_TO_NOTIFY = lambda do |ui_related_data, text|
+	sending_message.send_message(ui_related_data.channel_id_to_notify, text)
 end
 
 save_load = SaveLoad.new("data", ->{GameTable.new})

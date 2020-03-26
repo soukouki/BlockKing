@@ -104,8 +104,11 @@ module UI
 
 	class DiscordChoosingItems < ChoosingItemsBase
 
+		# コマンドもindexもない場合はうまく動かないけれど、そのケースはないと考える
 		def regex_text
-			"^("+@processes_by_commands.keys.map{|k|Regexp.escape(k)}.join("|")+'|\d+)$'
+			commands_regex = @processes_by_commands.keys.map{|k|Regexp.escape(k)}.join("|")
+			indexes_regex = (@process_checking_index.nil?)? "" : '\d+'
+			"^("+[*commands_regex, *indexes_regex].join("|")+")$"
 		end
 
 		def pick(message)

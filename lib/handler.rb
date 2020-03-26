@@ -57,7 +57,7 @@ class Handler
 			end
 			@last_one_hour_act_number += 1
 			@last_operation_time = Time.now
-			$logger.info "@#{@group.name}(#{@group.id}) : #{message}s"
+			$logger.info "@#{@group.name}(#{@group.id}) : #{message}"
 			$logger.info "@#{@group.name}(#{@group.id}) : #{@last_operation_elapsed_time}s"
 		end)
 	end

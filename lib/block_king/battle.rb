@@ -22,7 +22,7 @@ class Battle
 	private
 	
 	def settle
-		case (rulers_force * rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1)) <=> (challengers_force * rand(0.9..1.1)*rand(0.9..1.1)*rand(0.9..1.1))
+		case (rulers_force * rand(0.9..1.1)*rand(0.9..1.1)) <=> (challengers_force * rand(0.9..1.1)*rand(0.9..1.1))
 		when 1, 0 # rulerの勝利
 			:lose
 		when -1   # challengerの勝利

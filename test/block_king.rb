@@ -56,10 +56,12 @@ tui.smq.pop # なぜかこれを入れないと動かない
 tui.wrq << "X"
 tui.smq.pop.test(/残念ながら負けてしまいました/)
 tui.wrq << "x"
+tui.smq.pop
+tui.wrq << "x"
 tui.smq.pop.test(/ここのアイテムはたくさんあります！/)
 gt.turn()
 tui.wrq << "i"
-tui.smq.pop.test(/兵士 : 8/).test(/木材 : 10/)
+tui.smq.pop.test(/兵士 : 10/).test(/木材 : 10/)
 tui.smq.pop # なぜかこれを入れないと動かない
 gt.turn()
 gt.turn()

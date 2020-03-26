@@ -205,15 +205,19 @@ class Group < GroupBase
 	def weaken_at_win(sync_log, enemy)
 		# rateの範囲は、敵が強いほど0に、弱いほど大きくなる
 		rate = 1.0 * force / enemy.force
-		max = ((@soldier ** (1/4.0)) / (rate ** 1.5) * 6).ceil
-		count = rand(0..max)
+		ave = (@soldier ** (1/4.0)) / (rate ** 1.5) * 3
+		count = (ave*rand(1/1.5..1.5)*rand(1/1.5..1.5)*rand(1/1.5..1.5)).ceil
 		if count != 0
 			@soldier += count
 			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
 		end
 	end
+	MIN_SOLDIER = 6
 	def weaken_at_lose(sync_log, enemy)
-		count = rand(0..1.0*@soldier/4).to_i
+		count = rand(0..@soldier/(@soldier**0.3 + 1)).to_i
+		if @soldier-count < MIN_SOLDIER # MIN_SOLDIER人以下にならないようにする
+			count = @soldier-MIN_SOLDIER
+		end
 		if count != 0
 			@soldier -= count
 			@log.add_text(self, !sync_log && "「残念ながら、戦闘に敗北してしまいました・・・」", "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")

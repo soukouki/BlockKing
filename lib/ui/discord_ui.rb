@@ -33,11 +33,14 @@ module UI
 			sleep 4
 		end
 		
+		def choosing_items_class
+			DiscordChoosingItems
+		end
 		def choose(choosing_items, callback: nil)
 			bar_id = nil
 			queue = Thread::Queue.new
 			@waiting_for_message.register(
-				regexp_text: choosing_items.regexp_text,
+				regex_text: choosing_items.regex_text,
 				user_id: @user_id,
 				channel_id: @channel_id,
 				callback_giving_id: lambda do |id|
@@ -99,9 +102,18 @@ module UI
 		
 	end
 
-	class ChoosingItems < ChoosingItemsBase
-		def regexp_text
+	class DiscordChoosingItems < ChoosingItemsBase
+
+		def regex_text
 			"^("+@processes_by_commands.keys.map{|k|Regexp.escape(k)}.join("|")+'|\d+)$'
 		end
+
+		def pick(message)
+			if @process_checking_index && message.match?(/^\d+$/) && @process_checking_index.call(message.to_i)
+				return ->{@process_of_index.call(message.to_i)}
+			end
+			@processes_by_commands[message.downcase]
+		end
+
 	end
 end

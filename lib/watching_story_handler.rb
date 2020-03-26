@@ -20,18 +20,15 @@ class WatchingStoryHandler
 			stories.map.with_index(1){|story, index|"`#{index}` : #{story.brief}"}.join("\n")+
 			"\n`quit` : やめる"
 		)
-		@ui.wait_respons() do |res|
-			index = res.to_i
-			if res.downcase == "quit"
-				return true
-			end
-			unless (1..stories.length).include? index
-				return false
-			end
-			@ui.send_message("・・・・・・・・・・")
-			stories[index-1].pass_text_to(@ui)
-			@ui.send_message("・・・・・・・・・・")
-		end
+		@ui.choose(@ui.choosing_items_class.new(
+			quit: ->{@ui.send_message("やめました")},
+			process_checking_index: ->(index){(1..stories.length).include? index},
+			process_of_index: lambda do |index|
+				@ui.send_message("・・・・・・・・・・")
+				stories[index-1].pass_text_to(@ui)
+				@ui.send_message("・・・・・・・・・・")
+			end,
+		))
 		true
 	end
 	

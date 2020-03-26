@@ -31,8 +31,18 @@ class Handler
 	def start()
 		main_loop()
 	end
+	
+	def msg(text)
+		@ui.send_message(text)
+	end
+	
+	def recently_operating?
+		@last_operation_time > Time.now - 60
+	end
+	
+	private
 
-	def player_choose(choosing_items)
+	def player_chooses(choosing_items)
 		@ui.choose(choosing_items, callback: lambda do |message|
 			# last_operation_timeは更新されてしまうので、必要
 			@last_operation_elapsed_time = Time.now - @last_operation_time
@@ -51,16 +61,6 @@ class Handler
 			$logger.info "@#{@group.name}(#{@group.id}) : #{@last_operation_elapsed_time}s"
 		end)
 	end
-	
-	def msg(text)
-		@ui.send_message(text)
-	end
-	
-	def recently_operating?
-		@last_operation_time > Time.now - 60
-	end
-	
-	private
 	
 	def main_loop()
 		loop do
@@ -147,32 +147,25 @@ class Handler
 		@group.log.clear()
 		
 		msg(constant_text+block_text+tips+log_text)
-		wait_respons do |res|
-			# falseを返せばいい話ではあるけど、可読性の面でthrow-catchを使う
-			catch(:return_no_map) do
-				case res
-				when "w", "W"
-					move(0, 1)
-				when "a", "A"
-					move(-1, 0)
-				when "s", "S"
-					move(0, -1)
-				when "d", "D"
-					move(1, 0)
-				when "i", "I"
-					items_view()
-					throw(:return_no_map)
-				when "x", "X"
-					war()
-				when "c", "C"
-					build_building()
-				when "v", "V"
-					remove_building()
-				when "u", "U"
-					craft_using_building()
-				end
+
+		loop do
+			result = catch(:return_no_map) do
+				player_chooses(@ui.choosing_items_class.new(
+					w: ->{move(0, 1)},
+					a: ->{move(-1, 0)},
+					s: ->{move(0, -1)},
+					d: ->{move(1, 0)},
+					i: ->{items_view(); throw(:return_no_map)},
+					x: ->{war()},
+					c: ->{build_building()},
+					v: ->{remove_building()},
+					u: ->{craft_using_building()},
+				))
+				break true
 			end
+			break if result
 		end
+		
 	end
 	
 	def tips
@@ -196,7 +189,6 @@ class Handler
 		result = @group.move(@game_table, x, y)
 		
 		application_tutorial(GameData::Tutorial.after_moving(@group))
-		true
 	end
 	
 	def items_view()
@@ -206,7 +198,6 @@ class Handler
 			items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c}"}.join("\n")
 		end
 		msg("```javascript\n兵士 : #{@group.soldier}\n"+text+"\n```")
-		false
 	end
 	
 	def war()
@@ -226,9 +217,9 @@ class Handler
 		when :lose
 			@add_msg << "残念ながら負けてしまいました・・・\n"
 		end
-		true
 	end
 	
+	# チェックの一部はGroup#buildにて行っているので、いじるときはそっちも確認するように
 	def build_building()
 		unless block.empty?
 			msg(<<~EOS)
@@ -245,13 +236,13 @@ class Handler
 		
 		select_block = GameData::CAN_BUILD_LIST
 			.map
-			.with_index(1){|b, i|[i.to_s, b]}
+			.with_index(1){|b, i|[i, b]}
 			.to_h
 		select_text = select_block
-			.map do |char, (block_class, need_items)|
+			.map do |index, (block_class, need_items)|
 				can_build = need_items.all?{|item,count|(items[item]||0) >= count}
 				block = block_class.new(@group, @game_table.calc_level(pos))
-				"`#{char}` : "+(
+				"`#{index}` : "+(
 					if can_build
 						"**#{block.name}**(#{Item.count_by_items_hash_to_s(need_items, join_str:"、")}使う)"
 					else
@@ -263,25 +254,21 @@ class Handler
 		msg(<<~EOS)
 			建物リスト
 			#{select_text}
-			`ret` : 前の画面に戻る
+			`quit` : 前の画面に戻る
 		EOS
-		wait_respons() do |res|
-			if res == "ret"
-				return true
-			end
-			sel = select_block[res.to_str.downcase]
-			catch(:return_inner_wait) do
-				unless sel.nil?
-					result_tuple(@group.build(@game_table, sel[0].new(@group, @game_table.calc_level(pos))), :return_inner_wait)
+		player_chooses(@ui.choosing_items_class.new(
+			quit: ->{},
+			process_checking_index: ->(index){select_block[index]},
+			process_of_index: lambda do |index|
+				catch(:return_inner_wait) do
+					result_tuple(@group.build(@game_table, select_block[index][0].new(@group, @game_table.calc_level(pos))), :return_inner_wait)
 				end
-			end
-		end
-		true
+			end,
+		))
 	end
 	
 	def remove_building()
 		result_tuple(@group.remove(@game_table))
-		true
 	end
 	
 	def craft_using_building()
@@ -294,7 +281,7 @@ class Handler
 			.map
 			.with_index(1) do |recipe, i|
 				cc = recipe.can_craft?(block.class, adjacent_buildings, items)
-				{input_text: (cc)? i.to_s : "_", recipe:recipe, can_craft:cc}
+				{index_or_underbar: (cc)? i : "_", recipe:recipe, can_craft:cc}
 			end
 		if creatable_items.empty?
 			msg("「#{block}では何も作れないですよ？」")
@@ -302,10 +289,9 @@ class Handler
 		end
 		creatable_items_text = creatable_items
 			.map do |hash|
-				input_text = hash[:input_text]
 				recipe = hash[:recipe]
 				can_craft = hash[:can_craft]
-				"`#{input_text}` : "+(
+				"`#{hash[:index_or_underbar]}` : "+(
 					finished_item_name = recipe
 						.products_hash
 						.map do |item,count|
@@ -333,19 +319,18 @@ class Handler
 		msg(<<~EOS)
 			レシピリスト
 			#{creatable_items_text}
-			`ret` : 前の画面に戻る
+			`quit` : 前の画面に戻る
 		EOS
-		wait_respons() do |res|
-			case res
-			when "ret"
-				true
-			when "_"
-				@add_msg << "「それを作るには、なにか足りないものがあるみたいですよ？」"
-				true
-			else
-				recipe = creatable_items.select{|h|h[:input_text] == res.to_str.downcase}.first&.[](:recipe)
-				next if recipe.nil?
-				
+		
+		player_chooses(@ui.choosing_items_class.new(
+			quit: ->{},
+			_: ->{@add_msg << "「それを作るには、なにか足りないものがあるみたいですよ？」"},
+			process_checking_index: lambda do |index|
+				creatable_items.any?{|hash|hash[:index_or_underbar] == index}
+			end,
+			process_of_index: lambda do |index|
+				recipe = creatable_items.select{|hash|hash[:index_or_underbar] == index}.first[:recipe]
+
 				max_can_craft_count = recipe.materials_hash.map{|i,c|items[i] / c}.min
 				msg(<<~EOS)
 					「#{recipe.products_hash.map{|i,c|"#{i.name}を`#{c}`"}.join("、")}を何回作りますか・・？」
@@ -354,27 +339,24 @@ class Handler
 					`0` - `#{max_can_craft_count}` の中から選んでください。
 				EOS
 				
-				count = wait_respons() do |res_count|
-					str = res_count.to_str
-					i = str.to_i
-					break i if i.to_s == str && i >= 0 && i <= max_can_craft_count
-				end
-				
-				if count == 0
-					@add_msg << "「あれ、やっぱ何も作らないんですか？」"
-					break true
-				end
-				
-				recipe_and_count = RecipeAndCount.new(recipe, count, @group)
-				text_or_nil = @group.start_crafting(recipe_and_count)
-				if text_or_nil.nil?
-					throw(:break_map_loop)
-				else
-					msg(text_or_nil)
-				end
-			end
-		end
-		true
+				player_chooses(@ui.choosing_items_class.new(
+					process_checking_index: ->(i){i >= 0 && i <= max_can_craft_count},
+					process_of_index: lambda do |count|
+						if count == 0
+							@add_msg << "「あれ、やっぱ何も作らないんですか？」"
+							throw(:break_map_loop)
+						end
+						recipe_and_count = RecipeAndCount.new(recipe, count, @group)
+						text_or_nil = @group.start_crafting(recipe_and_count)
+						if text_or_nil.nil?
+							throw(:break_map_loop)
+						else
+							msg(text_or_nil)
+						end
+					end
+				))
+			end,
+		))
 	end
 	
 	# 名前が気に入らない・・・
@@ -382,7 +364,6 @@ class Handler
 		result, text = arr
 		if result
 			@add_msg << text
-			true
 		else
 			msg(text)
 			throw throw_symbol
@@ -422,18 +403,13 @@ class Handler
 						クラフト中止は(`c`)
 					EOS
 					
-					wait_respons() do |res|
-						case res
-						when "i", "I"
-							items_view()
-							false
-						when "c", "C"
+					player_chooses(@ui.choosing_items_class.new(
+						i: ->{items_view()},
+						c: lambda do
 							@group.cancel_crafting()
 							@add_msg << "クラフトをキャンセルしました。"
-							
-							return
-						end
-					end
+						end,
+					))
 				end
 			rescue Timeout::Error
 				# 時間になりました。

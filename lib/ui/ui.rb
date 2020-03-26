@@ -6,13 +6,13 @@ module UI
 		def send_message(text); raise NotImplementedError; end
 		def send_mention; raise NotImplementedError; end
 		def send_slow_message(text); raise NotImplementedError; end
-		def choosing_items_class; ChoosingItemsBase; end
-		def choose(choosing_items); raise NotImplementedError; end
+		def choosing_items_class; raise NotImplementedError; end
+		def choose(choosing_items, callback: nil); raise NotImplementedError; end
 		def kill_waiting_respons(); raise NotImplementedError; end
 	end
 
 	class ChoosingItemsBase
-		def initialize(process_checking_index:, process_of_index:, **args)
+		def initialize(process_checking_index: nil, process_of_index: nil, **args)
 			@processes_by_commands = args.transform_keys(&:to_s)
 			@process_checking_index = process_checking_index
 			@process_of_index = process_of_index

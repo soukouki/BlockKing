@@ -1,6 +1,6 @@
 
 require_relative "../lib/block_king"
-require_relative "../lib/ui/ui"
+require_relative "../lib/ui/discord_ui"
 require_relative "../lib/handler"
 
 Handler.direction_of_castle(AbPos.new(0,0)).test("")
@@ -34,7 +34,10 @@ class TestUI < UI::UIBase
 	def send_slow_message(text)
 		@ssmq << text
 	end
-	def chose(choosing_items_base)
+	def choosing_items_class()
+		UI::DiscordChoosingItems
+	end
+	def choose(choosing_items_base, callback: nil)
 		choosing_items_base.pick(@wrq.pop).call()
 	end
 end
@@ -52,15 +55,17 @@ tui.ssmq.pop.test(String) # ストーリー
 tui.smq.pop.test(/チュートリアル/).test(/TestUser/)
 tui.wrq << "i"
 tui.smq.pop.test(/兵士 : 6/).test(/現在アイテムは持っていません。/)
-tui.smq.pop # なぜかこれを入れないと動かない
 tui.wrq << "X"
 tui.smq.pop.test(/残念ながら負けてしまいました/)
+tui.wrq << "x"
+tui.smq.pop
+tui.wrq << "x"
+tui.smq.pop
 tui.wrq << "x"
 tui.smq.pop.test(/ここのアイテムはたくさんあります！/)
 gt.turn()
 tui.wrq << "i"
-tui.smq.pop.test(/兵士 : 8/).test(/木材 : 10/)
-tui.smq.pop # なぜかこれを入れないと動かない
+tui.smq.pop.test(/兵士 : 7/).test(/木材 : 10/)
 gt.turn()
 gt.turn()
 gt.turn()
@@ -104,11 +109,20 @@ tui.smq.pop
 tui.wrq << "1"
 tui.smq.pop
 tui.wrq << "1"
-tui.smq.pop
-gt.group(123).instance_variable_set(:@time_crafting_started, Time.now - 60) # あっ
-tui.wrq << "a"
-tui.smq.pop.test(/銅の剣/)
+tui.smq.pop.test(/銅の剣を5/)
 gt.group(123).instance_variable_set(:@soldier, 1000)
+gt.group(123).instance_variable_set(:@time_crafting_started, Time.now - 100) # あっ
+
+# Timeoutになるまで止まっちゃうから、新しいHandlerを作る。上のTimeoutが経っちゃうと変になるかもしれないけど、まぁ60秒あれば終わるでしょ
+tui = TestUI.new
+handler = Handler.new(
+	ui: tui,
+	game_table: gt,
+	group_id: 123,
+	group_name: "TestUser"
+)
+Thread.new{handler.start()}
+tui.smq.pop.test(/銅の剣/)
 gt.group(123).pos = AbPos.new(0, 0)
 tui.wrq << "x"
 tui.ssmq.pop.test(String) # ストーリー

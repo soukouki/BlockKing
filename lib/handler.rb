@@ -31,23 +31,25 @@ class Handler
 	def start()
 		main_loop()
 	end
-	
-	def wait_respons(&block)
-		res = @ui.wait_respons(&block)
-		# last_operation_timeは更新されてしまうので、必要
-		@last_operation_elapsed_time = Time.now - @last_operation_time
-		if @last_operation_time.hour != Time.now.hour || @last_operation_time.day != Time.now.day # 時が変わったら
-			if @last_one_hour_act_number >= MACRO_CONFIRMATION_THRESHOLD_VALUE
-				report(<<~EOS)
-					__マクロ確認__
-					#{@last_operation_time.month}月#{@last_operation_time.day}日#{@last_operation_time.hour}時台に`#{@group.name}`(#{@group.id})が#{@last_one_hour_act_number}回の操作を行いました。
-				EOS
+
+	def player_choose(choosing_items)
+		@ui.choose(choosing_items, callback: lambda do |message|
+			# last_operation_timeは更新されてしまうので、必要
+			@last_operation_elapsed_time = Time.now - @last_operation_time
+			if @last_operation_time.hour != Time.now.hour || @last_operation_time.day != Time.now.day # 時が変わったら
+				if @last_one_hour_act_number >= MACRO_CONFIRMATION_THRESHOLD_VALUE
+					report(<<~EOS)
+						__マクロ確認__
+						#{@last_operation_time.month}月#{@last_operation_time.day}日#{@last_operation_time.hour}時台に`#{@group.name}`(#{@group.id})が#{@last_one_hour_act_number}回の操作を行いました。
+					EOS
+				end
+				@last_one_hour_act_number = 0
 			end
-			@last_one_hour_act_number = 0
-		end
-		@last_one_hour_act_number += 1
-		@last_operation_time = Time.now
-		$logger.info "@#{@group.name}(#{@group.id}) : #{@last_operation_elapsed_time}s"
+			@last_one_hour_act_number += 1
+			@last_operation_time = Time.now
+			$logger.info "@#{@group.name}(#{@group.id}) : #{message}s"
+			$logger.info "@#{@group.name}(#{@group.id}) : #{@last_operation_elapsed_time}s"
+		end)
 	end
 	
 	def msg(text)

@@ -34,8 +34,8 @@ class TestUI < UI::UIBase
 	def send_slow_message(text)
 		@ssmq << text
 	end
-	def wait_respons(&block)
-		block.call(@wrq.pop)
+	def chose(choosing_items_base)
+		choosing_items_base.pick(@wrq.pop).call()
 	end
 end
 srand(0)

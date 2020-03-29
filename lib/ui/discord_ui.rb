@@ -107,7 +107,7 @@ module UI
 
 		# コマンドもindexもない場合はうまく動かないけれど、そのケースはないと考える
 		def regex_text
-			commands_regex = @processes_by_commands.keys.map{|k|Regexp.escape(k)}.join("|")
+			commands_regex = @processes_by_commands.keys.flat_map{|c|[c,c.upcase,c.downcase]}.uniq.map{|k|Regexp.escape(k)}.join("|")
 			indexes_regex = (@process_checking_index.nil?)? "" : '\d+'
 			"^("+[*commands_regex, *indexes_regex].join("|")+")$"
 		end

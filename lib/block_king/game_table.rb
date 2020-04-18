@@ -131,7 +131,7 @@ class GameTable
 					block.remaining_items -= count
 					ruler.add_item(false, "#{block}を支配し", get_item, count)
 					if !is_few_remaining_item && block.few_remaining_item?
-						ruler.add_text(
+						ruler.add_log(
 							text_to_notify: "「今支配してるブロックの残りアイテムがだいぶ少なくなってきました。そろそろ移動してもいい頃じゃないですか？」",
 							text: "支配しているブロックの残りアイテムが少なくなってきました。",
 						)

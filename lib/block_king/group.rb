@@ -129,7 +129,9 @@ class Group < GroupBase
 				@state = nil
 				@time_crafting_started = nil
 				@crafting_recipe_and_count = nil
-				@log.add_text(self, nil, "エラーが発生したため、クラフトを打ち切りました。")
+				add_log(
+					text: "エラーが発生したため、クラフトを打ち切りました。",
+				)
 				return
 			end
 			
@@ -143,7 +145,10 @@ class Group < GroupBase
 			
 			recipe_and_count.need_items.each{|item,count|@items[item] -= count}
 			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
-			@log.add_text(self, "「アイテムを作り終えました！」", "「アイテムを作り終えました！」")
+			add_log(
+				text_to_notify: "「アイテムを作り終えました！」",
+				text: 「アイテムを作り終えました！」,
+			)
 		end
 	end
 	def cancel_crafting()
@@ -166,7 +171,10 @@ class Group < GroupBase
 		count = (ave*rand(1/1.5..1.5)*rand(1/1.5..1.5)*rand(1/1.5..1.5)).ceil
 		if count != 0
 			@soldier += count
-			@log.add_text(self, !sync_log && "「戦闘に勝利しました！」", "戦闘に勝利し、`#{count}`人が加わりました！")
+			add_log(
+				text_to_notify: !sync_log && "「戦闘に勝利しました！」",
+				text: "戦闘に勝利し、`#{count}`人が加わりました！",
+			)
 		end
 	end
 	MIN_SOLDIER = 6
@@ -177,7 +185,10 @@ class Group < GroupBase
 		end
 		if count != 0
 			@soldier -= count
-			@log.add_text(self, !sync_log && "「残念ながら、戦闘に敗北してしまいました・・・」", "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・")
+			add_log(
+				text_to_notify: !sync_log && "「残念ながら、戦闘に敗北してしまいました・・・」",
+				text: "戦闘に敗北し、残念ながら`#{count}`人が去っていきました・・・",
+			)
 		end
 	end
 	

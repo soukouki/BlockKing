@@ -9,7 +9,7 @@ class ControllingShardsOfBot
 	]
 
 	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :is_user_bot, :channel_id, :message, keyword_init: true)
-	
+	ReceivedServers = Struct.new(:shard_id, :id_of_servers, keyword_init: true)
 	
 	def initialize(token:, shards_count: 1, game: "", logger: nil)
 		@token = token
@@ -50,6 +50,13 @@ class ControllingShardsOfBot
 			}
 		)
 	end
+	def get_servers
+		send_signal(
+			{
+				type: "get_servers",
+			}
+		)
+	end
 	
 	private
 	
@@ -61,11 +68,10 @@ class ControllingShardsOfBot
 						loop do
 							text = stream.readline.force_encoding("UTF-8")
 							redo if INNORING_TEXT.include?(text)
-							obj = JSON.parse(text, symbolize_names: true)
-							rm = ReceivedMessage.new(obj)
+							obj = separate_received_object(JSON.parse(text, symbolize_names: true))
 							@mutex_for_callbacks.synchronize do
 								@callbacks.each do |cb|
-									cb.call(rm)
+									cb.call(obj)
 								end
 							end
 						end
@@ -77,6 +83,17 @@ class ControllingShardsOfBot
 					end
 				end
 			end
+	end
+
+	def separate_received_object(object)
+		type = object[:type]
+		object.delete(:type)
+		case type
+		when "message"
+			ReceivedMessage.new(object)
+		when "servers"
+			ReceivedServers.new(object)
+		end
 	end
 	
 	# そのまま起動させると、bot側に登録したデータが消えてしまうので、いっそのことエラーを出して落とす

@@ -7,6 +7,7 @@ require_relative "../lib/save_load"
 require_relative "../lib/combined_logger"
 require_relative "../lib/using_different_process/controlling_shards_of_bot"
 require_relative "../lib/using_different_process/waiting_for_message"
+require_relative "../lib/using_different_process/getting_num_of_servers"
 require_relative "../lib/using_different_process/sending_message"
 
 # 将来的にデータの管理をするクラスに仕事を任せるべきな気がする
@@ -34,6 +35,11 @@ waiting_for_message = WaitingForMessage.new(
 	logger: $logger,
 )
 controlling_shards_of_bot.add_callback(waiting_for_message.receive_callback)
+getting_num_of_servers = GettingNumOfServers.new(
+	controlling_shards_of_bot: controlling_shards_of_bot,
+	num_of_shards: setting[:shards_count],
+)
+controlling_shards_of_bot.add_callback(getting_num_of_servers.receive_callback)
 sending_message = SendingMessage.new(
 	token: setting[:discord_bot_token]
 )
@@ -223,7 +229,6 @@ command["help"] do |rm|
 		製作者 : @sou7#0094 ストーリーを手伝ってくれたわょわぉさん その他テストプレイに参加してくださった方々
 	EOS
 end
-# TODO: サーバー数は諦めきれない
 command["stats"] do |rm|
 	program_details = (
 		(Dir.glob("bin/**/*.rb") + Dir.glob("lib/**/*.rb"))
@@ -240,6 +245,7 @@ command["stats"] do |rm|
 	)
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		ゲームユーザー数 : #{game_table.groups.length}
+		導入サーバー数 : #{getting_num_of_servers.get_num_of_servers}
 		メッセージ受け取り部シェード数 : #{setting[:shards_count]}
 		プログラムファイル数 : #{program_details.count}
 		プログラム行数 : #{program_details.map{|h|h[:lines]}.sum}

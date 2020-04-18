@@ -10,7 +10,9 @@ class WaitingForMessage
 	end
 
 	def receive_callback
-		self.method(:receive_message)
+		lambda do |obj|
+			receive_message(obj) if obj.is_a? ControllingShardsOfBot::ReceivedMessage
+		end
 	end
 	
 	# callback_giving_idは必ずblockよりも前に呼ばれる

@@ -9,6 +9,11 @@ num_shards = ARGV[1].to_i
 shard_id = ARGV[2].to_i
 game = ARGV[3]
 
+def send_object(obj)
+	$stdout.puts JSON.generate(obj)
+	$stdout.flush
+end
+
 bot = Discordrb::Bot.new(token: token, num_shards: num_shards, shard_id: shard_id)
 
 # もっと制限を加えることはできるけど、今回はしない。
@@ -31,6 +36,7 @@ bot.message do |event|
 	cleared_bars = checking_bars.select{|bar|check(bar[:channel_id], bar[:regex], channel_id, content)}
 	cleared_bars.each do |bar|
 		obj = {
+			type: "message",
 			id: bar[:id],
 			user_id: user_id,
 			user_name: (user.is_a? Discordrb::Member)? user.display_name : user.name,
@@ -38,8 +44,7 @@ bot.message do |event|
 			channel_id: channel_id,
 			message: content,
 		}
-		$stdout.puts JSON.generate(obj)
-		$stdout.flush
+		send_object(obj)
 		$logger.info("Shard of bot send received message id:#{bar[:id]}")
 		$logger.debug(obj)
 	end
@@ -75,6 +80,15 @@ begin
 					break if bars.reject!{|bar|bar[:id] == id}
 				end
 			end
+		when "get_servers"
+			obj = {
+				type: "servers",
+				shard_id: shard_id,
+				id_of_servers: bot.servers.keys,
+			}
+			send_object(obj)
+			$logger.info("Shard of bot send servers shard_id:#{shard_id}")
+			$logger.debug(obj)
 		end
 	end
 rescue => e

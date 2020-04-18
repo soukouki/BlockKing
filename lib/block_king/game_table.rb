@@ -1,16 +1,25 @@
 
+=begin
+2020年4月18日ごろのバージョンとの互換性
+@groups_mutexを追加
+=end
 class GameTable
-	attr_reader :groups, :kings_history, :game_level
+	attr_reader :kings_history, :game_level
 	def initialize()
 		@block_table = {}
 		@block_table_mutex = Mutex.new
 		@ruler_table = {}
 		@ruler_table_mutex = Mutex.new
 		@groups = {}
+		@groups_mutex = Mutex.new
 		@game_level = 100
 		@kings_history = []
 	end
 	
+	# dupで浅いコピーをすることで外で色々扱ってもmutexに影響がないように
+	def groups
+		@groups.dup
+	end
 	def group(id)
 		@groups[id]
 	end
@@ -18,7 +27,10 @@ class GameTable
 		@groups.values.select{|g|g.pos == pos}
 	end
 	def add_group(group)
-		@groups[group.id] = group
+		@groups_mutex ||= Mutex.new # 2020年4月18日ごろのバージョンとの互換性
+		@groups_mutex.synchronize do
+			@groups[group.id] = group
+		end
 	end
 	
 	def block(pos)
@@ -89,11 +101,13 @@ class GameTable
 	end
 	
 	def game_clear(cleared_group)
-		@ruler_table_mutex.synchronize do
-			
-			cleared_group.add_log(
-				text: "`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！"
-			)
+		@groups_mutex ||= Mutex.new # 2020年4月18日ごろのバージョンとの互換性
+		@groups_mutex.synchronize do
+			@groups.each do |_id, group|
+				group.add_log(
+					text: "`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！"
+				)
+			end
 		end
 		@kings_history.last&.add_item(false, "王城からアイテムを持ち出せ", GameData::KINGS_MEMORIAL_ITEMS.sample, 1)
 		@kings_history << cleared_group
@@ -163,27 +177,35 @@ class GameTable
 		end
 	end
 	def clear_blocks_and_rulers(new_game_level)
+		synchronize_mutex_for_clear_blocks_and_rulers do
+			# 後始末
+			@block_table
+			.select{|pos,block|block.is_a?(Building)}
+			.each do |pos, block|
+				block.need_items.each do |item, count|
+					builder = block.builder
+					builder.add_item(false, "#{block}を建てていたため", item, count)
+				end
+			end
+			# ゲームレベルの変更と初期化とメッセージ
+			@game_level = new_game_level
+			@ruler_table = {} # ルーラー初期化！
+			@block_table = {} # ブロック初期化！
+			@groups.each do |id, group|
+				group.pos = initial_pos(group.force)
+				group.add_log(
+					text_to_notify: "「あっ、何かが起きたようですよ！」",
+					text: "天変地異によって、グループは見知らぬ土地へ運ばれてしまいました！",
+				)
+			end
+		end
+	end
+	def synchronize_mutex_for_clear_blocks_and_rulers(&block)
+		@groups_mutex ||= Mutex.new # 2020年4月18日ごろのバージョンとの互換性
 		@block_table_mutex.synchronize do
 			@ruler_table_mutex.synchronize do
-				# 後始末
-				@block_table
-					.select{|pos,block|block.is_a?(Building)}
-					.each do |pos, block|
-						block.need_items.each do |item, count|
-							builder = block.builder
-							builder.add_item(false, "#{block}を建てていたため", item, count)
-						end
-					end
-				# ゲームレベルの変更と初期化とメッセージ
-				@game_level = new_game_level
-				@ruler_table = {} # ルーラー初期化！
-				@block_table = {} # ブロック初期化！
-				@groups.each do |id, group|
-					group.pos = initial_pos(group.force)
-					group.add_log(
-						text_to_notify: "「あっ、何かが起きたようですよ！」",
-						text: "天変地異によって、グループは見知らぬ土地へ運ばれてしまいました！",
-					)
+				@groups_mutex.synchronize do
+					block.call
 				end
 			end
 		end

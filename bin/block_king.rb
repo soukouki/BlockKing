@@ -27,9 +27,9 @@ $logger = CombinedLogger.new([
 controlling_shards_of_bot = ControllingShardsOfBot.new(
 	token: setting[:discord_bot_token],
 	shards_count: setting[:shards_count],
-	game: "ゲームスタートはBk(Bは大文字)",
 	logger: $logger,
 )
+controlling_shards_of_bot.set_game("ゲームスタートはBk(Bは大文字)")
 waiting_for_message = WaitingForMessage.new(
 	controlling_shards_of_bot: controlling_shards_of_bot,
 	logger: $logger,

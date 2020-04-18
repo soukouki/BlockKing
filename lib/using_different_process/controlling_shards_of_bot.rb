@@ -11,9 +11,8 @@ class ControllingShardsOfBot
 	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :is_user_bot, :channel_id, :message, keyword_init: true)
 	ReceivedServers = Struct.new(:shard_id, :id_of_servers, keyword_init: true)
 	
-	def initialize(token:, shards_count: 1, game: "", logger: nil)
+	def initialize(token:, shards_count: 1, logger: nil)
 		@token = token
-		@game = game
 		@shards_count = shards_count
 		@mutex_for_callbacks = Mutex.new
 		@callbacks = []
@@ -54,6 +53,14 @@ class ControllingShardsOfBot
 		send_signal(
 			{
 				type: "get_servers",
+			}
+		)
+	end
+	def set_game(game)
+		send_signal(
+			{
+				type: "set_game",
+				game: game
 			}
 		)
 	end
@@ -108,7 +115,7 @@ class ControllingShardsOfBot
 	
 	def start_bot()
 		@streams = @shards_count.times.map do |shard_id|
-			IO.popen("#{COMMAND_BOOTING_BOT} #{@token} #{@shards_count} #{shard_id} \"#{@game}\"", "r+")
+			IO.popen("#{COMMAND_BOOTING_BOT} #{@token} #{@shards_count} #{shard_id}", "r+")
 		end
 	end
 end

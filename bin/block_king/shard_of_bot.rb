@@ -7,7 +7,7 @@ require_relative "../../lib/using_different_process/logger_of_bots"
 token = ARGV[0]
 num_shards = ARGV[1].to_i
 shard_id = ARGV[2].to_i
-game = ARGV[3]
+game = ""
 
 def send_object(obj)
 	$stdout.puts JSON.generate(obj)
@@ -89,6 +89,9 @@ begin
 			send_object(obj)
 			$logger.info("Shard of bot send servers shard_id:#{shard_id}")
 			$logger.debug(obj)
+		when "set_game"
+			game = obj[:game]
+			bot.game = game
 		end
 	end
 rescue => e

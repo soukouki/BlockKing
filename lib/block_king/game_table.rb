@@ -82,7 +82,7 @@ class GameTable
 		return @game_level if len == 0
 		(
 			1.0 *
-			@game_level /
+			@game_level / 
 			UP_MAGNIFICATION**(1.0*len/GO_DISTANCE) *
 			rand(0.7..(1/0.7))
 		).ceil # 取れるアイテム数の関係
@@ -90,9 +90,10 @@ class GameTable
 	
 	def game_clear(cleared_group)
 		@ruler_table_mutex.synchronize do
-			cleared_group.log.add_text(cleared_group, nil, <<~EOS)
-				`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！
-			EOS
+			
+			cleared_group.add_log(
+				text: "`#{cleared_group.name}`によって王城が攻略され、ゲームがクリアされました！"
+			)
 		end
 		@kings_history.last&.add_item(false, "王城からアイテムを持ち出せ", GameData::KINGS_MEMORIAL_ITEMS.sample, 1)
 		@kings_history << cleared_group
@@ -116,8 +117,10 @@ class GameTable
 					block.remaining_items -= count
 					ruler.add_item(false, "#{block}を支配し", get_item, count)
 					if !is_few_remaining_item && block.few_remaining_item?
-						ruler.log.add_text(ruler, "「今支配してるブロックの残りアイテムがだいぶ少なくなってきました。そろそろ移動してもいい頃じゃないですか？」",
-							"支配しているブロックの残りアイテムが少なくなってきました。")
+						ruler.add_text(
+							text_to_notify: "「今支配してるブロックの残りアイテムがだいぶ少なくなってきました。そろそろ移動してもいい頃じゃないですか？」",
+							text: "支配しているブロックの残りアイテムが少なくなってきました。",
+						)
 					end
 				end
 				.each do |pos, ruler|
@@ -177,9 +180,10 @@ class GameTable
 				@block_table = {} # ブロック初期化！
 				@groups.each do |id, group|
 					group.pos = initial_pos(group.force)
-					group.log.add_text(group, "「あっ、何かが起きたようですよ！」", <<~EOS)
-						天変地異によって、グループは見知らぬ土地へ運ばれてしまいました！
-					EOS
+					group.add_log(
+						text_to_notify: "「あっ、何かが起きたようですよ！」",
+						text: "天変地異によって、グループは見知らぬ土地へ運ばれてしまいました！",
+					)
 				end
 			end
 		end

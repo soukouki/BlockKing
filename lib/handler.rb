@@ -142,9 +142,9 @@ class Handler
 		
 		application_tutorial(GameData::Tutorial.before_displaying_screen(@group))
 		
-		log_text = @add_msg + @group.log.to_s
+		log_text = @add_msg + @group.get_log
 		@add_msg = ""
-		@group.log.clear()
+		@group.clear_log()
 		
 		msg(constant_text+block_text+tips+log_text)
 

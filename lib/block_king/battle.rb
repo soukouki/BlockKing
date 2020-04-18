@@ -45,14 +45,15 @@ class BattleForTheKing < Battle
 		when :win
 			@challenger.state = :winning_the_king
 			@ruler.state = :being_deprived_of_king
-			@ruler.log.add_text(@ruler, "「大変です！王城に・・・！」",<<~EOS)
-				残念ながら、#{@challenger.name}に王城を攻撃され、負けてしまいました。
-			EOS
+			@ruler.add_log(
+				text_to_notify: "「大変です！王城に・・・！」",
+				text: "残念ながら、#{@challenger.name}に王城を攻撃され、負けてしまいました。",
+			)
 			@game_table.game_clear(@challenger)
 		when :lose
-			@ruler.log.add_text(@ruler, nil,<<~EOS)
-				王城に#{@challenger.name}が攻めてきましたが、なんとか撃退することができました！
-			EOS
+			@ruler.add_log(
+				text: "王城に#{@challenger.name}が攻めてきましたが、なんとか撃退することができました！"
+			)
 		end
 		result
 	end

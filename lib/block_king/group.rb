@@ -12,10 +12,12 @@ class GroupBase
 	end
 	def state=(args) # 何もしない
 	end
+	def add_log(text_to_notify:, text:) # 何もしない
+	end
 end
 
 class Group < GroupBase
-	attr_reader :id, :log, :soldier, :items, :crafting_recipe_and_count
+	attr_reader :id, :soldier, :items, :crafting_recipe_and_count
 	attr_accessor :name, :state, :pos, :tutorial_level
 	def ui_related_data
 		@ui_related_data ||= UIRelatedData.new
@@ -30,51 +32,6 @@ class Group < GroupBase
 		@state = :starting_game
 		@log = LogBasket.new
 		@tutorial_level = 0
-	end
-	
-	class LogBasket
-		def initialize
-			@causes = {}
-			@text_logs = []
-		end
-		def add_item(group, sync, cause, item, count)
-			causes_empty = @causes.empty?
-			@causes[cause] ||= {}
-			@causes[cause][item] ||= 0
-			@causes[cause][item] += count
-			notify(group, "「アイテムが手に入りました！確認してみてください！」") if !sync && causes_empty
-		end
-		# text_to_notifyがnilのときは通知をしない
-		def add_text(group, text_to_notify, text)
-			@text_logs << Time.now.strftime("[%m月%d日%H時%M分]")+text
-			notify(group, "<@#{group.id}>\n#{text_to_notify}") if text_to_notify
-		end
-		def clear()
-			@causes = {}
-			@text_logs = []
-		end
-		def to_s
-			@text_logs.join("\n")+(
-				text = @causes
-					.map do |cause, hash|
-						"#{cause}、#{hash.reject{|i,c|c==0}.map{|i,c|"#{i}を`#{c}`"}.join("、")}"
-					end
-					.join("\n")
-				(text == "")? "" : text+"、手に入れました！"
-			)
-		end
-		private
-		def notify(group, text)
-			begin
-				Handler.notify(group, text)
-			rescue => err
-				# loggerに疎結合にするため
-				$logger && (
-					$logger.error err.full_message
-					$logger.info "エラーは無視します。"
-				)
-			end
-		end
 	end
 	
 	def weapon_allocation
@@ -229,6 +186,16 @@ class Group < GroupBase
 		@items[item] += count
 		@log.add_item(self, sync, cause, item, count)
 	end
+	# text_to_notifyがnilのときは通知をしない
+	def add_log(text_to_notify: nil, text:)
+		@log.add_text(self, text_to_notify, text)
+	end
+	def get_log
+		@log.to_s
+	end
+	def clear_log
+		@log.clear
+	end
 end
 
 =begin
@@ -257,11 +224,5 @@ class NPCEnemy < GroupBase
 	def turn()
 		@soldier ||= @max_soldier ||= @force # 一時的な措置
 		@soldier += ((@max_soldier - @soldier) * 0.1).ceil unless @soldier == @max_soldier
-	end
-	def log
-		o = Object.new
-		def o.add_text(group, text_to_notify, text)
-		end
-		o
 	end
 end

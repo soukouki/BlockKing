@@ -5,6 +5,7 @@ require "pp"
 
 require_relative "../lib/save_load"
 require_relative "../lib/combined_logger"
+require_relative "../lib/using_different_process/controlling_shards_of_bot"
 require_relative "../lib/using_different_process/waiting_for_message"
 require_relative "../lib/using_different_process/sending_message"
 
@@ -22,12 +23,17 @@ $logger = CombinedLogger.new([
 	Logger.new($stderr, level: Logger::Severity::INFO),
 ])
 
-waiting_for_message = WaitingForMessage.new(
+controlling_shards_of_bot = ControllingShardsOfBot.new(
 	token: setting[:discord_bot_token],
 	shards_count: setting[:shards_count],
 	game: "ゲームスタートはBk(Bは大文字)",
 	logger: $logger,
 )
+waiting_for_message = WaitingForMessage.new(
+	controlling_shards_of_bot: controlling_shards_of_bot,
+	logger: $logger,
+)
+controlling_shards_of_bot.add_callback(waiting_for_message.receive_callback)
 sending_message = SendingMessage.new(
 	token: setting[:discord_bot_token]
 )

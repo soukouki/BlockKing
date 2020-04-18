@@ -40,7 +40,7 @@ bot.message do |event|
 		}
 		$stdout.puts JSON.generate(obj)
 		$stdout.flush
-		$logger.info("Bot picking up message send received message")
+		$logger.info("Shard of bot send received message id:#{bar[:id]}")
 		$logger.debug(obj)
 	end
 end
@@ -54,7 +54,7 @@ bot.run true
 begin
 	loop do
 		obj = JSON.parse($stdin.readline.force_encoding("UTF-8"), symbolize_names: true)
-		$logger.info("Bot picking up message receive command")
+		$logger.info("Shard of bot receive command type:#{obj[:type]}, id:#{obj[:id]||'none'}")
 		$logger.debug(obj)
 		case obj[:type]
 		when "register"

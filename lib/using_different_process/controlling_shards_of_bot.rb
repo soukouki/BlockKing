@@ -1,8 +1,8 @@
 
 require "json"
 
-class PickingUpMessage
-	COMMAND_BOOTING_BOT = "ruby bin/block_king/bot_picking_up_message.rb"
+class ControllingShardsOfBot
+	COMMAND_BOOTING_BOT = "ruby bin/block_king/shard_of_bot.rb"
 	INNORING_TEXT = [
 		"libsodium not available! You can continue to use discordrb as normal but voice support won't work.\n",
 		"        Read https://github.com/meew0/discordrb/wiki/Installing-libsodium for more details.\n",
@@ -10,14 +10,22 @@ class PickingUpMessage
 
 	ReceivedMessage = Struct.new(:id, :user_id, :user_name, :is_user_bot, :channel_id, :message, keyword_init: true)
 	
-	def initialize(token:, shards_count: 1, game: "", callback:, logger: nil)
+	
+	def initialize(token:, shards_count: 1, game: "", logger: nil)
 		@token = token
 		@game = game
 		@shards_count = shards_count
-		@callback = callback
+		@mutex_for_callbacks = Mutex.new
+		@callbacks = []
 		@logger = logger
 		start_bot()
 		start_receiving_message()
+	end
+
+	def add_callback(callback)
+		@mutex_for_callbacks.synchronize do
+			@callbacks << callback
+		end
 	end
 	
 	# idは32ビット符号なし整数で、被りがないように登録する
@@ -54,7 +62,12 @@ class PickingUpMessage
 							text = stream.readline.force_encoding("UTF-8")
 							redo if INNORING_TEXT.include?(text)
 							obj = JSON.parse(text, symbolize_names: true)
-							@callback.call(ReceivedMessage.new(obj))
+							rm = ReceivedMessage.new(obj)
+							@mutex_for_callbacks.synchronize do
+								@callbacks.each do |cb|
+									cb.call(rm)
+								end
+							end
 						end
 					rescue EOFError => e
 						@logger && @logger.info(e) # redoしても意味ない
@@ -72,7 +85,7 @@ class PickingUpMessage
 			stream.puts JSON.generate(object)
 			stream.flush
 		end
-		@logger && @logger.info("class picking up message send command")
+		@logger && @logger.info("class ControllingShardsOfBot send command type:#{object[:type]}, id:#{object[:id]}")
 		@logger && @logger.debug(object)
 	end
 	

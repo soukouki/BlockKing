@@ -1,20 +1,16 @@
 
-require_relative "picking_up_message"
-
 class WaitingForMessage
-	def initialize(token:, shards_count: 1, game: "", logger: nil)
-		@picking_up_message = PickingUpMessage.new(
-			token: token,
-			shards_count: shards_count,
-			game: game,
-			callback: ->(rm){receive_message(rm)},
-			logger: logger
-		)
+	def initialize(controlling_shards_of_bot:, logger: nil)
+		@controlling_shards_of_bot = controlling_shards_of_bot
 		@logger = logger
 		@id_count = 0
 		@mutex_for_id_count = Thread::Mutex.new
 		@waiting_processes_by_id = {}
 		@mutex_for_waiting_processes_by_id = Thread::Mutex.new
+	end
+
+	def receive_callback
+		self.method(:receive_message)
 	end
 	
 	# callback_giving_idは必ずblockよりも前に呼ばれる
@@ -28,10 +24,10 @@ class WaitingForMessage
 				end
 			end
 		end
-		@picking_up_message.register(id: id, regex_text: regex_text, user_id: user_id, channel_id: channel_id)
+		@controlling_shards_of_bot.register(id: id, regex_text: regex_text, user_id: user_id, channel_id: channel_id)
 	end
 	def cancel_waiting(id:)
-		@picking_up_message.cancel(id: id)
+		@controlling_shards_of_bot.cancel(id: id)
 		@mutex_for_waiting_processes_by_id.synchronize do
 			@waiting_processes_by_id.delete(id)
 		end

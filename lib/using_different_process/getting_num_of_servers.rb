@@ -21,7 +21,7 @@ class GettingNumOfServers
 			@num_of_shards.times do
 				result << @queue_of_received_servers.pop
 			end
-			result.map(&:id_of_servers).uniq.count
+			result.flat_map(&:id_of_servers).uniq.count
 		end
 	end
 

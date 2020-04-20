@@ -147,7 +147,7 @@ class Group < GroupBase
 			recipe_and_count.products_times_count.each{|item,count|add_item(true, "クラフトで", item, count)}
 			add_log(
 				text_to_notify: "「アイテムを作り終えました！」",
-				text: 「アイテムを作り終えました！」,
+				text: "「アイテムを作り終えました！」",
 			)
 		end
 	end

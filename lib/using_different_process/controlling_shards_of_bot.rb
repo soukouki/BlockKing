@@ -109,7 +109,7 @@ class ControllingShardsOfBot
 			stream.puts JSON.generate(object)
 			stream.flush
 		end
-		@logger && @logger.info("class ControllingShardsOfBot send command type:#{object[:type]}, id:#{object[:id]||none}")
+		@logger && @logger.info("class ControllingShardsOfBot send command type:#{object[:type]}, id:#{object[:id]||"none"}")
 		@logger && @logger.debug(object)
 	end
 	

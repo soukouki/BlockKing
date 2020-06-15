@@ -17,11 +17,12 @@ class WatchingStoryHandler
 		end
 		@ui.send_message(
 			"どのストーリーを見ますか？\n"+
-			stories.map.with_index(1){|story, index|"`#{index}` : #{story.brief}"}.join("\n")+
-			"\n`quit` : やめる"
+			stories.map.with_index(1){|story, index|"`#{index}` : #{story.brief}"}.join("\n")+"\n"+
+			"`quit` `q` : やめる"
 		)
 		@ui.choose(@ui.choosing_items_class.new(
 			quit: ->{@ui.send_message("やめました")},
+			q:    ->{@ui.send_message("やめました")},
 			process_checking_index: ->(index){(1..stories.length).include? index},
 			process_of_index: lambda do |index|
 				@ui.send_message("・・・・・・・・・・")

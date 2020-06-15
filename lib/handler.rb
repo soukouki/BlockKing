@@ -77,9 +77,7 @@ class Handler
 			when :crafting
 				craft_view()
 			else
-				catch(:break_map_loop) do
-					map()
-				end
+				map()
 			end
 		end
 	end
@@ -254,10 +252,11 @@ class Handler
 		msg(<<~EOS)
 			建物リスト
 			#{select_text}
-			`quit` : 前の画面に戻る
+			`quit` `q` : 前の画面に戻る
 		EOS
 		player_chooses(@ui.choosing_items_class.new(
 			quit: ->{},
+			q:    ->{},
 			process_checking_index: ->(index){select_block[index]},
 			process_of_index: lambda do |index|
 				catch(:return_inner_wait) do
@@ -319,11 +318,12 @@ class Handler
 		msg(<<~EOS)
 			レシピリスト
 			#{creatable_items_text}
-			`quit` : 前の画面に戻る
+			`quit` `q` : 前の画面に戻る
 		EOS
 		
 		player_chooses(@ui.choosing_items_class.new(
 			quit: ->{},
+			q:    ->{},
 			_: ->{@add_msg << "「それを作るには、なにか足りないものがあるみたいですよ？」"},
 			process_checking_index: lambda do |index|
 				creatable_items.any?{|hash|hash[:index_or_underbar] == index}
@@ -340,19 +340,17 @@ class Handler
 				EOS
 				
 				player_chooses(@ui.choosing_items_class.new(
+					quit: ->{},
+					q:    ->{},
 					process_checking_index: ->(i){i >= 0 && i <= max_can_craft_count},
 					process_of_index: lambda do |count|
 						if count == 0
 							@add_msg << "「あれ、やっぱ何も作らないんですか？」"
-							throw(:break_map_loop)
+							next
 						end
 						recipe_and_count = RecipeAndCount.new(recipe, count, @group)
 						text_or_nil = @group.start_crafting(recipe_and_count)
-						if text_or_nil.nil?
-							throw(:break_map_loop)
-						else
-							msg(text_or_nil)
-						end
+						msg(text_or_nil) unless text_or_nil.nil?
 					end
 				))
 			end,

@@ -1,18 +1,19 @@
 
 require_relative "../lib/block_king"
 require_relative "../lib/ui/discord_ui"
-require_relative "../lib/handler"
+require_relative "../lib/handler/playing_game"
 
-Handler.direction_of_castle(AbPos.new(0,0)).test("")
-Handler.direction_of_castle(AbPos.new(0,1)).test(/南(?![東西])/)
-Handler.direction_of_castle(AbPos.new(1,1)).test(/南西/)
-Handler.direction_of_castle(AbPos.new(1,0)).test(/(?<!南北)西/)
-Handler.direction_of_castle(AbPos.new(1,-1)).test(/北西/)
-Handler.direction_of_castle(AbPos.new(0,-1)).test(/北(?![東西])/)
-Handler.direction_of_castle(AbPos.new(-1,-1)).test(/北東/)
-Handler.direction_of_castle(AbPos.new(-1,0)).test(/(?<!南北)東/)
-Handler.direction_of_castle(AbPos.new(-1,1)).test(/南東/)
-Handler.direction_of_castle(AbPos.new(30,10)).test("王城は西の方向。")
+pg = Handler::PlayingGame
+pg.direction_of_castle(AbPos.new(0,0)).test("")
+pg.direction_of_castle(AbPos.new(0,1)).test(/南(?![東西])/)
+pg.direction_of_castle(AbPos.new(1,1)).test(/南西/)
+pg.direction_of_castle(AbPos.new(1,0)).test(/(?<!南北)西/)
+pg.direction_of_castle(AbPos.new(1,-1)).test(/北西/)
+pg.direction_of_castle(AbPos.new(0,-1)).test(/北(?![東西])/)
+pg.direction_of_castle(AbPos.new(-1,-1)).test(/北東/)
+pg.direction_of_castle(AbPos.new(-1,0)).test(/(?<!南北)東/)
+pg.direction_of_castle(AbPos.new(-1,1)).test(/南東/)
+pg.direction_of_castle(AbPos.new(30,10)).test("王城は西の方向。")
 
 $logger = Object.new
 def $logger.info(text) end
@@ -44,7 +45,7 @@ end
 srand(0)
 gt = GameTable.new
 tui = TestUI.new
-thandler = Handler.new(
+thandler = pg.new(
 	ui: tui,
 	game_table: gt,
 	group_id: 123,
@@ -111,7 +112,7 @@ gt.group(123).instance_variable_set(:@time_crafting_started, Time.now - 100) # �
 
 # Timeoutになるまで止まっちゃうから、新しいHandlerを作る。上のTimeoutが経っちゃうと変になるかもしれないけど、まぁ60秒あれば終わるでしょ
 tui = TestUI.new
-thandler = Handler.new(
+thandler = pg.new(
 	ui: tui,
 	game_table: gt,
 	group_id: 123,
@@ -121,7 +122,7 @@ Thread.new{thandler.start()}
 tui.smq.pop.test(/銅の剣/)
 gt.group(123).pos = AbPos.new(0, 0)
 oui = TestUI.new
-ohandler = Handler.new(
+ohandler = pg.new(
 	ui: oui,
 	game_table: gt,
 	group_id: 456,

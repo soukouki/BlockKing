@@ -2,11 +2,12 @@
 require "timeout"
 require "forwardable"
 
-require_relative "game_data/items_and_blocks"
-require_relative "game_data/texts"
+require_relative "../game_data/items_and_blocks"
+require_relative "../game_data/texts"
 
+module Handler
 
-class Handler
+class PlayingGame
 	extend Forwardable
 	def_delegators :@ui, :kill_waiting_respons, :send_mention
 	def_delegators :@group, :ui_related_data
@@ -103,8 +104,8 @@ class Handler
 	
 	def map()
 		constant_text = <<~EOS
-			#{Handler.make_map(@group, @game_table)}
-			現在の位置は(#{pos})、#{Handler.direction_of_castle(pos)}
+			#{PlayingGame.make_map(@group, @game_table)}
+			現在の位置は(#{pos})、#{PlayingGame.direction_of_castle(pos)}
 			移動は(`w`/`a`/`s`/`d`)
 			アイテム・その他情報は(`i`)
 		EOS
@@ -126,7 +127,7 @@ class Handler
 		else
 			<<~EOS
 				このブロックを支配するには(`x`)
-				#{Handler.compare_force(@group.force, ruler.ambiguous_force)}相手でしょう。
+				#{PlayingGame.compare_force(@group.force, ruler.ambiguous_force)}相手でしょう。
 			EOS
 		end + if block.get_items_when_turning.nil?
 			""
@@ -525,3 +526,5 @@ class << Handler
 		self::FUNCTION_TO_NOTIFY.call(group.ui_related_data, text)
 	end
 end
+
+end # module

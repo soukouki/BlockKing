@@ -1,8 +1,9 @@
 
-require_relative "game_data/texts"
+require_relative "../game_data/texts"
 
+module Handler
 
-class WatchingStoryHandler
+class WatchingStory
 	def initialize(ui:, game_table:, group_id:)
 		@ui = ui
 		@game_table = game_table
@@ -45,3 +46,5 @@ class WatchingStoryHandler
 		]
 	end
 end
+
+end # module

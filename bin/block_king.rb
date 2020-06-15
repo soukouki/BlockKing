@@ -14,8 +14,8 @@ require_relative "../lib/using_different_process/sending_message"
 require_relative "../lib/block_king"
 
 require_relative "../lib/ui/discord_ui"
-require_relative "../lib/handler"
-require_relative "../lib/watching_story_handler"
+require_relative "../lib/handler/playing_game"
+require_relative "../lib/handler/watching_story"
 
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
@@ -50,7 +50,7 @@ Kernel.define_method(:report) do |text|
 	end
 end
 
-Handler::FUNCTION_TO_NOTIFY = lambda do |ui_related_data, text|
+Handler::PlayingGame::FUNCTION_TO_NOTIFY = lambda do |ui_related_data, text|
 	sending_message.send_message(ui_related_data.channel_id_to_notify, text)
 end
 
@@ -86,7 +86,7 @@ command["k"] do |rm|
 		else
 			old_ui.kill_waiting_respons()
 		end
-		ui_by_user_id[user_id] = Handler.new(
+		ui_by_user_id[user_id] = Handler::PlayingGame.new(
 			ui: UI::DiscordUI.new(
 				sending_message: sending_message,
 				waiting_for_message: waiting_for_message,
@@ -113,7 +113,7 @@ end
 command["story"] do |rm|
 	user_id = rm.user_id
 	channel_id = rm.channel_id
-	WatchingStoryHandler.new(
+	Handler::WatchingStory.new(
 		ui: UI::DiscordUI.new(
 			sending_message: sending_message,
 			waiting_for_message: waiting_for_message,

@@ -22,8 +22,6 @@ def $logger.error(text) end
 class TestUI < UI::UIBase
 	attr_accessor :smq, :ssmq, :wrq
 	
-	def initialize() # なぜかこう書かないと動かなかった。なぜ？
-	end
 	def initialize()
 		@smq = Thread::Queue.new
 		@ssmq = Thread::Queue.new

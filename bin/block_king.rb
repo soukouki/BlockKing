@@ -50,7 +50,7 @@ Kernel.define_method(:report) do |text|
 	end
 end
 
-Handler::PlayingGame::FUNCTION_TO_NOTIFY = lambda do |ui_related_data, text|
+Handler::FUNCTION_TO_NOTIFY = lambda do |ui_related_data, text|
 	sending_message.send_message(ui_related_data.channel_id_to_notify, text)
 end
 

@@ -103,12 +103,13 @@ module UI
 		
 	end
 
+	# 大文字と小文字で動作が変わるようなコマンドは作らないという前提にします
 	class DiscordChoosingItems < ChoosingItemsBase
 
 		# コマンドもindexもない場合はうまく動かないけれど、そのケースはないと考える
 		def regex_text
 			commands_regex = @processes_by_commands.keys.flat_map{|c|[c,c.upcase,c.downcase]}.uniq.map{|k|Regexp.escape(k)}.join("|")
-			indexes_regex = (@process_checking_index.nil?)? "" : '\d+'
+			indexes_regex = (@process_checking_index.nil?)? [] : ['\d+']
 			"^("+[*commands_regex, *indexes_regex].join("|")+")$"
 		end
 
@@ -116,7 +117,8 @@ module UI
 			if @process_checking_index && message.match?(/^\d+$/) && @process_checking_index.call(message.to_i)
 				return ->{@process_of_index.call(message.to_i)}
 			end
-			@processes_by_commands[message.downcase]
+			@processes_by_commands_alterd_to_downcase ||= @processes_by_commands.transform_keys{|s|s.downcase}
+			@processes_by_commands_alterd_to_downcase[message.downcase]
 		end
 
 	end

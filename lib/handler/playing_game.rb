@@ -43,7 +43,13 @@ class PlayingGame
 	
 	private
 
-	def player_chooses(choosing_items)
+	def player_chooses(**choosing_pattern)
+		choosing_items = @ui.choosing_items_class.new(
+			**choosing_pattern, 
+			Bexit: lambda do
+				throw(:exit_main_loop)
+			end
+		)
 		@ui.choose(choosing_items, callback: lambda do |message|
 			# last_operation_timeは更新されてしまうので、必要
 			@last_operation_elapsed_time = Time.now - @last_operation_time
@@ -64,21 +70,23 @@ class PlayingGame
 	end
 	
 	def main_loop()
-		loop do
-			case @group.state
-			when :starting_game
-				@group.state = nil
-				GameData::Story::STARTING_GAME.pass_text_to(@ui)
-			when :winning_the_king
-				@group.state = nil
-				GameData::Story::WINNING_THE_KING.pass_text_to(@ui)
-			when :being_deprived_of_king
-				@group.state = nil
-				GameData::Story::BEING_DEPRIVED_OF_KING.pass_text_to(@ui)
-			when :crafting
-				craft_view()
-			else
-				map()
+		catch(:exit_main_loop) do
+			loop do
+				case @group.state
+				when :starting_game
+					@group.state = nil
+					GameData::Story::STARTING_GAME.pass_text_to(@ui)
+				when :winning_the_king
+					@group.state = nil
+					GameData::Story::WINNING_THE_KING.pass_text_to(@ui)
+				when :being_deprived_of_king
+					@group.state = nil
+					GameData::Story::BEING_DEPRIVED_OF_KING.pass_text_to(@ui)
+				when :crafting
+					craft_view()
+				else
+					map()
+				end
 			end
 		end
 	end
@@ -149,7 +157,7 @@ class PlayingGame
 
 		loop do
 			result = catch(:return_no_map) do
-				player_chooses(@ui.choosing_items_class.new(
+				player_chooses(
 					w: ->{move(0, 1)},
 					a: ->{move(-1, 0)},
 					s: ->{move(0, -1)},
@@ -159,7 +167,7 @@ class PlayingGame
 					c: ->{build_building()},
 					v: ->{remove_building()},
 					u: ->{craft_using_building()},
-				))
+				)
 				break true
 			end
 			break if result
@@ -255,7 +263,7 @@ class PlayingGame
 			#{select_text}
 			`quit` `q` : 前の画面に戻る
 		EOS
-		player_chooses(@ui.choosing_items_class.new(
+		player_chooses(
 			quit: ->{},
 			q:    ->{},
 			process_checking_index: ->(index){select_block[index]},
@@ -264,7 +272,7 @@ class PlayingGame
 					result_tuple(@group.build(@game_table, select_block[index][0].new(@group, @game_table.calc_level(pos))), :return_inner_wait)
 				end
 			end,
-		))
+		)
 	end
 	
 	def remove_building()
@@ -322,7 +330,7 @@ class PlayingGame
 			`quit` `q` : 前の画面に戻る
 		EOS
 		
-		player_chooses(@ui.choosing_items_class.new(
+		player_chooses(
 			quit: ->{},
 			q:    ->{},
 			_: ->{@add_msg << "「それを作るには、なにか足りないものがあるみたいですよ？」"},
@@ -340,7 +348,7 @@ class PlayingGame
 					`0` - `#{max_can_craft_count}` の中から選んでください。
 				EOS
 				
-				player_chooses(@ui.choosing_items_class.new(
+				player_chooses(
 					quit: ->{},
 					q:    ->{},
 					process_checking_index: ->(i){i >= 0 && i <= max_can_craft_count},
@@ -353,9 +361,9 @@ class PlayingGame
 						text_or_nil = @group.start_crafting(recipe_and_count)
 						msg(text_or_nil) unless text_or_nil.nil?
 					end
-				))
+				)
 			end,
-		))
+		)
 	end
 	
 	# 名前が気に入らない・・・
@@ -402,13 +410,13 @@ class PlayingGame
 						クラフト中止は(`c`)
 					EOS
 					
-					player_chooses(@ui.choosing_items_class.new(
+					player_chooses(
 						i: ->{items_view()},
 						c: lambda do
 							@group.cancel_crafting()
 							@add_msg << "クラフトをキャンセルしました。"
 						end,
-					))
+					)
 				end
 			rescue Timeout::Error
 				# 時間になりました。

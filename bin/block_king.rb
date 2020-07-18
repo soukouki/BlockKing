@@ -20,8 +20,8 @@ require_relative "../lib/handler/watching_story"
 setting = YAML.load(open("setting.yaml"), symbolize_names: true)
 
 $logger = CombinedLogger.new([
-	Logger.new("block_king.log", level: Logger::Severity::DEBUG),
-	Logger.new($stderr, level: Logger::Severity::INFO),
+	Logger.new("block_king.log", level: Logger::Severity::INFO),
+	Logger.new($stderr, level: Logger::Severity::DEBUG),
 ])
 
 controlling_shards_of_bot = ControllingShardsOfBot.new(
@@ -101,14 +101,12 @@ command["k"] do |rm|
 	end
 	ui.ui_related_data.channel_id_to_notify = channel_id
 	ui.start()
-end
-command["exit"] do |rm|
-	user_id = rm.user_id
+	# ここから下はBexitの終了処理
 	mutex_for_ui_by_user_id.synchronize do
 		ui_by_user_id[user_id]&.kill_waiting_respons()
 		ui_by_user_id.delete(user_id)
 	end
-	sending_message.send_message(rm.channel_id, "反応しないようになりました。")
+	sending_message.send_message(channel_id, "反応しないようになりました。")
 end
 command["story"] do |rm|
 	user_id = rm.user_id

@@ -2,8 +2,8 @@
 require_relative "../combined_logger"
 
 $logger = CombinedLogger.new([
-	Logger.new("block_king.log", level: Logger::Severity::DEBUG),
-	Logger.new($stderr, level: Logger::Severity::INFO),
+	Logger.new("block_king.log", level: Logger::Severity::INFO),
+	Logger.new($stderr, level: Logger::Severity::DEBUG),
 ])
 
 # Discordrbでは独自のロガーとログレベルを使っているので、それを移すための処理

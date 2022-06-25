@@ -18,7 +18,24 @@ Item = Struct.new(:name) do
 	
 	# どこに置くか悩んでる
 	def self.count_by_items_hash_to_s(hash, join_str: "、", inline_code_count: true)
-		cc = (inline_code_count)? "`" : ""
-		hash.map{|item,count|"#{item}を#{cc}#{count}#{cc}"}.join(join_str)
+		delimiter = (inline_code_count)? "`" : ""
+		hash.map{|item,count|"#{item}を#{delimiter}#{count.with_comma}#{delimiter}"}.join(join_str)
 	end
+end
+
+module IntegerWithComma
+	def with_comma
+		origin = self.to_s
+		return origin if origin.length <= 4
+		parts = []
+		until origin.length < 4
+			parts << origin[-3..-1]
+			origin[-3..-1] = ""
+		end
+		parts << origin
+		return parts.reverse.join(",")
+	end
+end
+class Integer
+	include IntegerWithComma
 end

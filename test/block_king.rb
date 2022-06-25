@@ -105,7 +105,9 @@ tui.wrq << "1"
 tui.smq.pop
 tui.wrq << "1"
 tui.smq.pop.test(/銅の剣を5/)
-gt.group(123).instance_variable_set(:@soldier, 1000)
+gt.group(123).instance_variable_set(:@soldier, 10000)
+tui.wrq << "i"
+tui.smq.pop.test(/10,000/)
 gt.group(123).instance_variable_set(:@time_crafting_started, Time.now - 100) # あっ
 
 # Timeoutになるまで止まっちゃうから、新しいHandlerを作る。上のTimeoutが経っちゃうと変になるかもしれないけど、まぁ60秒あれば終わるでしょ

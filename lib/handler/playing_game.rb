@@ -202,9 +202,9 @@ class PlayingGame
 		text = if items.empty?
 			"現在アイテムは持っていません。"
 		else
-			items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c}"}.join("\n")
+			items.sort_by{|i,c|GameData::SORT_ORDER.find_index(i) || 0}.map{|i,c|"#{i} : #{c.with_comma}"}.join("\n")
 		end
-		msg("```javascript\n兵士 : #{@group.soldier}\n"+text+"\n```")
+		msg("```javascript\n兵士 : #{@group.soldier.with_comma}\n"+text+"\n```")
 	end
 	
 	def war()
@@ -304,9 +304,9 @@ class PlayingGame
 						.products_hash
 						.map do |item,count|
 							if can_craft
-								"**#{item.name}**を`#{count}`"
+								"**#{item.name}**を`#{count.with_comma}`"
 							else
-								"~~#{item.name}を`#{count}`~~"
+								"~~#{item.name}を`#{count.with_comma}`~~"
 							end
 						end
 						.join("、")
@@ -345,7 +345,7 @@ class PlayingGame
 					「#{recipe.products_hash.map{|i,c|"#{i.name}を`#{c}`"}.join("、")}を何回作りますか・・？」
 					1回あたり必要アイテム数
 						#{recipe.materials_to_s(join_str:"\n\t")}
-					`0` - `#{max_can_craft_count}` の中から選んでください。
+					`0` - `#{max_can_craft_count.with_comma}` の中から選んでください。
 				EOS
 				
 				player_chooses(
@@ -381,7 +381,7 @@ class PlayingGame
 		need_items
 			.map{|i,c|[i,c,items[i]||0]}
 			.select{|(i,c,hc)|c>hc}
-			.map{|(i,c,hc)|"#{i}があと`#{c-hc}`"}
+			.map{|(i,c,hc)|"#{i}があと`#{(c-hc).with_comma}`"}
 			.join("、")
 	end
 	
@@ -400,7 +400,7 @@ class PlayingGame
 						#{crafting_recipe_and_count.products_to_s(inline_code_count: false)}
 						
 						素材 :  #{crafting_recipe_and_count.materials_to_s(inline_code_count: false)}
-						必要時間 : #{crafting_recipe_and_count.craft_time.to_i}秒(残り#{remaining_time.to_i}秒)
+						必要時間 : #{crafting_recipe_and_count.craft_time.to_i.with_comma}秒(残り#{remaining_time.to_i.with_comma}秒)
 						
 						完成予想 : #{(Time.now + remaining_time).strftime("%m月%d日%H時%M分")}頃
 						進捗 : |#{"*"*((1-progress)*20).to_i}#{"-"*(progress*20).to_i}|

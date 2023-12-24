@@ -319,7 +319,7 @@ class PlayingGame
 					when [false, true]
 						"#{finished_item_name}「あと#{not_enough_item_text(recipe.materials_hash)}必要です！」"
 					when [false, false]
-						"#{finished_item_name}「隣のブロックに#{not_enough_building}と、あと#{not_enough_item_text(recipe.materials_hash)}必要です！」"
+						"#{finished_item_name}「隣のブロックに#{not_enough_building}と、それと#{not_enough_item_text(recipe.materials_hash)}必要です！」"
 					end
 				)
 			end

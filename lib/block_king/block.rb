@@ -59,7 +59,7 @@ class Nature < Block
 		when 0.1..1
 			"もう少ししか残っていません。移ったほうがいいかもしれません。"
 		else
-			"殆ど残ってなさそうです。移ったほうがいいでしょう。"
+			"殆ど残ってなさそうです。次の場所に向かいましょう。"
 		end
 	end
 	def get_items_when_turning; nil end

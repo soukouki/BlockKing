@@ -78,14 +78,14 @@ class Group < GroupBase
 		block = game_table.block(@pos)
 		ruler = game_table.ruler(@pos)
 		if block.empty?
-			return [false, "「そもそも更地をどう解体するんですか・・？馬鹿なんですか・・？」"]
+			return [false, "「更地をどう解体するんですか・・？馬鹿なんですか・・？」"]
 		end
 		unless block.is_a?(Building)
-			return [false, "「#{block}を解体？いやですよー。」"]
+			return [false, "「#{block}を解体？無理ですって！」"]
 		end
 		need_items = block.need_items
 		if ruler!=self
-			return [false, "「ここを支配してるグループが邪魔すぎて、仕事にならないですよー。」"]
+			return [false, "「ここを支配してるグループが邪魔すぎて、仕事になりません！」"]
 		end
 		game_table.set_block(@pos, GameData::EMPTY.new(game_table.calc_level(pos)))
 		need_items

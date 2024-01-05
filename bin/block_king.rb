@@ -217,8 +217,6 @@ command["help"] do |rm|
 		- プログラムの更新等により、セーブデータに影響が出ないよう努力しますが、場合によっては影響が出る場合があります。
 		
 		
-		招待URL : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
-		(BlockKingが入っていないサーバーでもこのゲームを遊びたいときは、上のURLをサーバーの管理者権限を持っている人に開かせてください！きっといいことが起こります！)
 		公式サーバー : https://discord.gg/nJ5QVJu
 		製作者 : @sou7#0094 ストーリーを手伝ってくれたわょわぉさん その他テストプレイに参加してくださった方々
 	EOS

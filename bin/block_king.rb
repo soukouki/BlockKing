@@ -180,20 +180,6 @@ command["his"] do |rm|
 	sending_message.send_message(rm.channel_id, text)
 end
 
-command["bots"] do |rm|
-	sending_message.send_message(rm.channel_id, <<~EOS)
-		兄弟bot一覧！
-		__Greetingbot__
-			挨拶botです！挨拶に関してはかなりのものだと思ってます！
-				導入url : <https://discordapp.com/oauth2/authorize?client_id=394876010438328321&scope=bot&permissions=2048>
-				prefix : `n.`
-		__BlockKing__
-			:crossed_swords: **アイテムを集めてクラフトし、強力な剣で王座を狙うゲームです！** :fire:
-				導入url : <https://discordapp.com/oauth2/authorize?client_id=555753809834409987&permissions=2048&scope=bot>
-				公式サーバー(プレイもできる) : <https://discord.gg/nJ5QVJu>
-				prefix : `B`
-	EOS
-end
 command["help"] do |rm|
 	sending_message.send_message(rm.channel_id, <<~EOS)
 		コマンドの一覧です。
@@ -204,7 +190,6 @@ command["help"] do |rm|
 		`Brank` : ランキングが見れます。
 		`Bhis` : 過去の王が見れます。
 		`Bstats` : このbotに関する情報がﾁｮｯﾄﾀﾞｹ見れます。
-		`Bbots` : 兄弟botを紹介します！ぜひ導入してみてください！
 		
 		**禁止事項**
 		- bot、外部ツール等を使ってのプレイ。

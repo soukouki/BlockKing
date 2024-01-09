@@ -42,8 +42,6 @@ loop do
 	
 	break if target.nil?
 	
-	puts "#{target.name}(#{target_materials.length}通り)"
-	
 	# ターゲットのアイテムが含まれるレシピに埋め込んでいく
 	recipes_by_result.transform_values! do |recipes|
 		recipes
@@ -62,7 +60,7 @@ loop do
 end
 
 item = (GameData::SORT_ORDER - natural_materials + [GameData::DEBUG])
-	.each.with_index{|item, idx|puts "#{idx}:#{item.name}"}
+	.each.with_index{|item, idx|puts "#{idx}:#{item.name} (#{recipes_by_result[item]&.length || 0}通り)"}
 	.tap{||puts "どのアイテムを表示しますか？(すべての場合は最後の数字の次の値を)"}[gets.to_i]
 
 puts "上書き保存する先のファイル名(保存しない場合はそのまま)"

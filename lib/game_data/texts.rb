@@ -78,7 +78,7 @@ module GameData
 		
 		def before_displaying_screen(group)
 			arr = []
-			if group.tutorial_level == 0 || group.tutorial_level == 0
+			if group.tutorial_level == 0
 				arr << Tutorial::TutorialLevelAndText.new(1, <<~EOS)
 					「#{group.name}さん！はじめまして！
 					移動の仕方は、この画面から
